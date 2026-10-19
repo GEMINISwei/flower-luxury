@@ -4,10 +4,7 @@ import { useState } from "react"
 import { Container, ListPageHeader, Notify, useListFeedback } from "@/shared/ui"
 import type { ApiListMeta } from "@/shared/api/response"
 import { useT } from "@/shared/i18n/context"
-// 角色顯示名稱的規則 (系統角色走字典) 由 roles 模組唯一擁有, 這裡經 public entry 取用。
-import { getRoleDisplayName, rolesMessages } from "@/modules/roles/public.client"
 import { usersMessages } from "../i18n"
-import { isAssignableRole } from "../capabilities"
 import type { CurrentUser, RoleInfo, UserFilters, UserInfo } from "../types"
 import CreateUserDialog from "./CreateUserDialog"
 import EditUserDialog from "./EditUserDialog"
@@ -41,16 +38,10 @@ export default function UsersView({
   filters,
 }: UsersViewProps) {
   const t = useT(usersMessages)
-  const roleT = useT(rolesMessages)
   const showReset = meta.hasPrevious
   const [dialog, setDialog] = useState<Dialog>(null)
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null)
   const [filterDialogOpen, setFilterDialogOpen] = useState(false)
-  // 只有指派得出去的角色進得了這份清單; 篩選用的那份規則不同, 由 UsersFilterDialog 自己組。
-  const roleOptions = roles.filter(isAssignableRole).map((role) => ({
-    value: role.id,
-    label: getRoleDisplayName(role, roleT),
-  }))
 
   function closeSelectedDialog() {
     setDialog(null)
@@ -94,7 +85,6 @@ export default function UsersView({
         onClose={() => setDialog(null)}
         onSuccess={handleSuccess}
         onError={handleError}
-        roleOptions={roleOptions}
       />
       <EditUserDialog
         key={dialog === "edit" ? selectedUser?.id : "closed"}
@@ -104,7 +94,6 @@ export default function UsersView({
         onError={handleError}
         currentUser={currentUser}
         roles={roles}
-        roleOptions={roleOptions}
       />
       <ResetPasswordDialog
         user={dialog === "reset" ? selectedUser : null}
@@ -116,7 +105,6 @@ export default function UsersView({
         key={filterDialogOpen ? "filter-open" : "filter-closed"}
         open={filterDialogOpen}
         onClose={() => setFilterDialogOpen(false)}
-        roles={roles}
         filters={filters}
       />
 

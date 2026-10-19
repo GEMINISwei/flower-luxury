@@ -1,10 +1,6 @@
-"""建立超級管理者。唯一的入口是 CLI (`make db superuser`, 見 `scripts/db.py create-superuser`)。
+"""建立店長帳號, 由 CLI 或已驗證共用註冊碼的 registration 模組使用。
 
-這是**僅有的**能產生超級管理者的路徑 (一般的建立使用者永遠不行, 見
-`service.validate_role_ids`), 所以和一般的使用者管理分開放, 一眼看得出邊界。
-
-網頁上刻意沒有任何建立超管的入口: 授權模型是「呼叫者已經有伺服器的 shell 存取權」,
-不需要一把要保管、要清空的共用金鑰, 部署完成到建立第一個超管之間也沒有搶註的空窗。
+與員工建立流程分開, 避免一般的角色指派繞過店長註冊碼驗證。
 """
 
 from sqlalchemy.exc import IntegrityError
@@ -20,11 +16,7 @@ from .schema import SuperAdminCreate, UserOperate
 
 
 async def create_super_admin(form_data: SuperAdminCreate) -> UserOperate:
-    """建立一個擁有全部權限的超級管理者, 可重複執行 (第二個超管、唯一超管失聯時的救援)。
-
-    **刻意不接在任何 router 上, 也不應該接。** 它是唯一繞過 `validate_role_ids` 的路徑,
-    接上 HTTP 就變成完全不同的授權模型。
-    """
+    """建立擁有全部權限的店長帳號, 可重複建立。"""
     if await UserTable.find_detail_by_username(username=form_data.username):
         raise LangException(409, UserError.USERNAME_EXISTS)
 

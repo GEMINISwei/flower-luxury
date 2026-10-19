@@ -59,7 +59,9 @@ async def test_manager_can_update_and_read_settings(client, monkeypatch):
 async def test_signup_route_requires_valid_registration_key(client, monkeypatch):
     create = AsyncMock(return_value=UserOperate(id="new-manager"))
     monkeypatch.setattr(service, "create_super_admin", create)
-    response = await client.post("/api/registration/signup", json={**FORM, "registration_key": "wrong"})
+    response = await client.post(
+        "/api/registration/signup", json={**FORM, "registration_key": "wrong"},
+    )
     assert response.status_code == 403
     create.assert_not_awaited()
     response = await client.post("/api/registration/signup", json=FORM)

@@ -147,3 +147,17 @@
     height: var(--size-brand-mark-medium);
   }
 }
+
+.signupLink {
+  margin-top: var(--space-5);
+  color: var(--color-primary);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.signupTitle {
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: var(--fs-h2);
+  color: var(--color-text-display);
+}

@@ -49,9 +49,10 @@ users：關聯表與篩選（`model.py`）、依授權模型拆檔（`service.py
 1. 在 `apps/api/app/permissions.py` 的 `Permission` enum 加成員（`PRODUCT_READ = "products:read"`）。
    這是刻意中央化的清單，理由見 [`architecture.md`](architecture.md#兩份刻意中央化的清單)。
 2. label（動作，例「查看」）、category（分類，例「商品」）、dependencies、assignable 寫在
-   `modules/products/permissions.py`，由 manifest 註冊；宣告順序就是角色畫面上的順序。
+   `modules/products/permissions.py`，由 manifest 註冊；宣告順序就是權限選項 API 的順序。
    enum 與 metadata 對不上時，api 會在啟動時直接失敗。
-   角色編輯畫面直接用後端給的標籤與分類（`GET /roles/permission-options`），**前端不必改**。
+   `GET /roles/permission-options` 提供後端翻譯的標籤與分類。此專案使用固定店長／員工身分，
+   不提供角色權限編輯畫面；需要新增其他授權模型時，先確認產品需求。
 
 ### 3. Migration
 

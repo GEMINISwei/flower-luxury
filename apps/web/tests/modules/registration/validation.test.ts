@@ -13,7 +13,9 @@ describe("公開註冊", () => {
         username: " ", nickname: "", password: "short",
         confirm_password: "different", registration_key: "",
       }, locale)
-      for (const field of Object.keys(values)) expect(errors[field as keyof typeof errors]).toBeTruthy()
+      for (const field of Object.keys(values)) {
+        expect(errors[field as keyof typeof errors]).toBeTruthy()
+      }
       expect(errors.username).toBe(locale === "zh" ? "請輸入帳號" : "Username is required")
     }
   })

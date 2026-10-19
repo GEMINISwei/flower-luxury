@@ -157,6 +157,34 @@
         "title": "ProfileUpdate",
         "type": "object"
       },
+      "RegistrationSettings": {
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "configured"
+        ],
+        "title": "RegistrationSettings",
+        "type": "object"
+      },
+      "RegistrationSettingsUpdate": {
+        "properties": {
+          "registration_key": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Registration Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "registration_key"
+        ],
+        "title": "RegistrationSettingsUpdate",
+        "type": "object"
+      },
       "RoleCreate": {
         "properties": {
           "name": {
@@ -334,6 +362,39 @@
           "is_disabled"
         ],
         "title": "RoleUpdate",
+        "type": "object"
+      },
+      "SignupRequest": {
+        "properties": {
+          "nickname": {
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          },
+          "password": {
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          },
+          "registration_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Registration Key",
+            "type": "string"
+          },
+          "username": {
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "nickname",
+          "registration_key"
+        ],
+        "title": "SignupRequest",
         "type": "object"
       },
       "UserCreate": {
@@ -672,6 +733,110 @@
         "summary": "Get Language List Route",
         "tags": [
           "languages"
+        ]
+      }
+    },
+    "/api/registration/settings": {
+      "get": {
+        "description": "取得註冊碼設定狀態。",
+        "operationId": "get_registration_settings_route_api_registration_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Registration Settings Route",
+        "tags": [
+          "registration"
+        ]
+      },
+      "patch": {
+        "description": "設定或更換共用註冊碼。儲存後後續註冊須使用新碼。",
+        "operationId": "update_registration_settings_route_api_registration_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Registration Settings Route",
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/api/registration/signup": {
+      "post": {
+        "description": "使用共用註冊碼建立立即啟用的店長帳號。",
+        "operationId": "signup_route_api_registration_signup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOperate"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Signup Route",
+        "tags": [
+          "registration"
         ]
       }
     },

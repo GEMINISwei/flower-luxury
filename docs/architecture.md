@@ -139,7 +139,7 @@ app/
 ├── (public)/              # login
 └── (protected)/           # layout：登入檢查
     ├── (user)/            # 使用者區：首頁、個人設定　layout：使用者外殼
-    └── admin/             # 管理區：使用者、角色管理　layout：權限檢查 + 管理外殼
+    └── admin/             # 管理區：使用者管理、註冊碼設定　layout：權限檢查 + 管理外殼
 ```
 
 路由放哪一區由 manifest 的 `group: "user" | "admin"` 決定，頁面檔要放在對應的 route group
@@ -253,7 +253,7 @@ OpenAPI 的 `info.version` 固定是 `"1"`：規格要求必填，但前後端�
 | `apps/web/modules/<name>/`、`apps/web/tests/modules/<name>/`、`apps/web/app/(protected)/(<區>)/<path>/` | 整包刪除 |
 | `apps/web/config/routes.ts`、`config/shell/nav-icons.ts` | 移除 manifest 與圖示 |
 
-權限的標籤與分類跟著模組的 `permissions.py` 一起消失，角色畫面不必改。收尾**先 `make gen-types`
+權限的標籤與分類跟著模組的 `permissions.py` 一起消失，權限選項 API 會同步反映。收尾**先 `make gen-types`
 再 `make check`**，前端還在用的已刪除端點或權限才會變成編譯錯誤。另外清掉 `apps/web/.next`
 （否則 `tsc` 會找已刪除路由的型別），帶環境變數的模組要把
 [同步點](development.md#環境變數的同步點)一起縮小。

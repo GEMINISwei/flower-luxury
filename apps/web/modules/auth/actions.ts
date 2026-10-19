@@ -5,6 +5,7 @@ import { type ActionFormData, getActionFormString } from "@/shared/api/action-fo
 import { setAccessTokenCookie } from "@/shared/session/access-token.server"
 import { withoutAccessToken } from "@/shared/session/token-response"
 import type { LoginFormValues } from "./types"
+import type { ApiRequestBody } from "@/shared/api/contract"
 
 export async function loginUser(formData: ActionFormData<LoginFormValues>) {
   const values: LoginFormValues = {
@@ -27,4 +28,16 @@ export async function loginUser(formData: ActionFormData<LoginFormValues>) {
   }
 
   return withoutAccessToken(res)
+}
+
+export async function signup(formData: ActionFormData<ApiRequestBody<"/registration/signup", "post">>) {
+  return apiPost({
+    url: "/registration/signup", auth: "none",
+    data: {
+      username: getActionFormString(formData, "username").trim(),
+      nickname: getActionFormString(formData, "nickname").trim(),
+      password: getActionFormString(formData, "password"),
+      registration_key: getActionFormString(formData, "registration_key"),
+    },
+  })
 }
