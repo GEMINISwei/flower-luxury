@@ -2,6 +2,8 @@
 
 import { Lock, Shield, User } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
+import { SIGNUP_PATH } from "@/modules/registration/manifest"
 import { Button, ICON_SIZE } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { usePublicConfig } from "@/shared/runtime/context"
@@ -95,6 +97,7 @@ export default function LoginForm({ reason }: LoginFormProps) {
           </Button>
         </div>
 
+        <Link className={styles.signupLink} href={SIGNUP_PATH}>{t("signupLink")}</Link>
         <div className={styles.divider} aria-hidden="true"><span>◇</span></div>
         <div className={styles.securityNote}>
           <Shield size={ICON_SIZE.sm} color="var(--color-primary)" />

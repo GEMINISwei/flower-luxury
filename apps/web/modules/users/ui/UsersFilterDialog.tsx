@@ -2,14 +2,12 @@
 
 import { FilterDialog, useStatusFilterOptions } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
-import { getRoleDisplayName, rolesMessages } from "@/modules/roles/public.client"
 import { usersMessages } from "../i18n"
-import type { RoleInfo, UserFilters } from "../types"
+import type { UserFilters } from "../types"
 
 type UsersFilterDialogProps = {
   open: boolean
   onClose: () => void
-  roles: RoleInfo[]
   filters: UserFilters
 }
 
@@ -22,21 +20,10 @@ type UsersFilterDialogProps = {
 export default function UsersFilterDialog({
   open,
   onClose,
-  roles,
   filters,
 }: UsersFilterDialogProps) {
   const t = useT(usersMessages)
-  const roleT = useT(rolesMessages)
   const statusFilterOptions = useStatusFilterOptions()
-
-  // 篩選是「找出有哪些人是這個角色」, 跟指派角色的用途不同,
-  // 所以系統目前有的角色 (含超級管理者、已停用的角色) 都要能篩選。
-  const roleOptions = roles.map((role) => ({
-    value: role.id,
-    label: role.is_disabled
-      ? t("roleDisabledSuffix", { name: getRoleDisplayName(role, roleT) })
-      : getRoleDisplayName(role, roleT),
-  }))
 
   return (
     <FilterDialog
@@ -46,16 +33,6 @@ export default function UsersFilterDialog({
       fields={[
         { name: "name", label: t("colName"), type: "text" },
         {
-          name: "role_id",
-          label: t("colRole"),
-          type: "select",
-          options: [
-            { value: "", label: t("filterAll") },
-            { value: "unassigned", label: t("roleUnassigned") },
-            ...roleOptions,
-          ],
-        },
-        {
           name: "is_disabled",
           label: t("colStatus"),
           type: "select",
@@ -64,7 +41,6 @@ export default function UsersFilterDialog({
       ]}
       initialValues={{
         name: filters.name,
-        role_id: filters.roleId,
         is_disabled: filters.isDisabled,
       }}
     />

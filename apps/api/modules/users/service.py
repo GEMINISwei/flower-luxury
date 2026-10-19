@@ -4,8 +4,8 @@
 只留不論是誰都不該做的事: 停用自己; 停用超級管理者、改他的角色、重設他的密碼 (否則一位超管
 可以把其他超管鎖在系統外); 指派超級管理者角色。
 
-使用者對自己帳號的操作 (登入、改自己的密碼與個人資料) 在 `account.py`; 建立超級管理者在
-`superuser.py`。
+使用者對自己帳號的操作在 `account.py`, 建立店長在 `superuser.py`。
+公開註冊入口由 registration 模組驗證註冊碼。
 """
 
 from typing import Any, Literal
@@ -52,7 +52,7 @@ def _ensure_can_disable(
 async def create_user(form_data: UserCreate) -> UserOperate:
     """由超級管理者建立一般使用者。**這條路徑永遠不能建立超級管理者。**
 
-    超級管理者只能由 CLI 建立 (`superuser.py`); 一般使用者建立流程不能繞過角色驗證。
+    店長由 CLI 或註冊碼流程建立; 一般使用者建立流程不能繞過角色驗證。
     """
     if await UserTable.find_detail_by_username(username=form_data.username):
         raise LangException(409, UserError.USERNAME_EXISTS)

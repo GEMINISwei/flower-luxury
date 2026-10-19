@@ -24,6 +24,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/registration/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Registration Settings Route
+         * @description 取得註冊碼設定狀態。
+         */
+        get: operations["get_registration_settings_route_api_registration_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Registration Settings Route
+         * @description 設定或更換共用註冊碼。儲存後後續註冊須使用新碼。
+         */
+        patch: operations["update_registration_settings_route_api_registration_settings_patch"];
+        trace?: never;
+    };
+    "/api/registration/signup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Signup Route
+         * @description 使用共用註冊碼建立立即啟用的店長帳號。
+         */
+        post: operations["signup_route_api_registration_signup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/roles/": {
         parameters: {
             query?: never;
@@ -338,6 +382,16 @@ export interface components {
             /** Nickname */
             nickname: string;
         };
+        /** RegistrationSettings */
+        RegistrationSettings: {
+            /** Configured */
+            configured: boolean;
+        };
+        /** RegistrationSettingsUpdate */
+        RegistrationSettingsUpdate: {
+            /** Registration Key */
+            registration_key: string;
+        };
         /** RoleCreate */
         RoleCreate: {
             /** Name */
@@ -399,6 +453,17 @@ export interface components {
             name: string;
             /** Permissions */
             permissions: components["schemas"]["Permission"][];
+        };
+        /** SignupRequest */
+        SignupRequest: {
+            /** Nickname */
+            nickname: string;
+            /** Password */
+            password: string;
+            /** Registration Key */
+            registration_key: string;
+            /** Username */
+            username: string;
         };
         /** UserCreate */
         UserCreate: {
@@ -523,6 +588,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LanguageList"];
+                };
+            };
+        };
+    };
+    get_registration_settings_route_api_registration_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationSettings"];
+                };
+            };
+        };
+    };
+    update_registration_settings_route_api_registration_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    signup_route_api_registration_signup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOperate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

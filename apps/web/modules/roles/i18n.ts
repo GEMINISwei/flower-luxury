@@ -35,7 +35,7 @@ export const rolesMessages = defineMessages({
     noPermissionOptions: "目前沒有可指派的權限",
     updateFailed: "更新角色失敗",
     permissionsLabel: "權限",
-    roleSuperAdmin: "超級管理者",
+    roleSuperAdmin: "店長",
   },
   en: {
     pageTitle: "Role management",
@@ -71,6 +71,6 @@ export const rolesMessages = defineMessages({
     noPermissionOptions: "No permissions are available to assign yet",
     updateFailed: "Failed to update role",
     permissionsLabel: "Permissions",
-    roleSuperAdmin: "Super admin",
+    roleSuperAdmin: "Store manager",
   },
 })
