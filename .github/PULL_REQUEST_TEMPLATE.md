@@ -1,5 +1,6 @@
 <!-- PR 標題用 Conventional Commits（`feat: add product list page`）：squash merge 後它就是 main 的 commit。
-     先開 Draft，「驗證」寫完再按 Ready for review。流程見 docs/development.md#開發流程 -->
+     先寫測試，再實作；本機開發與必要檢查完成後，才首次 push 並開 Draft PR。
+     後續修改追加 commit 並更新驗證結果，審查前再按 Ready for review。流程見 docs/development.md#開發流程 -->
 
 ## 摘要
 

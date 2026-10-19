@@ -22,7 +22,8 @@
 
 ## 寫程式
 
-- **開發流程：Feature Branch → Draft PR → Incremental Commits → Code Review → Squash Merge**。
+- **首次推送前完成本機開發：先寫驗收條件與測試，再實作，通過本機必要檢查後才 push 並開 Draft PR**。
+  不單獨推送驗收文件或尚未實作的紅燈測試來開 PR；本機可以分段 commit，後續修改再追加 commit、驗證並 push。
   不直接 push `main`；PR 標題用 Conventional Commits，因為 squash 後它就是 `main` 的 commit
   （[說明](docs/development.md#開發流程)）。
 - **PR 描述固定三段：摘要、驗證（成功失敗都寫）、檢查（給審查者的 checkbox）**。
