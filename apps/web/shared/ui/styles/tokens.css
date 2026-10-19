@@ -84,9 +84,12 @@
   --ls-heading: 0.04em;
   --ls-body: 0.01em;
   --ls-label: 0.06em;
+  --ls-wordmark: 0.08em;
+  --fs-brand: 2.5rem;
 
   /* ---- 版面寬度 ---- */
   --container-toast: 480px;
+  --container-auth: 440px;
   --container-narrow: 520px;
   --container-form: 720px;
   --container-content: 760px;
@@ -94,6 +97,7 @@
   --layout-bottom-nav-height: 64px;
   --layout-sidebar-width: 216px;
   --layout-sidebar-width-rail: 72px;
+  --layout-mobile-header-height: 64px;
 
   /* ---- 框線、圓角、陰影 ---- */
   --focus-ring: 0 0 0 3px var(--color-focus-ring);
@@ -130,6 +134,10 @@
   --size-icon-lg: 24px;
   --size-avatar-sm: 32px;
   --size-avatar-md: 40px;
+  --size-brand-mark: 48px;
+  --size-brand-mark-medium: 64px;
+  --size-brand-mark-large: 80px;
+  --blur-surface: 12px;
 
   /* ---- 疊層順序 (一律從這裡取, 不要就地寫數字) ---- */
   --z-raised: 1;

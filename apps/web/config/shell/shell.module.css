@@ -1,4 +1,4 @@
-/* Protected layout — sidebar app shell */
+/* 導覽保持在視窗內, 避免長頁面把主要入口推離視窗。 */
 
 /* ---- App shell ---- */
 .shell {
@@ -37,8 +37,25 @@
   left: var(--space-6);
   right: var(--space-6);
   bottom: 0;
-  height: 1px;
-  background: var(--color-border-subtle);
+  height: var(--border-width-hairline);
+  background: linear-gradient(90deg, transparent, var(--color-border-brand), transparent);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.emblem {
+  width: var(--size-brand-mark);
+  height: var(--size-brand-mark);
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .areaBadge {
@@ -53,14 +70,17 @@
 }
 
 .sidebarWordmark {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   font-weight: var(--fw-bold);
   font-size: var(--fs-h3);
-  letter-spacing: var(--ls-label);
+  letter-spacing: var(--ls-wordmark);
   color: var(--color-text-display);
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
-.bottomNavigation {
+.bottomNavigation,
+.mobileHeader {
   display: none;
 }
 
@@ -87,15 +107,15 @@
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 56px;
+  min-height: var(--control-height-lg);
   gap: var(--space-4);
   padding: var(--space-3) var(--space-5) var(--space-3) var(--space-6);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-md);
   color: var(--color-text-body);
   font-family: var(--font-sans);
   font-size: var(--fs-base);
   font-weight: var(--fw-semibold);
-  letter-spacing: 0;
+  letter-spacing: var(--ls-body);
   text-decoration: none;
   transition: background var(--dur-fast) var(--ease-standard),
               color var(--dur-fast) var(--ease-standard);
@@ -109,7 +129,6 @@
   width: var(--size-icon-lg);
   height: var(--size-icon-lg);
   flex-shrink: 0;
-  stroke-width: 2;
   color: var(--color-text-muted);
   transition: color var(--dur-fast) var(--ease-standard);
 }
@@ -131,7 +150,7 @@
   left: 0;
   top: var(--space-2);
   bottom: var(--space-2);
-  width: 6px;
+  width: var(--border-width-accent);
   border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
   background: var(--color-primary);
 }
@@ -194,7 +213,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--border-width-hairline);
 }
 
 .userName {
@@ -231,6 +250,11 @@
 
   .sidebarLogo {
     padding: var(--space-5) var(--space-3);
+  }
+
+  .emblem {
+    width: var(--size-avatar-md);
+    height: var(--size-avatar-md);
   }
 
   .sidebarLogo::after {
@@ -282,6 +306,7 @@
     height: auto;
     min-height: 100dvh;
     overflow: visible;
+    flex-direction: column;
   }
 
   .sidebar {
@@ -290,9 +315,42 @@
 
   .main {
     height: auto;
-    min-height: 100dvh;
+    min-height: calc(100dvh - var(--layout-mobile-header-height) - env(safe-area-inset-top));
     overflow: visible;
     padding-bottom: calc(var(--layout-bottom-nav-height) + env(safe-area-inset-bottom));
+  }
+
+  .mobileHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: calc(var(--layout-mobile-header-height) + env(safe-area-inset-top));
+    padding: max(var(--space-2), env(safe-area-inset-top))
+             max(var(--space-4), env(safe-area-inset-right)) var(--space-2)
+             max(var(--space-4), env(safe-area-inset-left));
+    border-bottom: var(--border-width-hairline) solid var(--color-border-subtle);
+    background: var(--color-surface-card);
+  }
+
+  .mobileHeader .brand {
+    flex-direction: row;
+  }
+
+  .mobileHeader .sidebarWordmark {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .mobileHeader .areaBadge {
+    width: auto;
+    height: auto;
+    flex-shrink: 0;
+    padding: var(--space-1) var(--space-2);
+    color: var(--color-on-primary-container);
+    background: var(--color-primary-container);
   }
 
   .bottomNavigation {
@@ -307,19 +365,19 @@
     padding: var(--space-1) max(var(--space-2), env(safe-area-inset-right)) env(safe-area-inset-bottom) max(var(--space-2), env(safe-area-inset-left));
     border-top: var(--border-width-hairline) solid var(--color-border-subtle);
     background: color-mix(in srgb, var(--color-surface-card) 96%, transparent);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--blur-surface));
     box-shadow: var(--shadow-nav);
   }
 
   .bottomNavItem {
     min-width: 0;
-    min-height: 54px;
+    min-height: var(--control-height-lg);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    padding: var(--space-1) var(--space-2) 3px;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
     border: 0;
     border-radius: var(--radius-md);
     background: transparent;
@@ -327,7 +385,7 @@
     font-family: var(--font-sans);
     font-size: var(--fs-xs);
     font-weight: var(--fw-semibold);
-    line-height: 1;
+    line-height: var(--lh-tight);
     text-decoration: none;
     cursor: pointer;
   }
@@ -344,12 +402,10 @@
     color: var(--color-text-body);
   }
 
+  .bottomNavItem:hover,
+  .bottomNavItem[aria-expanded="true"],
   .bottomNavItemActive {
     background: var(--color-primary-container);
     color: var(--color-on-primary-container);
-  }
-
-  .bottomNavItemActive svg {
-    stroke-width: 2.4;
   }
 }

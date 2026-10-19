@@ -26,7 +26,7 @@ export const appMessages = defineMessages({
     // 首頁
     homeTitle: "首頁",
     homeHeading: "歡迎使用",
-    homeSubtitle: "請從左側選單選擇功能開始使用。",
+    homeSubtitle: "請從導覽選單選擇功能開始使用。",
     // 404
     notFoundTitle: "找不到頁面",
     notFoundDescription: "這個網址不存在，或是內容已經被移除。",
@@ -56,7 +56,7 @@ export const appMessages = defineMessages({
     roleUser: "User",
     homeTitle: "Home",
     homeHeading: "Welcome",
-    homeSubtitle: "Pick a feature from the menu to get started.",
+    homeSubtitle: "Pick a feature from the navigation menu to get started.",
     notFoundTitle: "Page not found",
     notFoundDescription: "This address does not exist, or the content has been removed.",
     backHome: "Back to home",
