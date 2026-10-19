@@ -1,0 +1,24 @@
+.stack { display: grid; gap: var(--space-5); min-width: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--container-auth)), 1fr)); gap: var(--space-5); }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--layout-sidebar-width)), 1fr)); gap: var(--space-4); }
+.actions { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; }
+.card { padding: var(--space-5); display: grid; gap: var(--space-4); min-width: 0; overflow-wrap: anywhere; }
+.card h2, .card h3, .card p { margin: 0; }
+.link { color: var(--color-primary); font-weight: var(--fw-semibold); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.muted { color: var(--color-text-secondary); font-size: var(--fs-sm); }
+.note { color: var(--color-warning-fg); background: var(--color-warning-bg); padding: var(--space-4); border-radius: var(--radius-sm); }
+.error { color: var(--color-danger-fg); }
+.notes { display: grid; gap: var(--space-2); color: var(--color-text-body); font-size: var(--fs-sm); }
+.notes textarea { width: 100%; min-height: var(--size-brand-mark-large); padding: var(--space-3); font: inherit; color: inherit; background: var(--color-surface-input); border: var(--border-width-hairline) solid var(--color-border-control); border-radius: var(--radius-sm); resize: vertical; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--layout-sidebar-width)), 1fr)); gap: var(--space-4); }
+.photo { display: grid; gap: var(--space-3); min-width: 0; }
+.photo img { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; background: var(--color-surface-sunken); border-radius: var(--radius-md); }
+.cover { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; background: var(--color-surface-sunken); border-radius: var(--radius-sm); }
+.upload { display: grid; gap: var(--space-3); }
+.upload input { max-width: 100%; font: inherit; color: var(--color-text-body); }
+.details { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3) var(--space-5); margin: 0; }
+.details dt { color: var(--color-text-secondary); }
+.details dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.history { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.history li { border-left: var(--border-width-accent) solid var(--color-border-brand); padding-left: var(--space-4); display: grid; gap: var(--space-2); }

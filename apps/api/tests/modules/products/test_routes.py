@@ -28,7 +28,9 @@ async def test_catalog_routes_require_login(client, method, path):
 @pytest.mark.asyncio
 async def test_staff_can_use_catalog_routes(client, monkeypatch):
     authenticate(client, "staff")
-    monkeypatch.setattr(brands, "get_brands", AsyncMock(return_value=BrandList(list_data=[], count=0)))
+    monkeypatch.setattr(
+        brands, "get_brands", AsyncMock(return_value=BrandList(list_data=[], count=0)),
+    )
     monkeypatch.setattr(service, "get_product_list", AsyncMock(return_value=ProductList(
         list_data=[], total_count=0, has_next=False, has_previous=False,
     )))
