@@ -8,6 +8,7 @@ export const authMessages = defineMessages({
   zh: {
     loginTitle: "登入帳號",
     login: "登入",
+    loginDescription: "管理二手精品庫存、商品資訊與流向，讓每件精品都被妥善記錄。",
     loggingIn: "登入中",
     username: "帳號",
     password: "密碼",
@@ -25,6 +26,7 @@ export const authMessages = defineMessages({
   en: {
     loginTitle: "Sign in",
     login: "Sign in",
+    loginDescription: "Manage pre-owned luxury inventory, product details and movements, with every piece carefully recorded.",
     loggingIn: "Signing in",
     username: "Username",
     password: "Password",

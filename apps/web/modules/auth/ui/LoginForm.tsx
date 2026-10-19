@@ -1,9 +1,10 @@
 "use client"
 
 import { Lock, Shield, User } from "lucide-react"
-import { ICON_SIZE } from "@/shared/ui"
-import { Button } from "@/shared/ui"
+import Image from "next/image"
+import { Button, ICON_SIZE } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
+import { usePublicConfig } from "@/shared/runtime/context"
 import { authMessages } from "../i18n"
 import { useLoginForm } from "./useLoginForm"
 import AuthField, { AuthErrorBanner, PasswordToggle } from "./AuthField"
@@ -16,6 +17,7 @@ type LoginFormProps = {
 
 export default function LoginForm({ reason }: LoginFormProps) {
   const t = useT(authMessages)
+  const { systemName } = usePublicConfig()
   const {
     values,
     errors,
@@ -47,8 +49,11 @@ export default function LoginForm({ reason }: LoginFormProps) {
         string, 接著進瀏覽器歷史與 access log。action 收到函式時, React 在 SSR 階段就把屬性
         渲染成一個會丟錯的 javascript: URL, 未 hydrate 的表單因此根本送不出去。
       */}
-      <form className={styles.card} action={() => submit()} noValidate>
-        <div className={styles.appName}>{t("login")}</div>
+      <form className={styles.card} action={() => submit()} aria-label={t("loginTitle")} noValidate>
+        <Image src="/logo.svg" alt="" width={150} height={150} className={styles.emblem} priority />
+        <h1 className={styles.appName}>{systemName}</h1>
+        <div className={styles.divider} aria-hidden="true"><span>◇</span></div>
+        <p className={styles.subtitle}>{t("loginDescription")}</p>
 
         <div className={styles.fields}>
           <AuthErrorBanner open={notifyState.open} message={notifyState.message} />
@@ -90,6 +95,7 @@ export default function LoginForm({ reason }: LoginFormProps) {
           </Button>
         </div>
 
+        <div className={styles.divider} aria-hidden="true"><span>◇</span></div>
         <div className={styles.securityNote}>
           <Shield size={ICON_SIZE.sm} color="var(--color-primary)" />
           <span>{t("securityNote")}</span>

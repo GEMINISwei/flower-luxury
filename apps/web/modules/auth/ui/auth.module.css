@@ -10,11 +10,13 @@
            max(var(--space-6), env(safe-area-inset-right))
            max(var(--space-6), env(safe-area-inset-bottom))
            max(var(--space-6), env(safe-area-inset-left));
-  background: var(--color-surface-sunken);
+  background:
+    radial-gradient(ellipse at top left, var(--color-surface-input), transparent 65%),
+    linear-gradient(135deg, var(--color-bg-app), var(--color-surface-sunken));
 }
 
 .card {
-  width: min(440px, 100%);
+  width: min(var(--container-auth), 100%);
   background: var(--color-surface-card);
   border: var(--border-width-hairline) solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
@@ -26,13 +28,47 @@
 }
 
 /* ---- App name heading ---- */
-.appName {
-  font-family: var(--font-sans);
-  font-weight: var(--fw-bold);
-  font-size: var(--fs-h1);
-  letter-spacing: var(--ls-heading);
-  color: var(--color-text-display);
+.emblem {
+  width: var(--size-brand-mark-large);
+  height: var(--size-brand-mark-large);
+  object-fit: contain;
   margin-bottom: var(--space-2);
+}
+
+.appName {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-brand);
+  letter-spacing: var(--ls-wordmark);
+  padding-left: var(--ls-wordmark);
+  color: var(--color-text-display);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  margin: var(--space-4) 0;
+  color: var(--color-primary);
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: var(--border-width-hairline);
+  background: linear-gradient(90deg, transparent, var(--color-border-brand), transparent);
+}
+
+.subtitle {
+  text-align: center;
+  font-size: var(--fs-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-6);
 }
 
 /* ---- Form fields ---- */
@@ -67,7 +103,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-top: var(--space-5);
+  justify-content: center;
+  text-align: center;
   color: var(--color-text-muted);
   font-family: var(--font-sans);
   font-size: var(--fs-sm);
@@ -101,5 +138,11 @@
     margin-block: auto;
     padding: var(--space-8) var(--space-5) var(--space-6);
     border-radius: var(--radius-lg);
+  }
+
+  .appName { font-size: var(--fs-h1); }
+  .emblem {
+    width: var(--size-brand-mark-medium);
+    height: var(--size-brand-mark-medium);
   }
 }
