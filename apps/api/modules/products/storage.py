@@ -19,7 +19,7 @@ def track_files(*, created: list[Path], deleted: list[Path]) -> None:
 
 
 def _cleanup(session: Session, key: str) -> None:
-    # SAVEPOINT 成功仍可能被外層回滾, 只在根交易結束才清檔。
+    # SAVEPOINT 成功仍可能被外層回滾, 只在根交易結束才清檔.
     if session.in_nested_transaction():
         return
     pending = session.info.pop("product_files", {"created": [], "deleted": []})

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 import { buildRequestHeaders } from "@/shared/api/headers"
 import { parseErrorDetail } from "@/shared/api/payload"
 import { getLocale } from "@/shared/i18n/locale.server"
-import { translate } from "@/shared/i18n/dictionary"
+import { translate, type Translator } from "@/shared/i18n/dictionary"
 import { ACCESS_TOKEN_COOKIE, loginUrl } from "@/shared/session/login-contract"
 import type { ApiResponse } from "@/shared/api/contract"
 import { validatePhotoBatch } from "./validation"
@@ -37,12 +37,25 @@ export async function sendPhotoBatch(id: string, data: FormData): Promise<ApiRes
     return { status: "error", code: 999, data: { detail: t("actionFailed") }, message: "Upload failed" }
   }
   if (response.status === 401) redirect(loginUrl())
-  const result = await response.json()
+  const result = await photoResponse(response, t)
+  if (result.status === "success") {
+    revalidatePath(PRODUCTS_PATH)
+    revalidatePath(`${PRODUCTS_PATH}/${id}`)
+  }
+  return result
+}
+
+async function photoResponse(
+  response: Response, t: Translator<(typeof productMessages)["zh"]>,
+): Promise<ApiResponse> {
+  const result = await response.json().catch(() => null)
+  if (result === null) {
+    return { status: "error", code: response.status,
+      data: { detail: t("actionFailed") }, message: "Invalid upload response" }
+  }
   if (!response.ok) {
     return { status: "failure", code: response.status,
       data: { detail: parseErrorDetail(result.detail).message }, message: "Upload failed" }
   }
-  revalidatePath(PRODUCTS_PATH)
-  revalidatePath(`${PRODUCTS_PATH}/${id}`)
   return { status: "success", code: response.status, data: result, message: "Uploaded" }
 }

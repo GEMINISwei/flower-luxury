@@ -74,7 +74,7 @@ async def update_product(id: str, form_data: ProductCreate, actor: CurrentUser) 
             setattr(row, field, value)
         row.updated_by, row.updated_at = actor["id"], utc_now()
         await active_session().flush()
-        # 品牌可能在同一個 session 變更, 避免關聯快取顯示舊名稱。
+        # 品牌可能在同一個 session 變更, 避免關聯快取顯示舊名稱.
         active_session().expire(row, ["brand_record"])
         return await get_product(id)
 

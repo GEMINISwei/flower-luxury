@@ -77,7 +77,7 @@ class ProductPhotoTable(BaseTable):
 
 
 async def lock_product(id: str, *, editable: bool = True) -> ProductTable:
-    # 每一種寫入都鎖同一列, 避免售出與照片/欄位更新併發時繞過鎖定。
+    # 每一種寫入都鎖同一列, 避免售出與照片/欄位更新併發時繞過鎖定.
     row = ensure_found(await active_session().scalar(select(ProductTable).where(
         ProductTable.id == parse_uuid(id), ProductTable.deleted_at.is_(None),
     ).with_for_update().execution_options(populate_existing=True)), ProductError.NOT_FOUND)

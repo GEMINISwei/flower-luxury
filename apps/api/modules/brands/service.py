@@ -63,7 +63,7 @@ async def update_brand(id: str, form_data: BrandUpdate) -> BrandInfo:
 
 
 async def delete_brand(id: str) -> BrandInfo:
-    # 外鍵 RESTRICT 是併發與後續模組引用的最後防線, 不需要品牌模組認識每一種引用者。
+    # 外鍵 RESTRICT 是併發與後續模組引用的最後防線, 不需要品牌模組認識每一種引用者.
     async with transaction():
         row = await lock_brand(id)
         result = BrandInfo.model_validate(row.to_dict())
