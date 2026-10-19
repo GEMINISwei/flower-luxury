@@ -66,6 +66,7 @@
 
 .subtitle {
   text-align: center;
+  text-wrap: balance;
   font-size: var(--fs-base);
   color: var(--color-text-secondary);
   margin-bottom: var(--space-6);
