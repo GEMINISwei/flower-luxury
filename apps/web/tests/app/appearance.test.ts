@@ -1,8 +1,11 @@
 import fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 import manifest from "@/app/manifest"
 
-const theme = fs.readFileSync(new URL("../../app/theme.css", import.meta.url), "utf8")
+const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../app")
+const theme = fs.readFileSync(path.join(APP, "theme.css"), "utf8")
 
 function color(name: string) {
   const value = theme.match(new RegExp(`--color-${name}:\\s*(#[a-f0-9]{6})`, "i"))?.[1]
