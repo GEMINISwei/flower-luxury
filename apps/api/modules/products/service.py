@@ -14,7 +14,7 @@ from shared.db.transaction import transaction
 from shared.http.errors import ensure_found
 from shared.time import utc_now
 
-from .model import ProductHistoryTable, ProductTable, lock_product
+from .model import ProductHistoryTable, ProductSaleTable, ProductTable, lock_product
 from .rules import ProductError, ensure_transition
 from .schema import (
     ProductCreate,
@@ -94,6 +94,13 @@ async def apply_status(id: str, to_status: str, reason: str | None,
         row = await lock_product(id, editable=not returning)
         ensure_transition(row.status, to_status, returning=returning)
         source = row.status
+        if returning and source == "sold":
+            sale = await active_session().scalar(select(ProductSaleTable).where(
+                ProductSaleTable.product_id == row.id, ProductSaleTable.is_current.is_(True),
+            ))
+            if sale is not None:
+                sale.is_current, sale.returned_at = False, utc_now()
+                sale.returned_by, sale.return_reason = actor["id"], reason
         row.status, row.updated_at, row.updated_by = to_status, utc_now(), actor["id"]
         await record_status(row, source, actor, "return" if returning else "change", reason)
         await active_session().flush()

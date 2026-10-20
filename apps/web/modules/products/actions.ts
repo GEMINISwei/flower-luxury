@@ -42,3 +42,26 @@ export async function deletePhoto(id: string, photo_id: string) {
 export async function uploadPhotos(id: string, data: FormData) {
   return sendPhotoBatch(id, data)
 }
+
+export async function createQuote(id: string, data: ApiRequestBody<"/products/{id}/quotes", "post">) {
+  return apiPost({ url: "/products/{id}/quotes", params: { id }, data, refresh })
+}
+
+export async function updateQuote(
+  id: string, quote_id: string, data: ApiRequestBody<"/products/{id}/quotes/{quote_id}", "patch">,
+) {
+  return apiPatch({ url: "/products/{id}/quotes/{quote_id}", params: { id, quote_id }, data, refresh })
+}
+
+export async function refreshQuote(id: string, quote_id: string) {
+  return apiPost({ url: "/products/{id}/quotes/{quote_id}/refresh-rate",
+    params: { id, quote_id }, refresh })
+}
+
+export async function deleteQuote(id: string, quote_id: string) {
+  return apiDelete({ url: "/products/{id}/quotes/{quote_id}", params: { id, quote_id }, refresh })
+}
+
+export async function confirmSale(id: string, data: ApiRequestBody<"/products/{id}/sales", "post">) {
+  return apiPost({ url: "/products/{id}/sales", params: { id }, data, refresh })
+}

@@ -7,10 +7,10 @@ it("售出只允許退回，其他狀態提供正確前進及退回目標", () =
     canEdit: false, forward: [], returns: ["in_stock", "not_acquired"],
   })
   expect(productCapabilities("not_acquired")).toEqual({
-    canEdit: true, forward: ["in_stock", "sold"], returns: [],
+    canEdit: true, forward: ["in_stock"], returns: [],
   })
   expect(productCapabilities("in_stock")).toEqual({
-    canEdit: true, forward: ["sold"], returns: ["not_acquired"],
+    canEdit: true, forward: [], returns: ["not_acquired"],
   })
 })
 

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Button, StatusBadge, useActionSubmit } from "@/shared/ui"
+import { Button, ConfirmDialog, StatusBadge, useActionSubmit } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import type { PhotoInfo } from "../types"
 import { productMessages } from "../i18n"
@@ -20,8 +20,9 @@ export default function PhotoPanel({ id, photos, canEdit }: {
   const input = useRef<HTMLInputElement>(null)
   const [files, setFiles] = useState<File[]>([])
   const [error, setError] = useState("")
+  const [removing, setRemoving] = useState<string | null>(null)
   const { isPending, submit } = useActionSubmit()
-  function done() { setError(""); router.refresh() }
+  function done() { setRemoving(null); setError(""); router.refresh() }
   function upload() {
     const validation = validatePhotoBatch(files, locale)
     if (validation) { setError(validation); return }
@@ -31,9 +32,9 @@ export default function PhotoPanel({ id, photos, canEdit }: {
       setFiles([]); if (input.current) input.current.value = ""; done()
     } })
   }
-  function remove(photoId: string) {
-    if (!window.confirm(t("deletePhotoConfirm"))) return
-    submit(() => deletePhoto(id, photoId), { onSuccess: done, onError: setError })
+  function remove() {
+    if (!removing) return
+    submit(() => deletePhoto(id, removing), { onSuccess: done, onError: setError })
   }
   return <div className={styles.stack}>
     <h2>{t("photos")}</h2>
@@ -48,7 +49,7 @@ export default function PhotoPanel({ id, photos, canEdit }: {
       <div><Button disabled={isPending || !files.length || Boolean(error)} onClick={upload}>
         {isPending ? t("saving") : t("upload")}</Button></div>
     </div>}
-    {error && <p className={styles.error} role="alert">{error}</p>}
+    {!removing && error && <p className={styles.error} role="alert">{error}</p>}
     {!photos.length && <p className={styles.muted}>{t("noPhotos")}</p>}
     <div className={styles.gallery}>{photos.map((photo) =>
       <div key={photo.id} className={styles.photo}>
@@ -60,9 +61,15 @@ export default function PhotoPanel({ id, photos, canEdit }: {
         {!photo.is_main && <Button variant="outlined" disabled={isPending} onClick={() =>
           submit(() => setMainPhoto(id, photo.id), { onSuccess: done, onError: setError })}>
           {t("setMain")}</Button>}
-        <Button variant="outlined" disabled={isPending} onClick={() => remove(photo.id)}>
+        <Button variant="outlined" disabled={isPending}
+          onClick={() => { setError(""); setRemoving(photo.id) }}>
           {t("delete")}</Button>
       </div>}
     </div>)}</div>
+    <ConfirmDialog title={t("delete")} open={Boolean(removing)} isPending={isPending}
+      confirmText={t("delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
+      <p>{t("deletePhotoConfirm")}</p>
+      {error && <p className={styles.error} role="alert">{error}</p>}
+    </ConfirmDialog>
   </div>
 }

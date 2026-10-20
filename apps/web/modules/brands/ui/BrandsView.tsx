@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button, Container, ErrorState, Flex, FormDialog, ListTableCard, PageHeader,
+import { Button, ConfirmDialog, Container, ErrorState, Flex, FormDialog, ListTableCard, PageHeader,
   SelectInput, StatusBadge, TableRow, TextInput, useActionSubmit } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { brandMessages } from "../i18n"
@@ -16,6 +16,7 @@ export default function BrandsView({ brands, errorMessage }: {
   const t = useT(brandMessages)
   const router = useRouter()
   const [selected, setSelected] = useState<BrandInfo | null>(null)
+  const [removing, setRemoving] = useState<BrandInfo | null>(null)
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [active, setActive] = useState("true")
@@ -31,15 +32,17 @@ export default function BrandsView({ brands, errorMessage }: {
     submit(() => selected ? updateBrand(selected.id, name, active === "true") : createBrand(name),
       { onSuccess: saved, onError: setError })
   }
-  function remove(brand: BrandInfo) {
-    if (!window.confirm(t("confirm"))) return
-    submit(() => deleteBrand(brand.id), { onSuccess: saved, onError: setError })
+  function remove() {
+    if (!removing) return
+    submit(() => deleteBrand(removing.id), {
+      onSuccess: () => { setRemoving(null); saved() }, onError: setError,
+    })
   }
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
       actions={<Button onClick={() => edit(null)}>{t("create")}</Button>} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
-    {!open && error && <p role="alert">{error}</p>}
+    {!open && !removing && error && <p role="alert">{error}</p>}
     <ListTableCard headers={[t("name"), t("status"), t("actions")]}
       isEmpty={!brands.length} emptyText={t("empty")}>
       {brands.map((brand) => <TableRow key={brand.id}>
@@ -48,7 +51,8 @@ export default function BrandsView({ brands, errorMessage }: {
           variant={brand.is_active ? "success" : "muted"} /></td>
         <td data-label={t("actions")}><Flex gap={2} className={styles.actions}>
           <Button variant="outlined" disabled={isPending} onClick={() => edit(brand)}>{t("edit")}</Button>
-          <Button variant="outlined" disabled={isPending} onClick={() => remove(brand)}>{t("delete")}</Button>
+          <Button variant="outlined" disabled={isPending}
+            onClick={() => { setError(""); setRemoving(brand) }}>{t("delete")}</Button>
         </Flex></td>
       </TableRow>)}
     </ListTableCard>
@@ -60,5 +64,10 @@ export default function BrandsView({ brands, errorMessage }: {
         options={[{ value: "true", label: t("active") }, { value: "false", label: t("inactive") }]} />}
       {error && <p role="alert">{error}</p>}
     </FormDialog>
+    <ConfirmDialog title={t("delete")} open={Boolean(removing)} isPending={isPending}
+      confirmText={t("delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
+      <p>{removing?.name}</p><p>{t("confirm")}</p>
+      {error && <p role="alert">{error}</p>}
+    </ConfirmDialog>
   </Container>
 }

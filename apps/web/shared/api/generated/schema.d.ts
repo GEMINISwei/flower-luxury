@@ -201,6 +201,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/products/{id}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Quotes Route */
+        get: operations["get_quotes_route_api_products__id__quotes_get"];
+        put?: never;
+        /** Create Quote Route */
+        post: operations["create_quote_route_api_products__id__quotes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}/quotes/{quote_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Quote Route */
+        delete: operations["delete_quote_route_api_products__id__quotes__quote_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Quote Route */
+        patch: operations["update_quote_route_api_products__id__quotes__quote_id__patch"];
+        trace?: never;
+    };
+    "/api/products/{id}/quotes/{quote_id}/refresh-rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh Quote Route */
+        post: operations["refresh_quote_route_api_products__id__quotes__quote_id__refresh_rate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/products/{id}/return": {
         parameters: {
             query?: never;
@@ -212,6 +265,24 @@ export interface paths {
         put?: never;
         /** Return Status Route */
         post: operations["return_status_route_api_products__id__return_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}/sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Sales Route */
+        get: operations["get_sales_route_api_products__id__sales_get"];
+        put?: never;
+        /** Confirm Sale Route */
+        post: operations["confirm_sale_route_api_products__id__sales_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -514,6 +585,42 @@ export interface paths {
         patch: operations["reset_user_password_route_api_users__id__reset_password_patch"];
         trace?: never;
     };
+    "/api/vendors/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Vendors Route */
+        get: operations["get_vendors_route_api_vendors__get"];
+        put?: never;
+        /** Create Vendor Route */
+        post: operations["create_vendor_route_api_vendors__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vendors/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Vendor Route */
+        delete: operations["delete_vendor_route_api_vendors__id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Vendor Route */
+        patch: operations["update_vendor_route_api_vendors__id__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -754,6 +861,68 @@ export interface components {
             /** Nickname */
             nickname: string;
         };
+        "QuoteAmount-Input": number | string;
+        "QuoteAmount-Output": string;
+        /** QuoteCreate */
+        QuoteCreate: {
+            /** Note */
+            note?: string | null;
+            original_amount: components["schemas"]["QuoteAmount-Input"];
+            /** Vendor Id */
+            vendor_id: string;
+        };
+        /** QuoteInfo */
+        QuoteInfo: {
+            /** Amount Twd */
+            amount_twd: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Currency
+             * @enum {string}
+             */
+            currency: "TWD" | "CNY";
+            /** Exchange Rate */
+            exchange_rate: string;
+            /** Has Sales */
+            has_sales: boolean;
+            /** Id */
+            id: string;
+            /** Note */
+            note?: string | null;
+            original_amount: components["schemas"]["QuoteAmount-Output"];
+            /** Product Id */
+            product_id: string;
+            /** Revision */
+            revision: number;
+            /** Updated At */
+            updated_at?: string | null;
+            /**
+             * Vendor Country
+             * @enum {string}
+             */
+            vendor_country: "TW" | "CN";
+            /** Vendor Id */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string;
+        };
+        /** QuoteList */
+        QuoteList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["QuoteInfo"][];
+        };
+        /** QuoteUpdate */
+        QuoteUpdate: {
+            /** Note */
+            note?: string | null;
+            original_amount: components["schemas"]["QuoteAmount-Input"];
+        };
         /** RegistrationSettings */
         RegistrationSettings: {
             /** Configured */
@@ -825,6 +994,72 @@ export interface components {
             name: string;
             /** Permissions */
             permissions: components["schemas"]["Permission"][];
+        };
+        /** SaleCreate */
+        SaleCreate: {
+            /** Cost Price */
+            cost_price: number;
+            /** Quote Id */
+            quote_id: string;
+            /** Quote Revision */
+            quote_revision: number;
+        };
+        /** SaleInfo */
+        SaleInfo: {
+            /** Amount Twd */
+            amount_twd: number;
+            /** Changed By */
+            changed_by: string;
+            /** Cost Price */
+            cost_price: number;
+            /**
+             * Currency
+             * @enum {string}
+             */
+            currency: "TWD" | "CNY";
+            /** Exchange Rate */
+            exchange_rate: string;
+            /** Id */
+            id: string;
+            /** Is Current */
+            is_current: boolean;
+            /** Operator Name */
+            operator_name: string;
+            /** Original Amount */
+            original_amount: string;
+            /** Product Id */
+            product_id: string;
+            /** Profit Amount */
+            profit_amount: number;
+            /** Quote Id */
+            quote_id: string;
+            /** Return Reason */
+            return_reason?: string | null;
+            /** Returned At */
+            returned_at?: string | null;
+            /** Returned By */
+            returned_by?: string | null;
+            /**
+             * Sold At
+             * Format: date-time
+             */
+            sold_at: string;
+            /**
+             * Vendor Country
+             * @enum {string}
+             */
+            vendor_country: "TW" | "CN";
+            /** Vendor Id */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string;
+        };
+        /** SaleList */
+        SaleList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["SaleInfo"][];
         };
         /** SignupRequest */
         SignupRequest: {
@@ -973,6 +1208,52 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** @enum {string} */
+        VendorCountry: "TW" | "CN";
+        /** VendorCreate */
+        VendorCreate: {
+            country: components["schemas"]["VendorCountry"];
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+        };
+        /** VendorInfo */
+        VendorInfo: {
+            country: components["schemas"]["VendorCountry"];
+            /** Country Locked */
+            country_locked: boolean;
+            /**
+             * Currency
+             * @enum {string}
+             */
+            readonly currency: "TWD" | "CNY";
+            /** Id */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+        };
+        /** VendorList */
+        VendorList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["VendorInfo"][];
+        };
+        /** VendorUpdate */
+        VendorUpdate: {
+            country: components["schemas"]["VendorCountry"];
+            /** Is Active */
+            is_active: boolean;
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
         };
     };
     responses: never;
@@ -1550,6 +1831,172 @@ export interface operations {
             };
         };
     };
+    get_quotes_route_api_products__id__quotes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_quote_route_api_products__id__quotes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_quote_route_api_products__id__quotes__quote_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_quote_route_api_products__id__quotes__quote_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_quote_route_api_products__id__quotes__quote_id__refresh_rate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     return_status_route_api_products__id__return_post: {
         parameters: {
             query?: never;
@@ -1572,6 +2019,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_sales_route_api_products__id__sales_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaleList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_sale_route_api_products__id__sales_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaleInfo"];
                 };
             };
             /** @description Validation Error */
@@ -2269,6 +2782,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserOperate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_vendors_route_api_vendors__get: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_vendor_route_api_vendors__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VendorCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_vendor_route_api_vendors__id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_vendor_route_api_vendors__id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VendorUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInfo"];
                 };
             };
             /** @description Validation Error */
