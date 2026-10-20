@@ -39,11 +39,13 @@ CNY 新詢價取當時設定的匯率，未設定時拒絕新增。修改金額�
 | 成交、狀態、歷程全部成功或回滾 | `test_sale_history_failure_rolls_back_entire_sale` |
 | 過期報價版本與成本不可成交 | `test_sale_rejects_stale_quote_or_cost` |
 | 同商品併發成交僅成功一次 | `test_concurrent_sales_create_one_current_sale` |
+| 同商品同廠商併發詢價僅建立一筆 | `test_concurrent_quotes_keep_one_vendor_quote` |
 | 退回及再次成交保留歷史，已成交詢價不可刪除 | `test_return_and_resale_preserve_snapshots_and_quote` |
 | 未成交詢價可刪除，廠商國家保持鎖定 | `test_unused_quote_can_be_deleted_without_unlocking_country` |
 | 所有新端點須登入，員工可操作，注入無效 | `test_trading_routes_require_login`、`test_staff_can_use_trading_routes`、`test_quote_ignores_injected_currency_and_rate` |
 | UI 不提供直接售出，依鎖定／成交歷史提供操作 | `詢價操作遵守售出鎖定與成交引用保護`、既有 `售出只允許退回，其他狀態提供正確前進及退回目標` |
 | 中英表單驗證及報價精度 | `廠商表單提供中英文驗證`、`詢價依國家驗證正數與小數位數` |
+| 新增詢價不重複選用廠商，成交預覽明示虧損 | `詢價表單排除已報價與停用廠商`、`成交確認依臺幣金額與成本顯示利潤或虧損` |
 | 接線與中英文、桌面手機可操作 | 既有 architecture、routes、route-adapters 測試與瀏覽器人工驗收 |
 
 測試先於實作建立，完成後鎖定。舊測試直接售出的預設需經使用者同意後改成詢價成交；
@@ -51,4 +53,22 @@ CNY 新詢價取當時設定的匯率，未設定時拒絕新增。修改金額�
 
 ## 驗證紀錄
 
-實作完成後補記測試紅燈、migration、契約產生、完整檢查、整合測試及瀏覽器驗收。
+2026-10-20：
+
+- 先建立規格與測試，確認後端缺少 vendors／quotes／sales 與前端缺少驗證／能力模組的預期紅燈。
+- 使用者同意更新既有直接售出測試：兩種直接售出的轉換改為拒絕，售出鎖定與歷程改由詢價成交建立，
+  一般狀態回滾改測未收購到在庫，另以新測試驗證整筆成交與退回的回滾。原鎖定、退回、歷程斷言保留。
+- 使用者同意補能力判斷與服務拒絕路徑測試，並整理新增測試的分行與 import，不修改既定驗收條件。
+- `make db migration "add vendors quotations and sale snapshots"` 產生三張表，已檢查外鍵、金額約束、
+  同廠商唯一與目前成交部分唯一索引。既有商品沒有欄位變更，也不捏造舊成交。
+- `make gen-types` 已更新 OpenAPI 與 TypeScript 型別。
+- `make check` 通過：後端 495 項、前端 345 項。標準檢查略過後端 70 項資料庫測試。
+  shared 獨立驗證後端 112 項、前端 188 項通過；後端 24 項資料庫測試依規格略過。
+- `make check integration` 通過：564 項，1 項略過為 registry 測試沒有違規權限參數可測。
+  `alembic check` 確認 model 與 migration 一致。Production build 保留 `ƒ Proxy (Middleware)`。
+- 瀏覽器驗收：員工建立臺灣／中國廠商、詢價國家鎖定、同廠商選項排除、人民幣兩位小數與臺幣整數驗證、
+  修改沿用原匯率、明確刷新匯率、負利潤確認、售出鎖定、退回及再成交、成本與廠商改名後舊快照保留。
+- 1440px、900px、390px、320px 的代表畫面與中英文均可操作，無橫向溢出。
+  瀏覽器發現 Node 與瀏覽器 ICU 的時間空白差異，統一空白後重新載入確認無 hydration 錯誤。
+- 站內確認視窗與驗收見 [站內確認視窗](in-app-confirmations.md)。
+- 實作提交的遠端 PR #7 `check`、`integration`、`images` 全部通過。
