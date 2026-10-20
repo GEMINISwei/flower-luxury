@@ -55,6 +55,17 @@ const eslintConfig = defineConfig([
       "max-depth": ["error", 4],
       complexity: ["error", 10],
       "max-lines-per-function": ["error", { max: 60, skipBlankLines: true, skipComments: true }],
+      "no-restricted-globals": ["error", {
+        name: "confirm", message: "確認操作請使用 @/shared/ui 的 ConfirmDialog。",
+      }, {
+        name: "alert", message: "請使用站內訊息或彈出視窗。",
+      }, {
+        name: "prompt", message: "請使用站內表單視窗。",
+      }],
+      "no-restricted-properties": ["error", ...["window", "globalThis"].flatMap((object) =>
+        ["confirm", "alert", "prompt"].map((property) => ({
+          object, property, message: "請使用 @/shared/ui 的站內訊息或彈出視窗。",
+        })))],
     },
   },
   {

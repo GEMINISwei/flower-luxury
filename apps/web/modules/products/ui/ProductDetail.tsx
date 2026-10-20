@@ -3,30 +3,37 @@
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button, Container, StatusBadge, Surface, useActionSubmit } from "@/shared/ui"
+import { Button, ConfirmDialog, Container, StatusBadge, Surface, useActionSubmit } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
-import type { PhotoInfo, ProductInfo, StatusHistoryInfo } from "../types"
-import { productMessages } from "../i18n"
+import type { VendorInfo } from "@/modules/vendors/public.client"
+import type { PhotoInfo, ProductInfo, QuoteInfo, SaleInfo, StatusHistoryInfo } from "../types"
+import { productMessages, quoteMessages } from "../i18n"
 import { CATEGORIES, HISTORY_ACTION_LABELS } from "../constants"
 import { productCapabilities } from "../capabilities"
 import { deleteProduct } from "../actions"
 import ProductForm from "./ProductForm"
 import StatusPanel from "./StatusPanel"
 import PhotoPanel from "./PhotoPanel"
+import QuotePanel from "./QuotePanel"
+import SaleHistory from "./SaleHistory"
 import styles from "./catalog.module.css"
 
-export default function ProductDetail({ product, brands, photos, histories }: {
+export default function ProductDetail({
+  product, brands, photos, histories, vendors, quotes, sales,
+}: {
   product: ProductInfo; brands: BrandInfo[]; photos: PhotoInfo[]; histories: StatusHistoryInfo[]
+  vendors: VendorInfo[]; quotes: QuoteInfo[]; sales: SaleInfo[]
 }) {
   const t = useT(productMessages)
+  const tq = useT(quoteMessages)
   const locale = useLocale()
   const router = useRouter()
   const [error, setError] = useState("")
+  const [removing, setRemoving] = useState(false)
   const { isPending, submit } = useActionSubmit()
   const { canEdit } = productCapabilities(product.status)
   function remove() {
-    if (!window.confirm(t("deleteConfirm"))) return
     submit(() => deleteProduct(product.id), {
       onSuccess: () => { router.push("/products"); router.refresh() }, onError: setError,
     })
@@ -48,12 +55,19 @@ export default function ProductDetail({ product, brands, photos, histories }: {
       {!canEdit && <p className={styles.note}>{t("locked")}</p>}
       <dl className={styles.details}>{basic.map(([label, value]) =>
         <div key={String(label)}><dt>{label}</dt><dd>{value || "—"}</dd></div>)}</dl>
-      {canEdit && <div><Button variant="outlined" disabled={isPending} onClick={remove}>
+      {canEdit && <div><Button variant="outlined" disabled={isPending}
+        onClick={() => { setError(""); setRemoving(true) }}>
         {t("deleteProduct")}</Button></div>}
-      {error && <p role="alert" className={styles.error}>{error}</p>}
     </Surface>
+    <ConfirmDialog title={t("deleteProduct")} open={removing} isPending={isPending}
+      confirmText={t("deleteProduct")} onClose={() => setRemoving(false)} onConfirm={remove}>
+      <p>{product.name}</p><p>{t("deleteConfirm")}</p>
+      {error && <p role="alert" className={styles.error}>{error}</p>}
+    </ConfirmDialog>
     <Surface className={styles.card}>
       <StatusPanel key={product.status} product={product} /></Surface>
+    <QuotePanel product={product} quotes={quotes} vendors={vendors} />
+    <SaleHistory sales={sales} />
     <Surface className={styles.card}>
       <PhotoPanel id={product.id} photos={photos} canEdit={canEdit} /></Surface>
     {canEdit && <Surface className={styles.card}><h2>{t("edit")}</h2>
@@ -64,9 +78,10 @@ export default function ProductDetail({ product, brands, photos, histories }: {
         <strong>{row.from_status ? `${t(row.from_status)} → ` : ""}{t(row.to_status)}</strong>
         <span>{row.operator_name} · {new Date(row.changed_at).toLocaleString(
             locale === "zh" ? "zh-TW" : "en-US", { timeZone: "Asia/Taipei" },
-          )}</span>
+          ).replace(/\s+/g, " ")}</span>
         <span className={styles.muted}>{row.changed_by}</span>
-        <span>{row.reason || t(HISTORY_ACTION_LABELS[row.action] ?? "changed")}</span>
+        <span>{row.reason || (row.action === "sale" ? tq("saleChanged")
+          : t(HISTORY_ACTION_LABELS[row.action] ?? "changed"))}</span>
       </li>)}</ol>
     </Surface>
   </div></Container>

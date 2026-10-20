@@ -10,7 +10,7 @@ class ProductError(BaseError):
     PHOTO_NOT_FOUND = LangText(zh="照片不存在", en="Photo not found")
 
 
-FORWARD = {"not_acquired": {"in_stock", "sold"}, "in_stock": {"sold"}, "sold": set()}
+FORWARD = {"not_acquired": {"in_stock"}, "in_stock": set(), "sold": set()}
 RETURNS = {"not_acquired": set(), "in_stock": {"not_acquired"},
            "sold": {"in_stock", "not_acquired"}}
 

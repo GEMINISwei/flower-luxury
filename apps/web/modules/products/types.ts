@@ -5,3 +5,5 @@ export type ProductStatus = Schema<"ProductStatus">
 export type ProductCategory = Schema<"ProductCategory">
 export type PhotoInfo = Schema<"PhotoInfo">
 export type StatusHistoryInfo = Schema<"StatusHistoryInfo">
+export type QuoteInfo = Schema<"QuoteInfo">
+export type SaleInfo = Schema<"SaleInfo">
