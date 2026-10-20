@@ -2,11 +2,11 @@ from decimal import Decimal
 from unittest.mock import AsyncMock
 
 import pytest
+from pydantic import ValidationError
+
 from modules.exchange_rates import service
 from modules.exchange_rates.model import ExchangeRateTable
 from modules.exchange_rates.schema import ExchangeRateUpdate
-from pydantic import ValidationError
-
 from shared.auth.contracts import CurrentUser
 from tests.modules.helpers import authenticate
 

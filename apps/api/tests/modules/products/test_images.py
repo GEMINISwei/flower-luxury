@@ -1,10 +1,10 @@
 from io import BytesIO
 
 import pytest
-from modules.products.images import decode_photo, validate_batch_size
 from PIL import Image
 from pillow_heif import register_heif_opener
 
+from modules.products.images import decode_photo, validate_batch_size
 from shared.http.errors import LangException
 
 register_heif_opener()

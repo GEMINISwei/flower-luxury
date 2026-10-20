@@ -3,14 +3,14 @@ from io import BytesIO
 
 import pytest
 from fastapi import UploadFile
+from PIL import Image
+from sqlalchemy import func, select
+
 from modules.brands import service as brands
 from modules.brands.schema import BrandCreate
 from modules.products import photos, service
 from modules.products.model import ProductHistoryTable, ProductTable
 from modules.products.schema import ProductCreate, StatusChange, StatusReturn
-from PIL import Image
-from sqlalchemy import func, select
-
 from shared.auth.contracts import CurrentUser
 from shared.db.session import active_session
 from shared.http.errors import LangException

@@ -1,8 +1,8 @@
 import pytest
-from modules.products.rules import ensure_transition
-from modules.products.schema import ProductCreate, StatusChange, StatusReturn
 from pydantic import ValidationError
 
+from modules.products.rules import ensure_transition
+from modules.products.schema import ProductCreate, StatusChange, StatusReturn
 from shared.http.errors import LangException
 
 FORM = {"name": "手袋", "brand_id": "11111111-1111-4111-8111-111111111111",

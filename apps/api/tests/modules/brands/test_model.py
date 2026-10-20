@@ -1,9 +1,9 @@
 import pytest
+
 from modules.brands import service
 from modules.brands.schema import BrandCreate, BrandUpdate
 from modules.products import service as products
 from modules.products.schema import ProductCreate
-
 from shared.auth.contracts import CurrentUser
 from shared.http.errors import LangException
 

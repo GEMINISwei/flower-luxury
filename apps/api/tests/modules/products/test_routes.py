@@ -1,11 +1,11 @@
 from unittest.mock import AsyncMock
 
 import pytest
+
 from modules.brands import service as brands
 from modules.brands.schema import BrandList
 from modules.products import photos, service
 from modules.products.schema import ProductList
-
 from tests.modules.helpers import authenticate
 
 

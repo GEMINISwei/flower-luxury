@@ -29,7 +29,8 @@ step() { printf '\n── %s ─────────────────
 
 run_lint() {
     step "lint"
-    (cd apps/api && uv run ruff check . && uv run lint-imports)
+    # 模組增刪可能改變 import 分類, 不沿用來源檔未變時的舊判定.
+    (cd apps/api && uv run ruff check --no-cache . && uv run lint-imports)
     (cd apps/web && npm run lint)
     lint_shell
     lint_compose

@@ -60,3 +60,21 @@ WebP、HEIC, 由後端解碼驗證並產生 WebP 顯示檔, 不信任副檔名�
 獨立 shared 驗證：後端 112 項、前端 185 項通過；後端 24 項資料庫測試依規格略過。
 Production build 保留 `ƒ Proxy (Middleware)`。瀏覽器驗收後已清除兩個暫時帳號、一件商品、一個品牌、
 四張照片與測試匯率，原有帳號及註冊碼未變更，語系還原中文。
+
+## CI 格式修正（2026-10-20）
+
+CI 的 `check` 在 Ruff `I001` 發現六個新增測試檔的 import 分組錯誤，`integration` 與 `images` 已通過。
+本機使用既有快取顯示通過，`ruff check --no-cache .` 可重現相同六項錯誤。
+使用者已同意只整理六個測試檔的 import，並讓 `make check` 的 Ruff 不使用快取。
+
+| 驗收條件 | 對應檢查／測試名稱 |
+|---|---|
+| 六個測試檔的 import 排序及分組正確 | Ruff `I001` |
+| 測試函式、參數與斷言完全保留 | 比較修正前後移除頂層 import 的 AST |
+| 品牌、商品、照片、狀態與匯率行為維持通過 | 上表既有測試、`make check`、`make check integration` |
+| 同一份修正通過遠端檢查 | PR #6 的 `check`、`integration`、`images` |
+
+修正後驗證：六個測試檔移除頂層 import 後的 AST 與修正前完全一致。
+`make check` 通過（後端 452 項、前端 334 項；獨立 shared 後端 112 項、前端 185 項）。
+`make check integration` 通過（505 項、1 項略過），model 與 migration 一致。
+遠端 CI 的最終結果記錄於 PR #6。
