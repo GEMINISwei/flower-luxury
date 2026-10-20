@@ -5,7 +5,10 @@
 """
 
 from app.permissions import Permission
+from modules.brands.manifest import MODULE as BRANDS_MODULE
+from modules.exchange_rates.manifest import MODULE as EXCHANGE_RATES_MODULE
 from modules.languages.manifest import MODULE as LANGUAGES_MODULE
+from modules.products.manifest import MODULE as PRODUCTS_MODULE
 from modules.registration.manifest import MODULE as REGISTRATION_MODULE
 from modules.roles.manifest import MODULE as ROLES_MODULE
 from modules.users.manifest import MODULE as USERS_MODULE
@@ -18,6 +21,9 @@ ENABLED_MODULES: tuple[ModuleManifest, ...] = validate_modules(
         ROLES_MODULE,
         LANGUAGES_MODULE,
         REGISTRATION_MODULE,
+        BRANDS_MODULE,
+        PRODUCTS_MODULE,
+        EXCHANGE_RATES_MODULE,
     )
 )
 

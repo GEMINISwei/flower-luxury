@@ -23,6 +23,8 @@ dependencies = [
     "bcrypt==5.0.0",
     # 是正式環境相依: compose 的 migrate service 用 api image 跑 `alembic upgrade head`。
     "alembic==1.20.0",
+    "pillow==13.0.0",
+    "pillow-heif==1.8.1",
 ]
 
 # dev group 用 `>=`: 不進正式環境, 跟著上游走較早吃到新規則。真正在擋的是 uv.lock

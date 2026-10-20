@@ -289,7 +289,7 @@ make db superuser
 
 ### 帳號管理與角色
 
-使用者管理與註冊碼設定只開放給店長 (內部為 `Permission.ALL`)。
+使用者管理、註冊碼與匯率設定只開放給店長 (內部為 `Permission.ALL`)。
 員工不能進入管理區, 但可以在個人設定修改自己的暱稱、密碼與語系。
 店長可以建立員工、修改暱稱、停用／啟用員工及重設員工密碼。
 
@@ -300,6 +300,16 @@ make db superuser
 
 即使是超級管理者也不能做的事：停用自己、停用超級管理者、指派超級管理者角色、把 `*` 放進一般角色、
 修改系統角色。
+
+## 商品照片與匯率
+
+商品照片的顯示檔保存在 `/app/uploads/products/`，由既有 uploads volume 備份。
+nginx 僅開放 `/api/products/photos/<id>/file` 的讀取代理，每次由後端檢查登入，回應禁止快取；
+其他業務 API 仍由 Server Component／Server Action 在內網呼叫。
+
+人民幣匯率由店長在 `/admin/exchange-rates` 手動設定，定義為 1 CNY 換算的新臺幣金額。
+初始不提供預設匯率。未來詢價保存當次匯率，更換設定不回寫歷史金額。
+功能規格見 [`catalog-workflow.md`](catalog-workflow.md)。
 
 ## Session
 

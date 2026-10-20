@@ -1,4 +1,4 @@
-import { KeyRound, Settings, Users, type LucideIcon } from "lucide-react"
+import { KeyRound, Settings, Users, Tags, Package, Banknote, type LucideIcon } from "lucide-react"
 import type { NavIconKey } from "@/config/routes"
 
 /**
@@ -9,6 +9,9 @@ import type { NavIconKey } from "@/config/routes"
  */
 export const NAV_ICONS: Record<NavIconKey, LucideIcon> = {
   users: Users,
+  brands: Tags,
+  products: Package,
+  exchange: Banknote,
   registration: KeyRound,
   settings: Settings,
 }

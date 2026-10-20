@@ -4,6 +4,60 @@
  */
 
 export interface paths {
+    "/api/brands/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Brands Route */
+        get: operations["get_brands_route_api_brands__get"];
+        put?: never;
+        /** Create Brand Route */
+        post: operations["create_brand_route_api_brands__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Brand Route */
+        delete: operations["delete_brand_route_api_brands__id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Brand Route */
+        patch: operations["update_brand_route_api_brands__id__patch"];
+        trace?: never;
+    };
+    "/api/exchange-rates/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Exchange Settings Route */
+        get: operations["get_exchange_settings_route_api_exchange_rates_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Exchange Settings Route */
+        patch: operations["update_exchange_settings_route_api_exchange_rates_settings_patch"];
+        trace?: never;
+    };
     "/api/languages/": {
         parameters: {
             query?: never;
@@ -18,6 +72,163 @@ export interface paths {
         get: operations["get_language_list_route_api_languages__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Products Route */
+        get: operations["get_products_route_api_products__get"];
+        put?: never;
+        /** Create Product Route */
+        post: operations["create_product_route_api_products__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/photos/{photo_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Photo File Route */
+        get: operations["get_photo_file_route_api_products_photos__photo_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Product Route */
+        get: operations["get_product_route_api_products__id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Product Route */
+        delete: operations["delete_product_route_api_products__id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Product Route */
+        patch: operations["update_product_route_api_products__id__patch"];
+        trace?: never;
+    };
+    "/api/products/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get History Route */
+        get: operations["get_history_route_api_products__id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Photos Route */
+        get: operations["get_photos_route_api_products__id__photos_get"];
+        put?: never;
+        /** Upload Photos Route */
+        post: operations["upload_photos_route_api_products__id__photos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}/photos/main": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set Main Photo Route */
+        patch: operations["set_main_photo_route_api_products__id__photos_main_patch"];
+        trace?: never;
+    };
+    "/api/products/{id}/photos/{photo_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Photo Route */
+        delete: operations["delete_photo_route_api_products__id__photos__photo_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Return Status Route */
+        post: operations["return_status_route_api_products__id__return_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change Status Route */
+        post: operations["change_status_route_api_products__id__status_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -315,6 +526,65 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** Body_upload_photos_route_api_products__id__photos_post */
+        Body_upload_photos_route_api_products__id__photos_post: {
+            /** Files */
+            files: string[];
+        };
+        /** BrandCreate */
+        BrandCreate: {
+            /** Name */
+            name: string;
+        };
+        /** BrandInfo */
+        BrandInfo: {
+            /** Id */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Name */
+            name: string;
+        };
+        /** BrandList */
+        BrandList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["BrandInfo"][];
+        };
+        /** BrandUpdate */
+        BrandUpdate: {
+            /** Is Active */
+            is_active: boolean;
+            /** Name */
+            name: string;
+        };
+        /** ExchangeRateSettings */
+        ExchangeRateSettings: {
+            /**
+             * Base Currency
+             * @default TWD
+             */
+            base_currency: string;
+            /**
+             * Currency
+             * @default CNY
+             */
+            currency: string;
+            /** Operator Name */
+            operator_name?: string | null;
+            /** Rate */
+            rate?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Updated By */
+            updated_by?: string | null;
+        };
+        /** ExchangeRateUpdate */
+        ExchangeRateUpdate: {
+            /** Rate */
+            rate: number | string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -336,6 +606,11 @@ export interface components {
             count: number;
             /** List Data */
             list_data: components["schemas"]["LanguageInfo"][];
+        };
+        /** MainPhotoUpdate */
+        MainPhotoUpdate: {
+            /** Photo Id */
+            photo_id: string;
         };
         /**
          * PasswordChange
@@ -377,6 +652,103 @@ export interface components {
             /** List Data */
             list_data: components["schemas"]["PermissionInfo"][];
         };
+        /** PhotoInfo */
+        PhotoInfo: {
+            /** Id */
+            id: string;
+            /** Is Main */
+            is_main: boolean;
+            /** Sort Order */
+            sort_order: number;
+            /** Url */
+            url: string;
+        };
+        /** PhotoList */
+        PhotoList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["PhotoInfo"][];
+        };
+        /** @enum {string} */
+        ProductCategory: "鞋子" | "配飾" | "皮件" | "包包" | "帽子" | "衣服" | "其他";
+        /** ProductCreate */
+        ProductCreate: {
+            /** Brand Id */
+            brand_id: string;
+            category: components["schemas"]["ProductCategory"];
+            /** Color */
+            color?: string | null;
+            /** Cost Price */
+            cost_price: number;
+            /** Internal Note */
+            internal_note?: string | null;
+            /** Model Name */
+            model_name?: string | null;
+            /** Name */
+            name: string;
+            /** Serial Number */
+            serial_number?: string | null;
+            /** Year */
+            year?: number | null;
+        };
+        /** ProductInfo */
+        ProductInfo: {
+            /** Brand */
+            brand: string;
+            /** Brand Id */
+            brand_id: string;
+            category: components["schemas"]["ProductCategory"];
+            /** Color */
+            color?: string | null;
+            /** Cost Price */
+            cost_price: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string;
+            /** Id */
+            id: string;
+            /** Internal Note */
+            internal_note?: string | null;
+            /** Main Photo Id */
+            main_photo_id?: string | null;
+            /** Model Name */
+            model_name?: string | null;
+            /** Name */
+            name: string;
+            /** Serial Number */
+            serial_number?: string | null;
+            /** Sku */
+            sku: string;
+            status: components["schemas"]["ProductStatus"];
+            /** Updated At */
+            updated_at?: string | null;
+            /** Updated By */
+            updated_by?: string | null;
+            /** Year */
+            year?: number | null;
+        };
+        /** ProductList */
+        ProductList: {
+            /** Has Next */
+            has_next: boolean;
+            /** Has Previous */
+            has_previous: boolean;
+            /** List Data */
+            list_data: components["schemas"]["ProductInfo"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Prev Cursor */
+            prev_cursor?: string | null;
+            /** Total Count */
+            total_count: number;
+        };
+        /** @enum {string} */
+        ProductStatus: "not_acquired" | "in_stock" | "sold";
         /** ProfileUpdate */
         ProfileUpdate: {
             /** Nickname */
@@ -464,6 +836,45 @@ export interface components {
             registration_key: string;
             /** Username */
             username: string;
+        };
+        /** StatusChange */
+        StatusChange: {
+            /** Reason */
+            reason?: string | null;
+            to_status: components["schemas"]["ProductStatus"];
+        };
+        /** StatusHistoryInfo */
+        StatusHistoryInfo: {
+            /** Action */
+            action: string;
+            /**
+             * Changed At
+             * Format: date-time
+             */
+            changed_at: string;
+            /** Changed By */
+            changed_by: string;
+            from_status: components["schemas"]["ProductStatus"] | null;
+            /** Id */
+            id: string;
+            /** Operator Name */
+            operator_name: string;
+            /** Reason */
+            reason: string | null;
+            to_status: components["schemas"]["ProductStatus"];
+        };
+        /** StatusHistoryList */
+        StatusHistoryList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["StatusHistoryInfo"][];
+        };
+        /** StatusReturn */
+        StatusReturn: {
+            /** Reason */
+            reason: string;
+            to_status: components["schemas"]["ProductStatus"];
         };
         /** UserCreate */
         UserCreate: {
@@ -572,6 +983,189 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_brands_route_api_brands__get: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_brand_route_api_brands__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_brand_route_api_brands__id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_brand_route_api_brands__id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_exchange_settings_route_api_exchange_rates_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExchangeRateSettings"];
+                };
+            };
+        };
+    };
+    update_exchange_settings_route_api_exchange_rates_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExchangeRateUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExchangeRateSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_language_list_route_api_languages__get: {
         parameters: {
             query?: never;
@@ -588,6 +1182,440 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LanguageList"];
+                };
+            };
+        };
+    };
+    get_products_route_api_products__get: {
+        parameters: {
+            query: {
+                keyword?: string | null;
+                brand_id?: string | null;
+                category?: components["schemas"]["ProductCategory"] | null;
+                status?: components["schemas"]["ProductStatus"] | null;
+                color?: string | null;
+                year?: number | null;
+                cursor?: string | null;
+                direction?: "next" | "prev";
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_product_route_api_products__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_photo_file_route_api_products_photos__photo_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                photo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_product_route_api_products__id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_product_route_api_products__id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_product_route_api_products__id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_history_route_api_products__id__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusHistoryList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_photos_route_api_products__id__photos_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_photos_route_api_products__id__photos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_photos_route_api_products__id__photos_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_main_photo_route_api_products__id__photos_main_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MainPhotoUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_photo_route_api_products__id__photos__photo_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                photo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    return_status_route_api_products__id__return_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusReturn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_status_route_api_products__id__status_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

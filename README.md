@@ -45,6 +45,11 @@ flowchart LR
 
 瀏覽器只認得 nginx，碰不到 api。
 
+## 業務功能
+
+品牌、商品、照片、售出鎖定與退回、人民幣匯率的規格與驗收見
+[`docs/catalog-workflow.md`](docs/catalog-workflow.md)。所有登入者共用業務資料，匯率設定限店長使用。
+
 ## 文件
 
 | | |

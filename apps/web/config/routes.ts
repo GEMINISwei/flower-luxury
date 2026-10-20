@@ -2,6 +2,9 @@
 
 import type { ModuleManifest, RouteArea } from "@/shared/module"
 import { canAccessRoute } from "@/shared/access/permissions"
+import { BRANDS_MODULE } from "@/modules/brands/manifest"
+import { PRODUCTS_MODULE } from "@/modules/products/manifest"
+import { EXCHANGE_RATES_MODULE } from "@/modules/exchange_rates/manifest"
 import { AUTH_MODULE } from "@/modules/auth/manifest"
 import { REGISTRATION_MODULE } from "@/modules/registration/manifest"
 import { ROLES_MODULE } from "@/modules/roles/manifest"
@@ -18,6 +21,9 @@ import { USERS_MODULE } from "@/modules/users/manifest"
  */
 const ENABLED_MODULES = [
   AUTH_MODULE,
+  PRODUCTS_MODULE,
+  BRANDS_MODULE,
+  EXCHANGE_RATES_MODULE,
   USERS_MODULE,
   REGISTRATION_MODULE,
   ROLES_MODULE,
