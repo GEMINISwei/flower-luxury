@@ -8,9 +8,12 @@ from sqlalchemy import func, select
 
 from modules.brands import service as brands
 from modules.brands.schema import BrandCreate
-from modules.products import photos, service
+from modules.products import photos, quotes, sales, service
 from modules.products.model import ProductHistoryTable, ProductTable
+from modules.products.quote_schema import QuoteCreate, SaleCreate
 from modules.products.schema import ProductCreate, StatusChange, StatusReturn
+from modules.vendors import service as vendors
+from modules.vendors.schema import VendorCreate
 from shared.auth.contracts import CurrentUser
 from shared.db.session import active_session
 from shared.http.errors import LangException
@@ -40,10 +43,20 @@ def image_file():
     return UploadFile(filename="phone.png", file=BytesIO(buffer.getvalue()))
 
 
+async def sell(item):
+    vendor = await vendors.create_vendor(VendorCreate(name="Buyer", country="TW"))
+    quote = await quotes.create_quote(item.id, QuoteCreate(
+        vendor_id=vendor.id, original_amount="10000",
+    ), ACTOR)
+    await sales.confirm_sale(item.id, SaleCreate(
+        quote_id=quote.id, quote_revision=quote.revision, cost_price=item.cost_price,
+    ), ACTOR)
+
+
 async def test_sold_product_rejects_all_mutations_until_return(db):
     item = await product()
     uploaded = await photos.upload_photos(item.id, [image_file()], ACTOR)
-    await service.change_status(item.id, StatusChange(to_status="sold"), ACTOR)
+    await sell(item)
     original = await service.get_product(item.id)
     actions = [
         lambda: service.update_product(item.id, ProductCreate(
@@ -72,7 +85,7 @@ async def test_status_history_preserves_actor_and_reason(db):
     item = await product()
     assert re.fullmatch(r"LX\d{8}[A-Z0-9]{5}", item.sku)
     assert item.status == "not_acquired"
-    await service.change_status(item.id, StatusChange(to_status="sold", reason="成交"), ACTOR)
+    await sell(item)
     await service.return_status(
         item.id, StatusReturn(to_status="in_stock", reason="退貨"), ACTOR,
     )
@@ -98,7 +111,7 @@ async def test_status_history_failure_rolls_back_status(db, monkeypatch):
 
     monkeypatch.setattr(ProductHistoryTable, "create", fail)
     with pytest.raises(RuntimeError, match="history unavailable"):
-        await service.change_status(item.id, StatusChange(to_status="sold"), ACTOR)
+        await service.change_status(item.id, StatusChange(to_status="in_stock"), ACTOR)
     assert (await service.get_product(item.id)).status == "not_acquired"
 
 

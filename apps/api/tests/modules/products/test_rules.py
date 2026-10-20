@@ -10,8 +10,8 @@ FORM = {"name": "手袋", "brand_id": "11111111-1111-4111-8111-111111111111",
 
 
 @pytest.mark.parametrize("source,target,returning,allowed", [
-    ("not_acquired", "in_stock", False, True), ("not_acquired", "sold", False, True),
-    ("in_stock", "sold", False, True), ("sold", "in_stock", False, False),
+    ("not_acquired", "in_stock", False, True), ("not_acquired", "sold", False, False),
+    ("in_stock", "sold", False, False), ("sold", "in_stock", False, False),
     ("in_stock", "not_acquired", False, False), ("sold", "not_acquired", True, True),
     ("sold", "in_stock", True, True), ("in_stock", "not_acquired", True, True),
     ("not_acquired", "in_stock", True, False), ("sold", "sold", True, False),

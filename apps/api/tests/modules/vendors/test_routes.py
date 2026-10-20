@@ -21,5 +21,7 @@ async def test_vendor_routes_require_login(client, method, path):
 async def test_staff_can_manage_vendors(client, set_current_users, monkeypatch):
     set_current_users({"staff": {"id": "staff", "permissions": [], "is_disabled": False}})
     authenticate(client, "staff")
-    monkeypatch.setattr(service, "get_vendors", AsyncMock(return_value=VendorList(list_data=[], count=0)))
+    monkeypatch.setattr(
+        service, "get_vendors", AsyncMock(return_value=VendorList(list_data=[], count=0)),
+    )
     assert (await client.get("/api/vendors/")).status_code == 200

@@ -148,7 +148,9 @@ async def test_sale_rejects_stale_quote_or_cost(db):
 async def test_return_and_resale_preserve_snapshots_and_quote(db):
     product, _, quote = await setup_trade()
     original = await sales.confirm_sale(product.id, confirmation(quote), ACTOR)
-    await service.return_status(product.id, StatusReturn(to_status="in_stock", reason="退貨"), ACTOR)
+    await service.return_status(
+        product.id, StatusReturn(to_status="in_stock", reason="退貨"), ACTOR,
+    )
     past = (await sales.get_sales(product.id)).list_data[0]
     assert not past.is_current and past.return_reason == "退貨" and past.returned_at
     assert past.returned_by == ACTOR["id"]
@@ -158,7 +160,9 @@ async def test_return_and_resale_preserve_snapshots_and_quote(db):
     await service.update_product(product.id, ProductCreate(
         name="changed", brand_id=product.brand_id, category="包包", cost_price=10,
     ), ACTOR)
-    changed = await quotes.update_quote(product.id, quote.id, QuoteUpdate(original_amount="1000"), ACTOR)
+    changed = await quotes.update_quote(
+        product.id, quote.id, QuoteUpdate(original_amount="1000"), ACTOR,
+    )
     second = await sales.confirm_sale(product.id, confirmation(changed, cost=10), ACTOR)
     assert second.profit_amount == 4502 and second.id != original.id
     history = (await sales.get_sales(product.id)).list_data

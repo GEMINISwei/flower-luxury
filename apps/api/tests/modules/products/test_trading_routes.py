@@ -25,7 +25,9 @@ async def test_trading_routes_require_login(client, method, suffix):
 async def test_staff_can_use_trading_routes(client, set_current_users, monkeypatch):
     set_current_users({"staff": {"id": "staff", "permissions": [], "is_disabled": False}})
     authenticate(client, "staff")
-    monkeypatch.setattr(quotes, "get_quotes", AsyncMock(return_value=QuoteList(list_data=[], count=0)))
+    monkeypatch.setattr(
+        quotes, "get_quotes", AsyncMock(return_value=QuoteList(list_data=[], count=0)),
+    )
     monkeypatch.setattr(sales, "get_sales", AsyncMock(return_value=SaleList(list_data=[], count=0)))
     assert (await client.get(f"/api/products/{PRODUCT}/quotes")).status_code == 200
     assert (await client.get(f"/api/products/{PRODUCT}/sales")).status_code == 200

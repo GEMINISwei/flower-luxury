@@ -3,7 +3,8 @@ from pydantic import ValidationError
 
 from modules.brands import service as brands
 from modules.brands.schema import BrandCreate
-from modules.products import quotes, service as products
+from modules.products import quotes
+from modules.products import service as products
 from modules.products.quote_schema import QuoteCreate
 from modules.products.schema import ProductCreate
 from modules.vendors import service
