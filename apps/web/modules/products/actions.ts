@@ -20,11 +20,6 @@ export async function deleteProduct(id: string) {
   return apiDelete({ url: "/products/{id}", params: { id }, refresh })
 }
 
-export async function changeStatus(id: string, to_status: ProductStatus, reason: string) {
-  return apiPost({ url: "/products/{id}/status", params: { id },
-    data: { to_status, reason }, refresh })
-}
-
 export async function returnStatus(id: string, to_status: ProductStatus, reason: string) {
   return apiPost({ url: "/products/{id}/return", params: { id },
     data: { to_status, reason }, refresh })

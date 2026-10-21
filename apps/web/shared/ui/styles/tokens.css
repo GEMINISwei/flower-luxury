@@ -67,6 +67,7 @@
   /* 系統字型, 不載入網路字型 (build 不必連網, 使用者也不必下載)。導入 DS 時在這裡換掉。 */
   --font-serif: "Songti TC", "STSong", "Noto Serif CJK TC", serif;
   --font-sans: "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --fs-h1: 1.875rem;
   --fs-h2: 1.4375rem;
   --fs-h3: 1.125rem;
@@ -137,6 +138,9 @@
   --size-brand-mark: 48px;
   --size-brand-mark-medium: 64px;
   --size-brand-mark-large: 80px;
+  --size-gallery-thumbnail: 80px;
+  --size-flow-node: 64px;
+  --size-flow-step: 160px;
   --blur-surface: 12px;
 
   /* ---- 疊層順序 (一律從這裡取, 不要就地寫數字) ---- */

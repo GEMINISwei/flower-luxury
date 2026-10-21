@@ -24,8 +24,8 @@ function initial(product?: ProductInfo): Values {
     [field, String(product?.[field] ?? "")])) as Values
 }
 
-export default function ProductForm({ product, brands }: {
-  product?: ProductInfo; brands: BrandInfo[]
+export default function ProductForm({ product, brands, onSaved }: {
+  product?: ProductInfo; brands: BrandInfo[]; onSaved?: () => void
 }) {
   const t = useT(productMessages)
   const locale = useLocale()
@@ -51,7 +51,7 @@ export default function ProductForm({ product, brands }: {
         router.push(`/products/${result.data.id}`)
       }
       return result
-    }, { onSuccess: () => { setMessage(t("saved")); router.refresh() }, onError: setFailure })
+    }, { onSuccess: () => { setMessage(t("saved")); onSaved?.(); router.refresh() }, onError: setFailure })
   }
   const availableBrands = brands.filter((brand) =>
     brand.is_active || brand.id === product?.brand_id)

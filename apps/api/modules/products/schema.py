@@ -10,7 +10,7 @@ from shared.http.schema import (
     UuidText,
 )
 
-type ProductStatus = Literal["not_acquired", "in_stock", "sold"]
+type ProductStatus = Literal["not_acquired", "sold"]
 type ProductCategory = Literal["鞋子", "配飾", "皮件", "包包", "帽子", "衣服", "其他"]
 
 
