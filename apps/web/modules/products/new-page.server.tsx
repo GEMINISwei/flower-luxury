@@ -1,5 +1,5 @@
 import "server-only"
-import { Container, ErrorState, PageHeader, Surface } from "@/shared/ui"
+import { ErrorState, FormPageShell, Surface } from "@/shared/ui"
 import { getBrandOptions } from "@/modules/brands/public.server"
 import { getT } from "@/shared/i18n/locale.server"
 import { productMessages } from "./i18n"
@@ -12,9 +12,10 @@ export async function generateMetadata() {
 export default async function NewProductPage() {
   const t = await getT(productMessages)
   const brands = await getBrandOptions()
-  return <Container size="lg" padded><PageHeader title={t("create")} />
+  return <FormPageShell title={t("create")} subtitle={t("createSubtitle")}
+    actions={null} backHref="/products" backLabel={t("back")}>
     {brands.status === "success"
-      ? <Surface className={styles.card}><ProductForm brands={brands.data.list_data} /></Surface>
+      ? <Surface className={`${styles.card} ${styles.formCard}`}><ProductForm brands={brands.data.list_data} /></Surface>
       : <ErrorState>{t("failed")}</ErrorState>}
-  </Container>
+  </FormPageShell>
 }

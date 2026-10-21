@@ -125,7 +125,6 @@ export default function AppShell({
 
   return (
     <div className={styles.shell}>
-      <header className={styles.mobileHeader}><ShellBrand area={area} /></header>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarLogo}>
           <ShellBrand area={area} />

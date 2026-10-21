@@ -79,8 +79,7 @@
   overflow-wrap: anywhere;
 }
 
-.bottomNavigation,
-.mobileHeader {
+.bottomNavigation {
   display: none;
 }
 
@@ -107,13 +106,13 @@
   position: relative;
   display: flex;
   align-items: center;
-  min-height: var(--control-height-lg);
+  min-height: calc(var(--control-height-lg) + var(--space-1));
   gap: var(--space-4);
   padding: var(--space-3) var(--space-5) var(--space-3) var(--space-6);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   color: var(--color-text-body);
   font-family: var(--font-sans);
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   letter-spacing: var(--ls-body);
   text-decoration: none;
@@ -150,9 +149,9 @@
   left: 0;
   top: var(--space-2);
   bottom: var(--space-2);
-  width: var(--border-width-accent);
+  width: calc(var(--border-width-accent) * 2);
   border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
-  background: var(--color-primary);
+  background: linear-gradient(180deg, transparent, var(--color-border-brand), var(--color-primary), var(--color-border-brand), transparent);
 }
 
 .navLinkActive svg {
@@ -315,42 +314,9 @@
 
   .main {
     height: auto;
-    min-height: calc(100dvh - var(--layout-mobile-header-height) - env(safe-area-inset-top));
+    min-height: 100dvh;
     overflow: visible;
     padding-bottom: calc(var(--layout-bottom-nav-height) + env(safe-area-inset-bottom));
-  }
-
-  .mobileHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    min-height: calc(var(--layout-mobile-header-height) + env(safe-area-inset-top));
-    padding: max(var(--space-2), env(safe-area-inset-top))
-             max(var(--space-4), env(safe-area-inset-right)) var(--space-2)
-             max(var(--space-4), env(safe-area-inset-left));
-    border-bottom: var(--border-width-hairline) solid var(--color-border-subtle);
-    background: var(--color-surface-card);
-  }
-
-  .mobileHeader .brand {
-    flex-direction: row;
-  }
-
-  .mobileHeader .sidebarWordmark {
-    display: block;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .mobileHeader .areaBadge {
-    width: auto;
-    height: auto;
-    flex-shrink: 0;
-    padding: var(--space-1) var(--space-2);
-    color: var(--color-on-primary-container);
-    background: var(--color-primary-container);
   }
 
   .bottomNavigation {

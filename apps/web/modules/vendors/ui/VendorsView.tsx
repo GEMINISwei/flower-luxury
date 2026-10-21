@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button, ConfirmDialog, Container, ErrorState, Flex, ListTableCard, PageHeader,
-  StatusBadge, TableRow, useActionSubmit } from "@/shared/ui"
+  ICON_SIZE, StatusBadge, TableRow, useActionSubmit } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { vendorMessages } from "../i18n"
 import { vendorRemovalAction } from "../capabilities"
@@ -30,10 +31,10 @@ export default function VendorsView({ vendors, errorMessage }: {
   const removalAction = removing ? vendorRemovalAction(removing) : "delete"
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
-      actions={<Button onClick={() => setEditor("new")}>{t("create")}</Button>} />
+      actions={<Button icon={<Plus size={ICON_SIZE.md} />} onClick={() => setEditor("new")}>{t("create")}</Button>} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
     {!removing && error && <p role="alert">{error}</p>}
-    <ListTableCard headers={[t("name"), t("country"), t("note"), t("status"), t("actions")]}
+    <div className={styles.list}><ListTableCard headers={[t("name"), t("country"), t("note"), t("status"), t("actions")]}
       isEmpty={!vendors.length} emptyText={t("empty")}>
       {vendors.map((vendor) => {
         const action = vendorRemovalAction(vendor)
@@ -51,7 +52,7 @@ export default function VendorsView({ vendors, errorMessage }: {
             {t(action)}</Button>}
         </Flex></td>
       </TableRow>})}
-    </ListTableCard>
+    </ListTableCard></div>
     {editor && <VendorDialog key={editor === "new" ? "new" : editor.id}
       vendor={editor === "new" ? undefined : editor} onClose={() => setEditor(null)} />}
     <ConfirmDialog title={t(removalAction ?? "delete")} open={Boolean(removing)} isPending={isPending}

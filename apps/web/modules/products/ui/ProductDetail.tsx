@@ -1,9 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button, ConfirmDialog, Container, StatusBadge, Surface, useActionSubmit } from "@/shared/ui"
+import { Button, ConfirmDialog, FormPageShell, StatusBadge, Surface, useActionSubmit } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { BrandInfo } from "@/modules/brands/public.client"
@@ -46,12 +45,18 @@ export default function ProductDetail({
     [t("color"), product.color],
     [t("year"), product.year], [t("internal_note"), product.internal_note],
   ]
-  return <Container size="lg" padded><div className={styles.stack}>
-    <Link className={styles.link} href="/products">{t("back")}</Link>
+  return <FormPageShell title={t("detail")} subtitle={product.sku}
+    backHref="/products" backLabel={t("back")} actions={null}>
+    <div className={styles.stack}>
+    <div className={styles.detailLayout}>
+      <Surface className={`${styles.card} ${styles.imagePanel}`}>
+        <PhotoPanel id={product.id} photos={photos} canEdit={canEdit} />
+      </Surface>
     <Surface className={styles.card}>
       <div className={styles.actions}>
       <StatusBadge label={t(product.status)} variant="muted" /><span>{product.sku}</span></div>
-      <h1>{product.name}</h1>
+      <h2 className={styles.detailTitle}>{product.name}</h2>
+      <p className={styles.muted}>{product.brand}</p>
       {!canEdit && <p className={styles.note}>{t("locked")}</p>}
       <dl className={styles.details}>{basic.map(([label, value]) =>
         <div key={String(label)}><dt>{label}</dt><dd>{value || "—"}</dd></div>)}</dl>
@@ -59,6 +64,7 @@ export default function ProductDetail({
         onClick={() => { setError(""); setRemoving(true) }}>
         {t("deleteProduct")}</Button></div>}
     </Surface>
+    </div>
     <ConfirmDialog title={t("deleteProduct")} open={removing} isPending={isPending}
       confirmText={t("deleteProduct")} onClose={() => setRemoving(false)} onConfirm={remove}>
       <p>{product.name}</p><p>{t("deleteConfirm")}</p>
@@ -68,9 +74,7 @@ export default function ProductDetail({
       <StatusPanel key={product.status} product={product} /></Surface>
     <QuotePanel product={product} quotes={quotes} vendors={vendors} />
     <SaleHistory sales={sales} />
-    <Surface className={styles.card}>
-      <PhotoPanel id={product.id} photos={photos} canEdit={canEdit} /></Surface>
-    {canEdit && <Surface className={styles.card}><h2>{t("edit")}</h2>
+    {canEdit && <Surface className={`${styles.card} ${styles.formCard}`}><h2>{t("edit")}</h2>
       <ProductForm key={product.id} product={product} brands={brands} />
     </Surface>}
     <Surface className={styles.card}><h2>{t("history")}</h2>
@@ -82,5 +86,5 @@ export default function ProductDetail({
           : t(HISTORY_ACTION_LABELS[row.action] ?? "changed"))}</span>
       </li>)}</ol>
     </Surface>
-  </div></Container>
+  </div></FormPageShell>
 }

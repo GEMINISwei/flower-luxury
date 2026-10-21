@@ -2,8 +2,11 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 
 export const productMessages = defineMessages({
   zh: {
-    title: "商品", subtitle: "共用商品庫存、照片與狀態歷程", create: "新增商品",
-    detail: "商品詳情", edit: "商品", save: "儲存", saving: "處理中…",
+    title: "商品列表", subtitle: "管理庫存、詢價與售出商品", create: "新增商品",
+    productColumn: "商品", createdDate: "建檔日期", purchasePrice: "收購價",
+    filterTitle: "篩選", reload: "重新整理", basic: "商品資訊",
+    pricing: "收購與備註", createSubtitle: "建立庫存商品資料",
+    detail: "商品詳情", edit: "編輯商品", save: "儲存", saving: "處理中…",
     back: "返回商品列表", name: "名稱", brand_id: "品牌", category: "分類",
     model_name: "型號", serial_number: "序號", color: "顏色", year: "年份",
     cost_price: "成本（新臺幣）", internal_note: "備註", sku: "商品編號",
@@ -28,8 +31,11 @@ export const productMessages = defineMessages({
     brandsHint: "請先至品牌管理建立啟用中的品牌，再新增商品。", manageBrands: "管理品牌",
   },
   en: {
-    title: "Products", subtitle: "Shared inventory, photos and status history", create: "New product",
-    detail: "Product details", edit: "Product", save: "Save", saving: "Processing…",
+    title: "Products", subtitle: "Manage inventory, vendor quotes and sold products", create: "New product",
+    productColumn: "Product", createdDate: "Created", purchasePrice: "Purchase price",
+    filterTitle: "Filter", reload: "Refresh", basic: "Product information",
+    pricing: "Purchase and notes", createSubtitle: "Create an inventory record",
+    detail: "Product details", edit: "Edit product", save: "Save", saving: "Processing…",
     back: "Back to products", name: "Name", brand_id: "Brand", category: "Category",
     model_name: "Model", serial_number: "Serial number", color: "Color", year: "Year",
     cost_price: "Cost (TWD)", internal_note: "Notes", sku: "SKU",

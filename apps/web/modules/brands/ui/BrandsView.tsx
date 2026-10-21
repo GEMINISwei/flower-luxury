@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button, ConfirmDialog, Container, ErrorState, Flex, FormDialog, ListTableCard, PageHeader,
-  SelectInput, StatusBadge, TableRow, TextInput, useActionSubmit } from "@/shared/ui"
+  ICON_SIZE, SelectInput, StatusBadge, TableRow, TextInput, useActionSubmit } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { brandMessages } from "../i18n"
 import { brandRemovalAction } from "../capabilities"
@@ -42,10 +43,10 @@ export default function BrandsView({ brands, errorMessage }: {
   const removalAction = removing ? brandRemovalAction(removing) : "delete"
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
-      actions={<Button onClick={() => edit(null)}>{t("create")}</Button>} />
+      actions={<Button icon={<Plus size={ICON_SIZE.md} />} onClick={() => edit(null)}>{t("create")}</Button>} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
     {!open && !removing && error && <p role="alert">{error}</p>}
-    <ListTableCard headers={[t("name"), t("status"), t("actions")]}
+    <div className={styles.list}><ListTableCard headers={[t("name"), t("status"), t("actions")]}
       isEmpty={!brands.length} emptyText={t("empty")}>
       {brands.map((brand) => {
         const action = brandRemovalAction(brand)
@@ -59,7 +60,7 @@ export default function BrandsView({ brands, errorMessage }: {
             onClick={() => { setError(""); setRemoving(brand) }}>{t(action)}</Button>}
         </Flex></td>
       </TableRow>})}
-    </ListTableCard>
+    </ListTableCard></div>
     <FormDialog title={t(selected ? "entity" : "create")} open={open} isPending={isPending}
       submitText={t("save")} onClose={() => setOpen(false)}
       onSubmit={(event) => { event.preventDefault(); save() }}>

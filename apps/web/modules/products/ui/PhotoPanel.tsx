@@ -38,17 +38,6 @@ export default function PhotoPanel({ id, photos, canEdit }: {
   }
   return <div className={styles.stack}>
     <h2>{t("photos")}</h2>
-    {canEdit && <div className={styles.upload}>
-      <label>{t("upload")}<input ref={input} type="file" multiple
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-        disabled={isPending} onChange={(event) => {
-          const selected = Array.from(event.target.files ?? [])
-          setFiles(selected); setError(validatePhotoBatch(selected, locale) ?? "")
-        }} /></label>
-      <p className={styles.muted}>{t("uploadHint")}</p>
-      <div><Button disabled={isPending || !files.length || Boolean(error)} onClick={upload}>
-        {isPending ? t("saving") : t("upload")}</Button></div>
-    </div>}
     {!removing && error && <p className={styles.error} role="alert">{error}</p>}
     {!photos.length && <p className={styles.muted}>{t("noPhotos")}</p>}
     <div className={styles.gallery}>{photos.map((photo) =>
@@ -66,6 +55,17 @@ export default function PhotoPanel({ id, photos, canEdit }: {
           {t("delete")}</Button>
       </div>}
     </div>)}</div>
+    {canEdit && <div className={styles.upload}>
+      <label>{t("upload")}<input ref={input} type="file" multiple
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+        disabled={isPending} onChange={(event) => {
+          const selected = Array.from(event.target.files ?? [])
+          setFiles(selected); setError(validatePhotoBatch(selected, locale) ?? "")
+        }} /></label>
+      <p className={styles.muted}>{t("uploadHint")}</p>
+      <div><Button disabled={isPending || !files.length || Boolean(error)} onClick={upload}>
+        {isPending ? t("saving") : t("upload")}</Button></div>
+    </div>}
     <ConfirmDialog title={t("delete")} open={Boolean(removing)} isPending={isPending}
       confirmText={t("delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
       <p>{t("deletePhotoConfirm")}</p>
