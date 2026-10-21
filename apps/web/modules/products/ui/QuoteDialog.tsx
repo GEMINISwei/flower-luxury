@@ -33,7 +33,7 @@ export default function QuoteDialog({ id, quote, vendors, onClose }: {
       : createQuote(id, { ...data, vendor_id: vendorId }),
     { onSuccess: () => { onClose(); router.refresh() }, onError: setError })
   }
-  return <FormDialog title={t(quote ? "edit" : "create")} open isPending={isPending}
+  return <FormDialog title={t(quote ? "entity" : "create")} open isPending={isPending}
     submitText={t("save")} onClose={onClose}
     onSubmit={(event) => { event.preventDefault(); save() }}>
     {quote ? <p>{t("vendor")}：{quote.vendor_name} · {t(quote.vendor_country)}</p>

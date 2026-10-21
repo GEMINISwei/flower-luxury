@@ -2,7 +2,7 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 
 export const usersMessages = defineMessages({
   zh: {
-    pageTitle: "使用者管理",
+    pageTitle: "使用者",
     heading: "使用者",
     subtitle: "管理店長與員工帳號，新增帳號一律為員工",
     listFailed: "無法取得使用者列表",
@@ -33,7 +33,7 @@ export const usersMessages = defineMessages({
     create: "新增員工",
     createSubmit: "建立",
     createPending: "建立中",
-    editTitle: "編輯使用者",
+    editTitle: "使用者",
     editSubmit: "儲存",
     editPending: "儲存中",
     password: "密碼",
@@ -47,7 +47,7 @@ export const usersMessages = defineMessages({
     passwordReset: "密碼已重設",
   },
   en: {
-    pageTitle: "User management",
+    pageTitle: "Users",
     heading: "Users",
     subtitle: "Manage store accounts. New accounts created here are staff members.",
     listFailed: "Failed to load users",
@@ -78,7 +78,7 @@ export const usersMessages = defineMessages({
     create: "New staff member",
     createSubmit: "Create",
     createPending: "Creating",
-    editTitle: "Edit user",
+    editTitle: "User",
     editSubmit: "Save",
     editPending: "Saving",
     password: "Password",

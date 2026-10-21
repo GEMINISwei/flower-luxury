@@ -76,7 +76,7 @@ export function useLoginForm({ reason }: UseLoginFormParams) {
         const res = await loginUser(createActionFormData(values))
 
         if (res.status === "success") {
-          router.push("/")
+          router.push("/products")
 
           return
         }

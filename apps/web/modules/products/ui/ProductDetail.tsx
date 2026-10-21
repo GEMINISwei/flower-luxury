@@ -4,7 +4,8 @@ import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button, ConfirmDialog, Container, StatusBadge, Surface, useActionSubmit } from "@/shared/ui"
-import { useLocale, useT } from "@/shared/i18n/context"
+import { useT } from "@/shared/i18n/context"
+import { formatDateTime } from "@/shared/i18n/date-time"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
 import type { PhotoInfo, ProductInfo, QuoteInfo, SaleInfo, StatusHistoryInfo } from "../types"
@@ -27,7 +28,6 @@ export default function ProductDetail({
 }) {
   const t = useT(productMessages)
   const tq = useT(quoteMessages)
-  const locale = useLocale()
   const router = useRouter()
   const [error, setError] = useState("")
   const [removing, setRemoving] = useState(false)
@@ -76,9 +76,7 @@ export default function ProductDetail({
     <Surface className={styles.card}><h2>{t("history")}</h2>
       <ol className={styles.history}>{histories.map((row) => <li key={row.id}>
         <strong>{row.from_status ? `${t(row.from_status)} → ` : ""}{t(row.to_status)}</strong>
-        <span>{row.operator_name} · {new Date(row.changed_at).toLocaleString(
-            locale === "zh" ? "zh-TW" : "en-US", { timeZone: "Asia/Taipei" },
-          ).replace(/\s+/g, " ")}</span>
+        <span>{row.operator_name} · {formatDateTime(row.changed_at, "Asia/Taipei")}</span>
         <span className={styles.muted}>{row.changed_by}</span>
         <span>{row.reason || (row.action === "sale" ? tq("saleChanged")
           : t(HISTORY_ACTION_LABELS[row.action] ?? "changed"))}</span>

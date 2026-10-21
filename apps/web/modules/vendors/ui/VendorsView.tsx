@@ -6,6 +6,7 @@ import { Button, ConfirmDialog, Container, ErrorState, Flex, ListTableCard, Page
   StatusBadge, TableRow, useActionSubmit } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { vendorMessages } from "../i18n"
+import { vendorRemovalAction } from "../capabilities"
 import type { VendorInfo } from "../types"
 import { deleteVendor } from "../actions"
 import VendorDialog from "./VendorDialog"
@@ -26,6 +27,7 @@ export default function VendorsView({ vendors, errorMessage }: {
       onSuccess: () => { setRemoving(null); router.refresh() }, onError: setError,
     })
   }
+  const removalAction = removing ? vendorRemovalAction(removing) : "delete"
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
       actions={<Button onClick={() => setEditor("new")}>{t("create")}</Button>} />
@@ -33,7 +35,9 @@ export default function VendorsView({ vendors, errorMessage }: {
     {!removing && error && <p role="alert">{error}</p>}
     <ListTableCard headers={[t("name"), t("country"), t("note"), t("status"), t("actions")]}
       isEmpty={!vendors.length} emptyText={t("empty")}>
-      {vendors.map((vendor) => <TableRow key={vendor.id}>
+      {vendors.map((vendor) => {
+        const action = vendorRemovalAction(vendor)
+        return <TableRow key={vendor.id}>
         <td data-label={t("name")}>{vendor.name}</td>
         <td data-label={t("country")}>{t(vendor.country)}</td>
         <td data-label={t("note")}>{vendor.note || "—"}</td>
@@ -42,17 +46,17 @@ export default function VendorsView({ vendors, errorMessage }: {
         <td data-label={t("actions")}><Flex gap={2} className={styles.actions}>
           <Button variant="outlined" disabled={isPending} onClick={() => setEditor(vendor)}>
             {t("edit")}</Button>
-          <Button variant="outlined" disabled={isPending}
+          {action && <Button variant="outlined" disabled={isPending}
             onClick={() => { setError(""); setRemoving(vendor) }}>
-            {t("delete")}</Button>
+            {t(action)}</Button>}
         </Flex></td>
-      </TableRow>)}
+      </TableRow>})}
     </ListTableCard>
     {editor && <VendorDialog key={editor === "new" ? "new" : editor.id}
       vendor={editor === "new" ? undefined : editor} onClose={() => setEditor(null)} />}
-    <ConfirmDialog title={t("delete")} open={Boolean(removing)} isPending={isPending}
-      confirmText={t("delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
-      <p>{removing?.name}</p><p>{t("confirm")}</p>
+    <ConfirmDialog title={t(removalAction ?? "delete")} open={Boolean(removing)} isPending={isPending}
+      confirmText={t(removalAction ?? "delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
+      <p>{removing?.name}</p><p>{t(removalAction === "deactivate" ? "confirmDeactivate" : "confirmDelete")}</p>
       {error && <p role="alert">{error}</p>}
     </ConfirmDialog>
   </Container>

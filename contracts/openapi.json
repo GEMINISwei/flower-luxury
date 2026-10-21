@@ -52,6 +52,10 @@
             "title": "Id",
             "type": "string"
           },
+          "in_use": {
+            "title": "In Use",
+            "type": "boolean"
+          },
           "is_active": {
             "title": "Is Active",
             "type": "boolean"
@@ -65,7 +69,8 @@
         "required": [
           "name",
           "is_active",
-          "id"
+          "id",
+          "in_use"
         ],
         "title": "BrandInfo",
         "type": "object"

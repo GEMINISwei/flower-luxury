@@ -13,6 +13,7 @@ class BrandUpdate(BrandCreate):
 
 class BrandInfo(BrandUpdate):
     id: str
+    in_use: bool
 
 
 class BrandList(SimpleListResponse[BrandInfo]):

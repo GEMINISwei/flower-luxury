@@ -31,7 +31,7 @@ export default function VendorDialog({ vendor, onClose }: {
     submit(() => vendor ? updateVendor(vendor.id, { ...data, is_active: active === "true" })
       : createVendor(data), { onSuccess: () => { onClose(); router.refresh() }, onError: setError })
   }
-  return <FormDialog title={t(vendor ? "edit" : "create")} open isPending={isPending}
+  return <FormDialog title={t(vendor ? "entity" : "create")} open isPending={isPending}
     submitText={t("save")} onClose={onClose}
     onSubmit={(event) => { event.preventDefault(); save() }}>
     <TextInput label={t("name")} value={name} onChange={setName} required autoFocus

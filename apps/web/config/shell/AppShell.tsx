@@ -59,8 +59,6 @@ const ENTRY_ICONS: Record<AccountMenuLabel, LucideIcon> = {
   logout: LogOut,
 }
 
-const SHELL_ICONS = { ...NAV_ICONS, home: House }
-
 function ShellBrand({ area }: { area: RouteArea }) {
   const { systemName } = usePublicConfig()
   const t = useT(appMessages)
@@ -83,7 +81,7 @@ function ShellNavigation({ area, permissions, variant }: {
   const locale = useLocale()
   const size = variant === "sidebar" ? ICON_SIZE.sm : ICON_SIZE.md
   return getShellRoutes(area, permissions).map((route) => {
-    const Icon = SHELL_ICONS[route.navIcon]
+    const Icon = NAV_ICONS[route.navIcon]
     return (
       <NavLink
         key={route.path}
