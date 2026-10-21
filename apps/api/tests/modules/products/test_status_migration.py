@@ -27,7 +27,9 @@ ACTOR: CurrentUser = {
 def run_migration(connection, direction):
     api = Path(__file__).resolve().parents[3]
     scripts = ScriptDirectory.from_config(Config(str(api / "alembic.ini")))
-    migration = scripts.get_revision("29e7062acabd").module
+    revision = scripts.get_revision("29e7062acabd")
+    assert revision is not None
+    migration = revision.module
     with Operations.context(MigrationContext.configure(connection)):
         getattr(migration, direction)()
 
@@ -61,6 +63,7 @@ async def test_two_status_migration_preserves_history_and_rejects_in_stock(db):
     assert {row.reason for row in histories} == {None, "舊庫存", "舊退回"}
     assert all(row.operator_name == "staff" and row.changed_by == ACTOR["id"] for row in histories)
     assert all(row.changed_at.replace(tzinfo=None) == moment for row in histories if row.reason)
-    with pytest.raises(IntegrityError), session.begin_nested():
-        await session.execute(text("UPDATE products SET status = 'in_stock' WHERE id = :id"),
-                              {"id": product.id})
+    with pytest.raises(IntegrityError):
+        async with session.begin_nested():
+            await session.execute(text("UPDATE products SET status = 'in_stock' WHERE id = :id"),
+                                  {"id": product.id})
