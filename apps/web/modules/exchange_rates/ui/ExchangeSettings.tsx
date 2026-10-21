@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button, Container, ErrorState, PageHeader, Surface, TextInput, useActionSubmit } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
+import { formatDateTime } from "@/shared/i18n/date-time"
 import type { Schema } from "@/shared/api/contract"
 import { exchangeMessages } from "../i18n"
 import { validateRate } from "../validation"
@@ -43,9 +44,7 @@ export default function ExchangeSettings({ settings, errorMessage }: {
         <p className={styles.hint}>{t("hint")}</p>
         {settings?.updated_at && <p className={styles.hint}>{t("updated", {
           name: settings.operator_name ?? "—",
-          time: new Date(settings.updated_at).toLocaleString(
-            locale === "zh" ? "zh-TW" : "en-US", { timeZone: "Asia/Taipei" },
-          ),
+          time: formatDateTime(settings.updated_at, "Asia/Taipei"),
         })}</p>}
         {failure && <p role="alert">{failure}</p>}{message && <p role="status">{message}</p>}
         <div>
