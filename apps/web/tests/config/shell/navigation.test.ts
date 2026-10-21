@@ -3,11 +3,11 @@ import { navRoutes } from "@/config/routes"
 import { getShellRoutes, isShellLinkActive } from "@/config/shell/navigation"
 
 describe("外殼導覽", () => {
-  it("一般操作區包含首頁與可見模組，管理區沿用權限篩選", () => {
+  it("一般操作區只包含可見模組，管理區沿用權限篩選", () => {
     for (const permissions of [[], ["*"]]) {
       const routes = getShellRoutes("user", permissions)
-      expect(routes[0]).toMatchObject({ path: "/" })
-      expect(routes.slice(1)).toEqual(navRoutes("user", permissions))
+      expect(routes.some((route) => route.path === "/")).toBe(false)
+      expect(routes).toEqual(navRoutes("user", permissions))
       expect(getShellRoutes("admin", permissions)).toEqual(navRoutes("admin", permissions))
     }
   })
