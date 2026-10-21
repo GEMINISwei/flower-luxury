@@ -66,7 +66,7 @@ async def test_sold_product_rejects_all_mutations_until_return(db):
         lambda: photos.upload_photos(item.id, [image_file()], ACTOR),
         lambda: photos.delete_photo(item.id, uploaded.list_data[0].id, ACTOR),
         lambda: photos.set_main_photo(item.id, uploaded.list_data[0].id, ACTOR),
-        lambda: service.change_status(item.id, StatusChange(to_status="in_stock"), ACTOR),
+        lambda: service.change_status(item.id, StatusChange(to_status="not_acquired"), ACTOR),
     ]
     for action in actions:
         with pytest.raises(LangException) as error:
@@ -87,15 +87,12 @@ async def test_status_history_preserves_actor_and_reason(db):
     assert item.status == "not_acquired"
     await sell(item)
     await service.return_status(
-        item.id, StatusReturn(to_status="in_stock", reason="退貨"), ACTOR,
-    )
-    await service.return_status(
         item.id, StatusReturn(to_status="not_acquired", reason="收購取消"), ACTOR,
     )
     histories = (await service.get_history(item.id)).list_data
-    assert len(histories) == 4
+    assert len(histories) == 3
     assert [row.to_status for row in histories] == [
-        "not_acquired", "in_stock", "sold", "not_acquired",
+        "not_acquired", "sold", "not_acquired",
     ]
     assert histories[0].reason == "收購取消"
     assert all(row.changed_by == ACTOR["id"] for row in histories)
@@ -109,10 +106,13 @@ async def test_status_history_failure_rolls_back_status(db, monkeypatch):
     async def fail(*args, **kwargs):
         raise RuntimeError("history unavailable")
 
+    await sell(item)
     monkeypatch.setattr(ProductHistoryTable, "create", fail)
     with pytest.raises(RuntimeError, match="history unavailable"):
-        await service.change_status(item.id, StatusChange(to_status="in_stock"), ACTOR)
-    assert (await service.get_product(item.id)).status == "not_acquired"
+        await service.return_status(
+            item.id, StatusReturn(to_status="not_acquired", reason="退貨"), ACTOR,
+        )
+    assert (await service.get_product(item.id)).status == "sold"
 
 
 async def test_products_filter_page_and_allow_duplicate_serials(db):
