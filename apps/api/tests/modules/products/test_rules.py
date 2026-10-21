@@ -10,12 +10,10 @@ FORM = {"name": "手袋", "brand_id": "11111111-1111-4111-8111-111111111111",
 
 
 @pytest.mark.parametrize("source,target,returning,allowed", [
-    ("not_acquired", "in_stock", False, True), ("not_acquired", "sold", False, False),
-    ("in_stock", "sold", False, False), ("sold", "in_stock", False, False),
-    ("in_stock", "not_acquired", False, False), ("sold", "not_acquired", True, True),
-    ("sold", "in_stock", True, True), ("in_stock", "not_acquired", True, True),
-    ("not_acquired", "in_stock", True, False), ("sold", "sold", True, False),
-    ("in_stock", "in_stock", False, False),
+    ("not_acquired", "sold", False, False), ("sold", "not_acquired", False, False),
+    ("sold", "not_acquired", True, True), ("not_acquired", "not_acquired", True, False),
+    ("sold", "sold", True, False), ("not_acquired", "in_stock", False, False),
+    ("sold", "in_stock", True, False), ("in_stock", "not_acquired", True, False),
 ])
 def test_status_transitions_follow_workflow(source, target, returning, allowed):
     if allowed:
@@ -47,3 +45,9 @@ def test_create_ignores_injected_workflow_fields():
     assert "status" not in form.model_dump()
     assert "sku" not in form.model_dump()
     assert form.name == "手袋"
+
+
+@pytest.mark.parametrize("model", [StatusChange, StatusReturn])
+def test_status_payload_rejects_removed_in_stock(model):
+    with pytest.raises(ValidationError):
+        model(to_status="in_stock", reason="legacy")

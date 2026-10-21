@@ -695,7 +695,6 @@
       "ProductStatus": {
         "enum": [
           "not_acquired",
-          "in_stock",
           "sold"
         ],
         "type": "string"

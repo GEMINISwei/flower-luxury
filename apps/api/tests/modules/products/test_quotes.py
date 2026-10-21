@@ -149,7 +149,7 @@ async def test_return_and_resale_preserve_snapshots_and_quote(db):
     product, _, quote = await setup_trade()
     original = await sales.confirm_sale(product.id, confirmation(quote), ACTOR)
     await service.return_status(
-        product.id, StatusReturn(to_status="in_stock", reason="退貨"), ACTOR,
+        product.id, StatusReturn(to_status="not_acquired", reason="退貨"), ACTOR,
     )
     past = (await sales.get_sales(product.id)).list_data[0]
     assert not past.is_current and past.return_reason == "退貨" and past.returned_at

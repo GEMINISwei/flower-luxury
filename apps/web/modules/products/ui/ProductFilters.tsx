@@ -18,7 +18,7 @@ export default function ProductFilters({ brands, filters, open, onClose }: {
           ...brands.map((brand) => ({ value: brand.id, label: brand.name }))] },
       { name: "status", label: t("status"), type: "select",
         options: [{ value: "", label: t("all") },
-          ...(["not_acquired", "in_stock", "sold"] as const).map((value) =>
+          ...(["not_acquired", "sold"] as const).map((value) =>
             ({ value, label: t(value) }))] },
       { name: "category", label: t("category"), type: "select",
         options: [{ value: "", label: t("all") },

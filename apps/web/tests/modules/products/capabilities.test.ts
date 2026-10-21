@@ -2,15 +2,12 @@ import { expect, it } from "vitest"
 import { productCapabilities } from "@/modules/products/capabilities"
 import { validatePhotoBatch, validateProduct } from "@/modules/products/validation"
 
-it("售出只允許退回，其他狀態提供正確前進及退回目標", () => {
+it("未收購可編輯刪除，已出售只允許退回", () => {
   expect(productCapabilities("sold")).toEqual({
-    canEdit: false, forward: [], returns: ["in_stock", "not_acquired"],
+    canEdit: false, canDelete: false, canReturn: true,
   })
   expect(productCapabilities("not_acquired")).toEqual({
-    canEdit: true, forward: ["in_stock"], returns: [],
-  })
-  expect(productCapabilities("in_stock")).toEqual({
-    canEdit: true, forward: [], returns: ["not_acquired"],
+    canEdit: true, canDelete: true, canReturn: false,
   })
 })
 

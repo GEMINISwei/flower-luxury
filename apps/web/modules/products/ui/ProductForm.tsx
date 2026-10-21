@@ -24,8 +24,8 @@ function initial(product?: ProductInfo): Values {
     [field, String(product?.[field] ?? "")])) as Values
 }
 
-export default function ProductForm({ product, brands }: {
-  product?: ProductInfo; brands: BrandInfo[]
+export default function ProductForm({ product, brands, onSaved }: {
+  product?: ProductInfo; brands: BrandInfo[]; onSaved?: () => void
 }) {
   const t = useT(productMessages)
   const locale = useLocale()
@@ -51,13 +51,14 @@ export default function ProductForm({ product, brands }: {
         router.push(`/products/${result.data.id}`)
       }
       return result
-    }, { onSuccess: () => { setMessage(t("saved")); router.refresh() }, onError: setFailure })
+    }, { onSuccess: () => { setMessage(t("saved")); onSaved?.(); router.refresh() }, onError: setFailure })
   }
   const availableBrands = brands.filter((brand) =>
     brand.is_active || brand.id === product?.brand_id)
   return <form className={styles.stack} noValidate
     onSubmit={(event) => { event.preventDefault(); save() }}>
-    <div className={styles.fields}>
+    <section className={styles.formSection}>
+    <h3>{t("basic")}</h3><div className={styles.formFields}>
       <TextInput label={t("name")} value={values.name}
         required disabled={isPending}
         onChange={(value) => set("name", value)} error={errors.name ?? fieldError("name")} />
@@ -71,16 +72,20 @@ export default function ProductForm({ product, brands }: {
         error={errors.category ?? fieldError("category")}
         options={[{ value: "", label: t("choose") },
           ...Object.entries(CATEGORIES).map(([value, key]) => ({ value, label: t(key) }))]} />
-      {(["model_name", "serial_number", "color", "year", "cost_price"] as const).map((field) =>
+      {(["model_name", "serial_number", "color", "year"] as const).map((field) =>
         <TextInput key={field} label={t(field)} value={values[field]}
-          type={field === "year" || field === "cost_price" ? "number" : "text"}
-          required={field === "cost_price"} disabled={isPending}
+          type={field === "year" ? "number" : "text"} disabled={isPending}
           onChange={(value) => set(field, value)} error={errors[field] ?? fieldError(field)} />)}
-    </div>
+    </div></section>
+    <section className={styles.formSection}>
+    <h3>{t("pricing")}</h3>
+    <TextInput label={t("cost_price")} value={values.cost_price} type="number"
+      required disabled={isPending} onChange={(value) => set("cost_price", value)}
+      error={errors.cost_price ?? fieldError("cost_price")} />
     <label className={styles.notes}>{t("internal_note")}
       <textarea value={values.internal_note} disabled={isPending}
         onChange={(event) => set("internal_note", event.target.value)} />
-    </label>
+    </label></section>
     {!availableBrands.length && <p className={styles.note}>{t("brandsHint")}{" "}
       <Link className={styles.link} href="/brands">{t("manageBrands")}</Link></p>}
     {failure && <p role="alert" className={styles.error}>{failure}</p>}

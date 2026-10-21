@@ -11,8 +11,7 @@
            max(var(--space-6), env(safe-area-inset-bottom))
            max(var(--space-6), env(safe-area-inset-left));
   background:
-    radial-gradient(ellipse at top left, var(--color-surface-input), transparent 65%),
-    linear-gradient(135deg, var(--color-bg-app), var(--color-surface-sunken));
+    linear-gradient(var(--color-bg-app), var(--color-surface-sunken));
 }
 
 .card {
@@ -47,17 +46,20 @@
   color: var(--color-text-display);
 }
 
-.divider {
+.divider,
+.brandDivider {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   width: 100%;
-  margin: var(--space-4) 0;
+  margin: var(--space-5) 0 var(--space-4);
   color: var(--color-primary);
 }
 
 .divider::before,
-.divider::after {
+.divider::after,
+.brandDivider::before,
+.brandDivider::after {
   content: "";
   flex: 1;
   height: var(--border-width-hairline);
@@ -161,3 +163,7 @@
   font-size: var(--fs-h2);
   color: var(--color-text-display);
 }
+
+.brandDivider { width: min(var(--layout-sidebar-width), 100%); }
+.signupLink { display: flex; align-items: center; justify-content: center; width: 100%; min-height: var(--control-height-md); padding: var(--space-2) var(--space-3); border: var(--border-width-hairline) solid var(--color-border-default); border-radius: var(--radius-md); color: var(--color-text-secondary); text-decoration: none; }
+.signupLink:hover { color: var(--color-primary); border-color: var(--color-border-brand); }

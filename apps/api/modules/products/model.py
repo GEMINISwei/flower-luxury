@@ -39,7 +39,7 @@ class ProductTable(BaseTable):
     __table_args__ = (
         CheckConstraint("cost_price >= 0", name="product_cost_nonnegative"),
         CheckConstraint("year IS NULL OR year BETWEEN 1 AND 9999", name="product_year_range"),
-        CheckConstraint("status IN ('not_acquired', 'in_stock', 'sold')", name="product_status"),
+        CheckConstraint("status IN ('not_acquired', 'sold')", name="product_status"),
         Index("ix_products_created_at_id", "created_at", "id"),
         Index("ix_products_brand_id", "brand_id"), Index("ix_products_status", "status"),
     )

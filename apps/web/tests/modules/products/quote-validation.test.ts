@@ -36,7 +36,7 @@ it("詢價操作遵守售出鎖定與成交引用保護", () => {
   expect(quoteCapabilities("sold", "CN", false)).toEqual({
     canEdit: false, canDelete: false, canRefresh: false, canConfirm: false,
   })
-  expect(quoteCapabilities("in_stock", "TW", false)).toEqual({
+  expect(quoteCapabilities("not_acquired", "TW", false)).toEqual({
     canEdit: true, canDelete: true, canRefresh: false, canConfirm: true,
   })
   expect(quoteCapabilities("not_acquired", "CN", true)).toEqual({

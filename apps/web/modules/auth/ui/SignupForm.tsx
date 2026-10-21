@@ -11,6 +11,7 @@ import {
   registrationMessages, validateSignup, type SignupErrors, type SignupValues,
 } from "@/modules/registration/public.client"
 import styles from "./auth.module.css"
+import { AuthBrand, AuthSecurityNote } from "./AuthBrand"
 
 const EMPTY: SignupValues = {
   username: "", nickname: "", password: "", confirm_password: "", registration_key: "",
@@ -47,8 +48,9 @@ export default function SignupForm() {
   return (
     <main className={styles.page}>
       <section className={styles.card}>
+        <AuthBrand />
         <form action={handleSubmit} className={styles.fields} noValidate>
-          <h1 className={styles.signupTitle}>{t("signupTitle")}</h1>
+          <h2 className={styles.signupTitle}>{t("signupTitle")}</h2>
           <p className={styles.subtitle}>{t("signupDescription")}</p>
           {created ? <p role="status">{t("signupSuccess")}</p> : <>
             {message && <p role="alert">{message}</p>}
@@ -67,6 +69,7 @@ export default function SignupForm() {
           </>}
           <Link className={styles.signupLink} href={LOGIN_PATH}>{t("backToLogin")}</Link>
         </form>
+        <AuthSecurityNote />
       </section>
     </main>
   )

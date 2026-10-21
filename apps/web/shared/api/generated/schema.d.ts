@@ -857,7 +857,7 @@ export interface components {
             total_count: number;
         };
         /** @enum {string} */
-        ProductStatus: "not_acquired" | "in_stock" | "sold";
+        ProductStatus: "not_acquired" | "sold";
         /** ProfileUpdate */
         ProfileUpdate: {
             /** Nickname */
