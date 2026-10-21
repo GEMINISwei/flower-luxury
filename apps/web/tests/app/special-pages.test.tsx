@@ -29,11 +29,11 @@ describe("App Router 特殊頁面", () => {
 
   // not-found.tsx 是 Server Component (要有 generateMetadata), 畫面本體拆在
   // not-found-view.tsx, 所以這裡測的是後者。
-  it("not-found 保留自訂訊息與首頁連結", () => {
+  it("not-found 保留自訂訊息與返回商品列表連結", () => {
     render(<NotFoundView />)
 
     expect(screen.getByRole("heading", { name: "找不到頁面" })).toBeInTheDocument()
     expect(screen.getByText("這個網址不存在，或是內容已經被移除。")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "回首頁" })).toHaveAttribute("href", "/")
+    expect(screen.getByRole("link", { name: "返回商品列表" })).toHaveAttribute("href", "/")
   })
 })

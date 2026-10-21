@@ -647,6 +647,8 @@ export interface components {
         BrandInfo: {
             /** Id */
             id: string;
+            /** In Use */
+            in_use: boolean;
             /** Is Active */
             is_active: boolean;
             /** Name */

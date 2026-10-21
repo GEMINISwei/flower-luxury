@@ -2,8 +2,8 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 
 export const productMessages = defineMessages({
   zh: {
-    title: "商品管理", subtitle: "共用商品庫存、照片與狀態歷程", create: "新增商品",
-    detail: "商品詳情", edit: "編輯商品", save: "儲存商品", saving: "處理中…",
+    title: "商品", subtitle: "共用商品庫存、照片與狀態歷程", create: "新增商品",
+    detail: "商品詳情", edit: "商品", save: "儲存", saving: "處理中…",
     back: "返回商品列表", name: "名稱", brand_id: "品牌", category: "分類",
     model_name: "型號", serial_number: "序號", color: "顏色", year: "年份",
     cost_price: "成本（新臺幣）", internal_note: "備註", sku: "商品編號",
@@ -29,7 +29,7 @@ export const productMessages = defineMessages({
   },
   en: {
     title: "Products", subtitle: "Shared inventory, photos and status history", create: "New product",
-    detail: "Product details", edit: "Edit product", save: "Save product", saving: "Processing…",
+    detail: "Product details", edit: "Product", save: "Save", saving: "Processing…",
     back: "Back to products", name: "Name", brand_id: "Brand", category: "Category",
     model_name: "Model", serial_number: "Serial number", color: "Color", year: "Year",
     cost_price: "Cost (TWD)", internal_note: "Notes", sku: "SKU",
@@ -57,7 +57,7 @@ export const productMessages = defineMessages({
 
 export const quoteMessages = defineMessages({
   zh: {
-    title: "廠商詢價", create: "新增詢價", edit: "修改詢價", save: "儲存詢價",
+    title: "廠商詢價", create: "新增詢價", entity: "詢價", edit: "編輯", save: "儲存",
     empty: "尚無詢價。請先新增廠商報價，再確認成交。", vendor: "廠商", choose: "請選擇廠商",
     amount: "原幣報價", currency: "幣別", rate: "保存匯率", twd: "臺幣金額",
     note: "備註", required: "請選擇廠商", delete: "刪除詢價", refresh: "套用最新匯率",
@@ -75,7 +75,7 @@ export const quoteMessages = defineMessages({
     saleChanged: "確認成交", reload: "重新載入最新資料", returnedBy: "退回人",
   },
   en: {
-    title: "Vendor quotes", create: "New quote", edit: "Edit quote", save: "Save quote",
+    title: "Vendor quotes", create: "New quote", entity: "Quote", edit: "Edit", save: "Save",
     empty: "No quotes yet. Add a vendor quote before confirming a sale.",
     vendor: "Vendor", choose: "Select a vendor", amount: "Original quote", currency: "Currency",
     rate: "Saved exchange rate", twd: "Amount (TWD)", note: "Notes", required: "Select a vendor",

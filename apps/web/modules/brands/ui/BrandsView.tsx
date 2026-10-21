@@ -6,6 +6,7 @@ import { Button, ConfirmDialog, Container, ErrorState, Flex, FormDialog, ListTab
   SelectInput, StatusBadge, TableRow, TextInput, useActionSubmit } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { brandMessages } from "../i18n"
+import { brandRemovalAction } from "../capabilities"
 import type { BrandInfo } from "../types"
 import { createBrand, deleteBrand, updateBrand } from "../actions"
 import styles from "./brands.module.css"
@@ -38,6 +39,7 @@ export default function BrandsView({ brands, errorMessage }: {
       onSuccess: () => { setRemoving(null); saved() }, onError: setError,
     })
   }
+  const removalAction = removing ? brandRemovalAction(removing) : "delete"
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
       actions={<Button onClick={() => edit(null)}>{t("create")}</Button>} />
@@ -45,18 +47,20 @@ export default function BrandsView({ brands, errorMessage }: {
     {!open && !removing && error && <p role="alert">{error}</p>}
     <ListTableCard headers={[t("name"), t("status"), t("actions")]}
       isEmpty={!brands.length} emptyText={t("empty")}>
-      {brands.map((brand) => <TableRow key={brand.id}>
+      {brands.map((brand) => {
+        const action = brandRemovalAction(brand)
+        return <TableRow key={brand.id}>
         <td data-label={t("name")}>{brand.name}</td>
         <td data-label={t("status")}><StatusBadge label={t(brand.is_active ? "active" : "inactive")}
           variant={brand.is_active ? "success" : "muted"} /></td>
         <td data-label={t("actions")}><Flex gap={2} className={styles.actions}>
           <Button variant="outlined" disabled={isPending} onClick={() => edit(brand)}>{t("edit")}</Button>
-          <Button variant="outlined" disabled={isPending}
-            onClick={() => { setError(""); setRemoving(brand) }}>{t("delete")}</Button>
+          {action && <Button variant="outlined" disabled={isPending}
+            onClick={() => { setError(""); setRemoving(brand) }}>{t(action)}</Button>}
         </Flex></td>
-      </TableRow>)}
+      </TableRow>})}
     </ListTableCard>
-    <FormDialog title={t(selected ? "edit" : "create")} open={open} isPending={isPending}
+    <FormDialog title={t(selected ? "entity" : "create")} open={open} isPending={isPending}
       submitText={t("save")} onClose={() => setOpen(false)}
       onSubmit={(event) => { event.preventDefault(); save() }}>
       <TextInput label={t("name")} value={name} onChange={setName} required autoFocus />
@@ -64,9 +68,9 @@ export default function BrandsView({ brands, errorMessage }: {
         options={[{ value: "true", label: t("active") }, { value: "false", label: t("inactive") }]} />}
       {error && <p role="alert">{error}</p>}
     </FormDialog>
-    <ConfirmDialog title={t("delete")} open={Boolean(removing)} isPending={isPending}
-      confirmText={t("delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
-      <p>{removing?.name}</p><p>{t("confirm")}</p>
+    <ConfirmDialog title={t(removalAction ?? "delete")} open={Boolean(removing)} isPending={isPending}
+      confirmText={t(removalAction ?? "delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
+      <p>{removing?.name}</p><p>{t(removalAction === "deactivate" ? "confirmDeactivate" : "confirmDelete")}</p>
       {error && <p role="alert">{error}</p>}
     </ConfirmDialog>
   </Container>
