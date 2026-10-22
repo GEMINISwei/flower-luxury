@@ -1,9 +1,9 @@
 """建立超級管理者 (見 `modules/users/superuser.py`)。
 
-唯一入口是 CLI `scripts/db.py create-superuser`。
+CLI 與驗證註冊碼的公開註冊流程共用建立店長的服務。
 
 測試分成兩部分:
-- 不需要資料庫的: 網頁上沒有任何建立超管的入口
+- 不需要資料庫的: 註冊入口存在, 但不直接暴露建立超管的內部函式
 - 標 `integration` 的: 建立出來的帳號真的掛上超管角色、可以建第二個、帳號重複時拒絕
 """
 
@@ -51,15 +51,11 @@ def test_create_super_admin_is_not_exposed_over_http():
         assert not any("create_super_admin" in operation_id for operation_id in operation_ids)
 
 
-def test_signup_routes_are_not_registered():
-    """以註冊代碼建立第一個超管的網頁路徑已經移除, 不能被重新接回來。
-
-    比對路徑而不是打一次請求: `GET /users/bootstrap-status` 會落進 `/users/{user_id}`
-    而回 401, 看起來像「有擋住」, 其實什麼都沒驗證到。
-    """
+def test_signup_route_is_registered_without_bootstrap_bypass():
+    """公開註冊須走註冊碼驗證, 不另外開放 bootstrap 入口。"""
     paths = _openapi_operations()
 
-    assert "/api/users/signup" not in paths
+    assert "/api/registration/signup" in paths
     assert "/api/users/bootstrap-status" not in paths
 
 

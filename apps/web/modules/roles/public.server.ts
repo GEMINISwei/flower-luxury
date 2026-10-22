@@ -1,6 +1,2 @@
 import "server-only"
-export { default as RolesPage, generateMetadata as generateRolesMetadata } from "./page.server"
-export type { RolesPageProps } from "./page.server"
-export { default as RoleEditPage, generateMetadata as generateRoleEditMetadata } from "./edit-page.server"
-export type { RoleEditPageProps } from "./edit-page.server"
 export { getRoleOptions } from "./role-options.server"

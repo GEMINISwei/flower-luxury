@@ -14,6 +14,7 @@ export { Form, SelectInput, TextInput, useActiveStatusOptions } from "./forms"
 export { Button, Container, Flex, Surface } from "./primitives"
 export { ICON_SIZE } from "./internals"
 export { FormDialog, Modal } from "./dialogs"
+export { ConfirmDialog } from "./ConfirmDialog"
 export { Loading, Notify, NotifyViewport, type NotifyProps } from "./notifications"
 export { Pagination, usePaginationResetHref } from "./pagination"
 

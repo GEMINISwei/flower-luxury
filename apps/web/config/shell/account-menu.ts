@@ -1,4 +1,5 @@
 import { SETTINGS_MODULE } from "@/modules/settings/manifest"
+import { PRODUCTS_PATH } from "@/modules/products/manifest"
 import { accessibleRoutes } from "@/config/routes"
 import type { appMessages } from "@/config/i18n"
 import type { RouteArea } from "@/shared/module"
@@ -29,7 +30,7 @@ export function getAccountMenuEntries(
   const firstAdminRoute = accessibleRoutes("admin", permissions)[0]
   const areaSwitch: AccountMenuEntry[] =
     area === "admin"
-      ? [{ kind: "link", href: "/", label: "goUserArea" }]
+      ? [{ kind: "link", href: PRODUCTS_PATH, label: "goUserArea" }]
       : firstAdminRoute
         ? [{ kind: "link", href: firstAdminRoute.path, label: "goAdminArea" }]
         : []

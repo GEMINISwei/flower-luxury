@@ -1,7 +1,7 @@
 /**
  * 組裝層自己的字串: 不屬於任何模組、也不屬於 UI kit 的那些。
  *
- * 應用外殼 (側欄、導覽)、首頁、錯誤頁與 404 都在這裡。模組的字串請放各自的
+ * 應用外殼 (側欄、導覽)、錯誤頁與 404 都在這裡。模組的字串請放各自的
  * `modules/<name>/i18n.ts` —— 放進來的話, 刪掉那個模組時會留下沒人用的字串。
  */
 
@@ -21,16 +21,12 @@ export const appMessages = defineMessages({
     accountSettings: "設定",
     adminAreaBadge: "管理後台",
     logout: "登出",
-    roleSuperAdmin: "超級管理者",
-    roleUser: "使用者",
-    // 首頁
-    homeTitle: "首頁",
-    homeHeading: "歡迎使用",
-    homeSubtitle: "請從左側選單選擇功能開始使用。",
+    roleSuperAdmin: "店長",
+    roleUser: "員工",
     // 404
     notFoundTitle: "找不到頁面",
     notFoundDescription: "這個網址不存在，或是內容已經被移除。",
-    backHome: "回首頁",
+    backHome: "返回商品列表",
     // 錯誤頁
     errorTitle: "系統發生錯誤",
     errorDescription: "請重新整理頁面，或聯絡系統管理員。",
@@ -52,14 +48,11 @@ export const appMessages = defineMessages({
     accountSettings: "Settings",
     adminAreaBadge: "Admin",
     logout: "Sign out",
-    roleSuperAdmin: "Super admin",
-    roleUser: "User",
-    homeTitle: "Home",
-    homeHeading: "Welcome",
-    homeSubtitle: "Pick a feature from the menu to get started.",
+    roleSuperAdmin: "Store manager",
+    roleUser: "Staff",
     notFoundTitle: "Page not found",
     notFoundDescription: "This address does not exist, or the content has been removed.",
-    backHome: "Back to home",
+    backHome: "Back to products",
     errorTitle: "Something went wrong",
     errorDescription: "Please refresh the page, or contact your administrator.",
     retry: "Refresh",

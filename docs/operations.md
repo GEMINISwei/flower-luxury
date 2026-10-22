@@ -21,6 +21,11 @@ make start                         # 建置 image 並啟動
 從原始碼 bind mount 的）。`MODE=production` 時 `make start` 只認停在 `v<APP_VERSION>` tag 上的
 checkout：在主機上 `git pull` 了 main 再啟動，等於上線一份沒發版、沒經過 CI 的程式碼。
 
+nginx 的模板（`infra/nginx/`）有變時，`make start` 會重建 nginx，沒變就不動。bind mount 的內容變了，
+compose 本身看不出來，所以由 `scripts/lib/compose.sh` 把內容的雜湊放進 nginx 的 label。
+重建之前會先用一次性的容器跑 `nginx -t`；**模板寫錯時 `make start` 在啟動任何服務之前就失敗**，
+線上的 nginx 維持原樣。
+
 **`.env` 的 `MODE` 決定這個目錄是哪種環境**（`make init prod` 寫入 `production`），一個目錄只會有
 一種。`MODE=production` 時這些指令會直接拒絕，防的是手誤，不是權限控制（能上主機的人照樣可以改 `.env`）：
 
@@ -31,6 +36,12 @@ checkout：在主機上 `git pull` 了 main 再啟動，等於上線一份沒發
 | `make db migration`、`make check`、`make gen-types`、`make release`、`make init dev` | 開發機的工作 |
 
 `make services down` 在正式環境要先確認（資料留在 volume，但服務會停）。
+
+`make services restart` 原地重啟現有的容器（migrate 除外），在正式環境也要先確認。它不重建容器、不拉也不建 image，
+所以主機上不必知道 image 名稱、不必登入 GHCR，跑的是本機建置的還是 registry 拉的都照原樣。
+**它不套用任何變更**：`.env`、compose、image 變了要用 `make start`；容器已經 `down` 掉時也只能 `make start`。
+nginx 模板改了也用 `make start`：它會先跑 `nginx -t` 再重建 nginx。restart 雖然也會重新展開模板，
+但**不會先檢查**，模板寫錯時 nginx 起不來，整個站就停了。
 
 `make services` 會列出這個專案的 volume（以 compose 的專案標籤篩選），名稱不是 `<專案>_<MODE>_`
 開頭的標 `← Not Matched`：另一種模式留下的，或改過命名之前的舊 volume，目前的 `MODE` 用不到，
@@ -273,31 +284,43 @@ gh workflow run deploy.yml --ref main -f tag=v0.1.0 -f target="production stagin
 make db superuser
 ```
 
-超級管理者**只能**用這個指令建立：第一個、第二個、唯一的超管失聯時的救援都是。互動式輸入暱稱、
-帳號、密碼（密碼不回顯），可以重複執行。網頁上刻意沒有註冊入口，能建立超管的前提是握有主機的
-shell，不需要保管任何註冊代碼。
+系統採用固定的「店長／員工」身分。`make db superuser` 建立店長, 用於首次建置或帳號救援。
+第一位店長建立後, 在管理後台「註冊碼設定」設定共用註冊碼。
 
-其餘帳號由超級管理者在「使用者管理」頁面建立。需要讓使用者自助註冊的專案自行開發
-（Email 驗證、防機器人、限流都要一起考慮）。
+### 公開註冊與共用註冊碼
 
-### 角色
+登入頁的註冊入口連到 `/signup`。使用正確的註冊碼註冊即成為店長, 立即啟用, 完成後回登入頁登入。
+帳號、暱稱與密碼必填; 密碼至少 8 字元且最多 72 bytes。
+未設定註冊碼時不接受公開註冊。註冊依來源 IP 限制五分鐘十次, 成功也計入。
 
-預設只有一個內建角色 `super_admin`（權限 `*`，涵蓋所有操作與日後新增的權限）。
-它**不能經由 API 指派**，只能由上面兩種方式產生。新建的使用者沒指定角色時沒有任何權限；
-需要 `member` 之類的預設角色，在 `RoleTable.seed_data` 新增（見
-[`extending.md`](extending.md#初始資料seed)）。系統角色（有 `code` 的）的權限、名稱與啟用狀態
-都由模板擁有，不能經由 API 修改，畫面上的名稱依 `code` 查前端字典。
+註冊碼為 8 至 128 個字元, 由店長在 `/admin/registration` 設定或更換。
+資料庫只保存 SHA-256 摘要, API 只回傳是否已設定, 不回傳原碼或摘要。
+設定不會隨服務重啟被重設。儲存新碼後, 後續註冊只能使用新碼; 既有帳號及登入狀態不受影響。
+註冊碼提供給要成為店長的人, 員工帳號由店長在「使用者管理」建立。
 
-### 後台只開放給超級管理者
+### 帳號管理與角色
 
-使用者與角色的管理（後台）只有超級管理者進得去：前端的 `admin/layout.tsx` 只看是不是
-超級管理者，後端這些端點一律要求 `Permission.ALL`。角色上的權限是給**一般帳號**的業務功能用的，
-沒有任何一個權限能打開後台。
+使用者管理、註冊碼與匯率設定只開放給店長 (內部為 `Permission.ALL`)。
+員工不能進入管理區, 但可以在個人設定修改自己的暱稱、密碼與語系。
+店長可以建立員工、修改暱稱、停用／啟用員工及重設員工密碼。
 
-一般帳號對自己帳號的操作（改暱稱、改密碼、語系）集中在設定頁，不需要任何權限。
+內部沿用角色機制: 店長使用系統角色 `super_admin` (權限 `*`),
+員工在建立時不指派角色。畫面不提供角色指派與權限編輯, `/admin/roles` 頁面已移除。
+原有角色 API 保留為內部管理基礎, 仍僅允許店長使用; 一般帳號建立與更新 API 仍不能指派店長角色。
+系統角色仍由程式種子資料維護, 一般 API 不能修改。
 
 即使是超級管理者也不能做的事：停用自己、停用超級管理者、指派超級管理者角色、把 `*` 放進一般角色、
 修改系統角色。
+
+## 商品照片與匯率
+
+商品照片的顯示檔保存在 `/app/uploads/products/`，由既有 uploads volume 備份。
+nginx 僅開放 `/api/products/photos/<id>/file` 的讀取代理，每次由後端檢查登入，回應禁止快取；
+其他業務 API 仍由 Server Component／Server Action 在內網呼叫。
+
+人民幣匯率由店長在 `/admin/exchange-rates` 手動設定，定義為 1 CNY 換算的新臺幣金額。
+初始不提供預設匯率。未來詢價保存當次匯率，更換設定不回寫歷史金額。
+功能規格見 [`catalog-workflow.md`](catalog-workflow.md)。
 
 ## Session
 
@@ -349,6 +372,7 @@ compose 裡的 nginx **一定在主機的 reverse proxy 後面**：HTTPS、網�
 **容器 nginx 信任上一層的前提是外部連不到它**。compose 把 port 綁在 `127.0.0.1`，只有主機上的程式連得到；
 改回 `0.0.0.0` 的話，任何人都能直接連進來、自己帶 `X-Real-IP` 冒充別人的 IP。Docker 直接改 iptables，
 **主機的 ufw 擋不住它開的 port**，所以不能靠防火牆補。`apps/api/tests/test_nginx_trusted_proxy.py` 守住這幾件事。
+開發機的 `make start lan` 會改綁 `0.0.0.0`（寫在 dev overlay），prod overlay 不碰 port，`MODE=production` 時也會拒絕。
 
 LB 在**另一台機器**時，它連不到 `127.0.0.1`：要改 compose 的綁定位址，並且用防火牆或安全群組確保只有
 LB 連得到，再把 `infra/nginx/snippets/trusted-proxy.conf` 的 `set_real_ip_from` 縮到 LB 的網段。

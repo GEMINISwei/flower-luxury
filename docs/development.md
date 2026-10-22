@@ -13,9 +13,22 @@ make init dev   # 產生 .env（MODE=development，金鑰自動產生）、安�
 make start      # 啟動 postgres → migrate → api → web → nginx（首次建置約 2–5 分鐘）
 ```
 
-環境起來之後用 `make db superuser` 建立第一個帳號（網頁上沒有註冊入口），再打開
+環境起來之後用 `make db superuser` 建立第一位店長（之後可在後台設定註冊碼供其他店長註冊），再打開
 `http://localhost:{SYSTEM_PORT}`（預設 3000）登入。`migrate` 停在 `Exited (0)`、`nginx` 沒有 `(healthy)`
 都是正常的。
+
+### 用手機測試
+
+```bash
+make start lan  # 同 make start，但對區網開放，結束時印出手機要開的網址
+```
+
+平常 nginx 只綁 `127.0.0.1`，手機連不進來。`make start lan` 只在這次啟動改綁 `0.0.0.0`，
+下次一般的 `make start` 就關回去，所以**用完跑一次 `make start`**；`.env` 裡沒有對應的設定，刻意不讓它常駐。
+開著的時候同一個網路上的人都連得到，在公共 Wi-Fi 上不要用。`MODE=production` 時會被拒絕。
+
+只能用 `http`：瀏覽器只對 `localhost` 放寬安全來源的限制，相機、定位、Service Worker 這類需要 HTTPS 的功能
+在 `http://<區網 IP>` 上不能用，要測的話改用會給 https 網址的 tunnel（cloudflared、Tailscale Funnel）。
 
 ### 環境變數的同步點
 
@@ -44,8 +57,8 @@ make start      # 啟動 postgres → migrate → api → web → nginx（首次
 
 ```bash
 make init dev|prod                           # 產生 .env 並寫入 MODE；prod 只產生 .env（部署主機用）
-make start                                   # 依 .env 的 MODE 啟動
-make services [volumes|logs [服務]|down]     # 不帶參數 = 版本與 MODE、服務狀態、volume；volumes = 各 volume 的容量
+make start [lan]                             # 依 .env 的 MODE 啟動；lan = 開放區網讓手機連（僅 development）
+make services [volumes|logs [服務]|restart|down]   # 不帶參數 = 版本與 MODE、服務狀態、volume；restart = 原地重啟
 make backup                                  # 資料庫與上傳檔案一起備份，期間對外服務暫停
 make db   psql|restore [檔案]|reset|migrate|migration "說明"|superuser
 make uploads restore [檔案]
@@ -133,6 +146,7 @@ cd apps/web && npm run test:watch           # 前端 watch 模式
 | 沒有未使用的匯出 | knip（`npm run check:deadcode`） |
 | model 改了有寫 migration | `make check integration` |
 | nginx 每個 location 都覆寫用戶端 IP、兩份模板都帶安全標頭 | `apps/api/tests/test_nginx_templates.py` |
+| nginx 的模板變了 `make start` 會重建 nginx | `apps/api/tests/test_nginx_config_recreate.py` |
 | `scripts/` 的 shell 寫法 | shellcheck（`make check lint`） |
 | compose 展得開、用到的變數 `.env.example` 都有 | `docker compose config`（`make check lint`） |
 | 契約與前端型別是最新的 | `make check contract`（只比對、不改檔） |

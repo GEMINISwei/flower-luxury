@@ -19,7 +19,7 @@ make start      # 啟動開發環境（首次建置約 2–5 分鐘）
 | 後端 | FastAPI、SQLAlchemy 2.0 async、Alembic、Python 3.14；pytest、ruff、mypy |
 | 前端 | Next.js 16、React 19、TypeScript、CSS Modules；Vitest、ESLint、knip |
 | 基礎設施 | PostgreSQL 17、Docker Compose（dev／prod）、nginx、GitHub Actions |
-| 功能 | JWT 認證、角色權限、使用者與角色管理、Session 撤銷、登入限流、游標分頁 |
+| 功能 | JWT 認證、店長／員工帳號、共用註冊碼、Session 撤銷、登入及註冊限流、游標分頁 |
 | 前後端契約 | 後端產生 OpenAPI → 前端型別，端點、權限、語系寫錯都是編譯錯誤 |
 | i18n | 前後端一致的中英雙語，漏翻譯會編譯失敗 |
 
@@ -44,6 +44,13 @@ flowchart LR
 ```
 
 瀏覽器只認得 nginx，碰不到 api。
+
+## 業務功能
+
+品牌、商品、照片、售出鎖定與退回、人民幣匯率的規格與驗收見
+[`docs/catalog-workflow.md`](docs/catalog-workflow.md)。所有登入者共用業務資料，匯率設定限店長使用。
+廠商、詢價匯率保存、成交與利潤快照見
+[`docs/vendor-quotation-workflow.md`](docs/vendor-quotation-workflow.md)。結帳批次不在系統範圍內。
 
 ## 文件
 

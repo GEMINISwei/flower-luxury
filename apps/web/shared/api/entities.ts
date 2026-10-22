@@ -15,14 +15,6 @@ type Schemas = components["schemas"]
 // 後端的 Permission enum, 經 OpenAPI 自動同步 —— 新增權限**不必**改這裡。
 export type Permission = Schemas["Permission"]
 
-/**
- * 排除超級管理者萬用字元的權限聯集。
- *
- * 這不是角色頁實際可指派的完整清單; `GET /roles/permission-options` 會排除標成
- * `assignable=False` 的權限 (見各 module 的 permission metadata)。
- */
-export type AssignablePermission = Exclude<Permission, "*">
-
 // ---- 語系 ----
 // 後端 shared/http/errors.py 的 Language enum, 經 `GET /languages/` 進入 OpenAPI。
 // 新增語系**不必**改前端這一份清單; 漏跟上的地方會編譯失敗 (tests/shared/i18n/locale.test-d.ts)。
