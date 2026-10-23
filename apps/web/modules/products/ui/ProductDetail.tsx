@@ -31,9 +31,8 @@ export default function ProductDetail({
   const [action, setAction] = useState<"edit" | "delete" | "return" | "photos" | null>(null)
   const caps = productCapabilities(product.status)
   const basic = [
-    [t("category"), t(CATEGORIES[product.category])],
     [t("model_name"), product.model_name], [t("serial_number"), product.serial_number],
-    [t("color"), product.color], [t("year"), product.year], [t("internal_note"), product.internal_note],
+    [t("year"), product.year], [t("color"), product.color],
     [t("created"), formatDateTime(product.created_at, "Asia/Taipei").slice(0, 10)],
     [t("updated"), product.updated_at
       ? formatDateTime(product.updated_at, "Asia/Taipei").slice(0, 10) : null],
@@ -46,25 +45,33 @@ export default function ProductDetail({
         onClick={() => setAction("delete")}>{t("deleteProduct")}</Button>}
       {caps.canReturn && <Button variant="outlined" icon={<Undo2 size={ICON_SIZE.md} />}
         onClick={() => setAction("return")}>{t("return")}</Button>}
-      <Button variant="outlined" className={styles.photoButton}
-        icon={<Images size={ICON_SIZE.md} aria-hidden />} onClick={() => setAction("photos")}>
-        <span className={styles.photoButtonLabel}>{t("photos")}</span></Button>
+      <Button variant="outlined" icon={<Images size={ICON_SIZE.md} aria-hidden />}
+        onClick={() => setAction("photos")}>{t("photos")}</Button>
     </>}>
     <div className={styles.stack}>
       <section className={styles.summary}>
         <div className={styles.hero}>
-          <div className={styles.meta}><StatusBadge label={t(product.status)}
-            variant={caps.canReturn ? "success" : "warning"} /><span>{product.sku}</span></div>
-          <h2 className={styles.title}>{product.name}</h2>
-          <p className={styles.brand}>{product.brand}</p>
+          <div className={styles.identity}>
+            <div className={styles.meta}><StatusBadge label={t(product.status)}
+              variant={caps.canReturn ? "success" : "warning"} />
+              <StatusBadge label={t(CATEGORIES[product.category])} variant="muted" />
+              <span>{product.sku}</span></div>
+            <h2 className={styles.title}>{product.name}</h2>
+            <p className={styles.brand}>{product.brand}</p>
+          </div>
           <p className={styles.price} aria-label={t("cost_price")}>
             NT$ {product.cost_price.toLocaleString()}</p>
         </div>
         <Surface className={styles.infoCard}>
           <h3>{t("basicInfo")}</h3>
-          <dl className={styles.details}>{basic.map(([label, value]) => <div key={String(label)}>
-            <dt>{label}</dt><dd>{String(value ?? "").trim() || "—"}</dd>
-          </div>)}</dl>
+          <dl className={styles.details}>
+            {basic.map(([label, value]) => <div key={String(label)}>
+              <dt>{label}</dt><dd>{String(value ?? "").trim() || "—"}</dd>
+            </div>)}
+            <div className={styles.notes}>
+              <dt>{t("internal_note")}</dt><dd>{product.internal_note?.trim() || "—"}</dd>
+            </div>
+          </dl>
         </Surface>
       </section>
       <QuotePanel product={product} quotes={quotes} vendors={vendors} />

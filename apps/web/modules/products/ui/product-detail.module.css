@@ -4,21 +4,6 @@
   min-width: 0;
 }
 
-.photoButton {
-  width: var(--control-height-md);
-  min-width: var(--control-height-md);
-  padding: 0;
-}
-
-.photoButtonLabel {
-  position: absolute;
-  width: var(--border-width-hairline);
-  height: var(--border-width-hairline);
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 .imagePanel {
   display: grid;
   gap: var(--space-5);
@@ -78,6 +63,14 @@
 
 .hero {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.identity {
+  display: grid;
   gap: var(--space-3);
   min-width: 0;
 }
@@ -105,7 +98,9 @@
 }
 
 .price {
-  margin: var(--space-3) 0 0;
+  margin: 0;
+  justify-self: end;
+  text-align: right;
   font-family: var(--font-mono);
   font-size: var(--fs-h1);
   color: var(--color-text-display);
@@ -126,6 +121,9 @@
 }
 
 .details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--space-8);
   margin: 0;
 }
 
@@ -150,6 +148,16 @@
   font-weight: var(--fw-semibold);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.details .notes {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.notes dd {
+  text-align: left;
 }
 
 .timeline {
@@ -224,6 +232,13 @@
 }
 
 @media (max-width: 720px) {
+  .hero, .details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .price {
+    justify-self: start;
+    text-align: left;
+  }
   .infoCard, .flowCard {
     padding: var(--space-4);
   }
