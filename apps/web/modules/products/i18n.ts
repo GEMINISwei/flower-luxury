@@ -3,7 +3,8 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 export const productMessages = defineMessages({
   zh: {
     title: "商品列表", subtitle: "管理庫存、詢價與售出商品", create: "新增商品",
-    productColumn: "商品", createdDate: "建檔日期", purchasePrice: "收購價",
+    productColumn: "商品", createdDate: "建檔日期", purchaseDate: "收購日期", purchasePrice: "收購價",
+    loadingMore: "載入更多商品…", retry: "重試",
     filterTitle: "篩選", reload: "重新整理", basic: "商品資訊",
     pricing: "收購與備註", createSubtitle: "建立庫存商品資料",
     basicInfo: "基本資訊", photoPreview: "預覽商品照片", editPhotos: "管理照片",
@@ -34,7 +35,8 @@ export const productMessages = defineMessages({
   },
   en: {
     title: "Products", subtitle: "Manage inventory, vendor quotes and sold products", create: "New product",
-    productColumn: "Product", createdDate: "Created", purchasePrice: "Purchase price",
+    productColumn: "Product", createdDate: "Created", purchaseDate: "Purchase date",
+    purchasePrice: "Purchase price", loadingMore: "Loading more products…", retry: "Retry",
     filterTitle: "Filter", reload: "Refresh", basic: "Product information",
     pricing: "Purchase and notes", createSubtitle: "Create an inventory record",
     basicInfo: "Basic information", photoPreview: "Preview product photo", editPhotos: "Manage photos",

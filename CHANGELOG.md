@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+- 手機商品卡片為收購日期加上標籤並與年份同列，篩選移至頁首新增圖示旁；列表捲到底才接續載入商品，載入失敗可重試，桌面維持分頁。
+
 - 參考 Project Starter PR #55、#56，將 Dependabot 改為套件與 Actions 只收安全更新、Docker 映像每月只提 patch 更新，並補齊 GitHub 安全設定及發版前相依盤點文件。
 
 - 參考 Project Starter PR #54，將正式環境的 anyio 升至 4.14.2、API 映像的 uv 升至 0.13.5，以及 nginx 升至 1.31.8-alpine，修補已知安全問題。
