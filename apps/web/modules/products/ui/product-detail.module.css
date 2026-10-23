@@ -4,20 +4,45 @@
   min-width: 0;
 }
 
-.detailLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  gap: var(--space-6);
-  align-items: start;
+.photoButton {
+  width: var(--control-height-md);
+  min-width: var(--control-height-md);
+  padding: 0;
+}
+
+.photoButtonLabel {
+  position: absolute;
+  width: var(--border-width-hairline);
+  height: var(--border-width-hairline);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .imagePanel {
+  display: grid;
+  gap: var(--space-5);
   min-width: 0;
-  padding: var(--space-5);
-  border: var(--border-width-thick) solid var(--color-border-brand);
+}
+
+.imageCard {
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--border-width-accent) solid transparent;
   border-radius: var(--radius-lg);
   background: var(--color-surface-card);
+  box-shadow: inset 0 0 0 var(--border-width-hairline) var(--color-border-subtle);
+}
+
+.imageCard[data-main="true"] {
+  border-color: var(--color-primary);
   box-shadow: var(--shadow-md);
+}
+
+.photoCaption {
+  margin-bottom: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
 }
 
 .imageFrame, .placeholder {
@@ -33,7 +58,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .placeholder {
@@ -43,44 +68,6 @@
   justify-content: center;
   gap: var(--space-3);
   color: var(--color-text-muted);
-}
-
-.thumbnails {
-  display: flex;
-  gap: var(--space-3);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  padding: var(--space-1);
-  margin-top: var(--space-3);
-  scrollbar-width: thin;
-}
-
-.thumbnails:empty {
-  display: none;
-}
-
-.thumbnail {
-  flex: 0 0 var(--size-gallery-thumbnail);
-  width: var(--size-gallery-thumbnail);
-  height: var(--size-gallery-thumbnail);
-  padding: 0;
-  overflow: hidden;
-  border: var(--border-width-thick) solid var(--color-border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-sunken);
-  cursor: pointer;
-}
-
-.thumbnail[aria-pressed="true"] {
-  border-color: var(--color-border-brand);
-  box-shadow: var(--focus-ring);
-}
-
-.thumbnail img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .summary {
@@ -237,10 +224,7 @@
 }
 
 @media (max-width: 720px) {
-  .detailLayout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .imagePanel, .infoCard, .flowCard {
+  .infoCard, .flowCard {
     padding: var(--space-4);
   }
   .title {

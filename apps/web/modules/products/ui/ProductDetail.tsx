@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Pencil, Trash2, Undo2 } from "lucide-react"
+import { Images, Pencil, Trash2, Undo2 } from "lucide-react"
 import { Button, FormPageShell, ICON_SIZE, Modal, StatusBadge, Surface } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
@@ -28,7 +28,7 @@ export default function ProductDetail({
   vendors: VendorInfo[]; quotes: QuoteInfo[]; sales: SaleInfo[]
 }) {
   const t = useT(productMessages)
-  const [action, setAction] = useState<"edit" | "delete" | "return" | null>(null)
+  const [action, setAction] = useState<"edit" | "delete" | "return" | "photos" | null>(null)
   const caps = productCapabilities(product.status)
   const basic = [
     [t("category"), t(CATEGORIES[product.category])],
@@ -40,37 +40,41 @@ export default function ProductDetail({
   ]
   return <FormPageShell title={t("detail")} subtitle={product.sku}
     backHref="/products" backLabel={t("back")} actions={<>
-      <Button icon={<Pencil size={ICON_SIZE.md} />} disabled={!caps.canEdit}
-        onClick={() => setAction("edit")}>{t("edit")}</Button>
-      <Button variant="outlined" icon={<Trash2 size={ICON_SIZE.md} />} disabled={!caps.canDelete}
-        onClick={() => setAction("delete")}>{t("deleteProduct")}</Button>
+      {caps.canEdit && <Button icon={<Pencil size={ICON_SIZE.md} />}
+        onClick={() => setAction("edit")}>{t("edit")}</Button>}
+      {caps.canDelete && <Button variant="outlined" icon={<Trash2 size={ICON_SIZE.md} />}
+        onClick={() => setAction("delete")}>{t("deleteProduct")}</Button>}
       {caps.canReturn && <Button variant="outlined" icon={<Undo2 size={ICON_SIZE.md} />}
         onClick={() => setAction("return")}>{t("return")}</Button>}
+      <Button variant="outlined" className={styles.photoButton}
+        icon={<Images size={ICON_SIZE.md} aria-hidden />} onClick={() => setAction("photos")}>
+        <span className={styles.photoButtonLabel}>{t("photos")}</span></Button>
     </>}>
     <div className={styles.stack}>
-      <div className={styles.detailLayout}>
-        <ProductGallery photos={photos} name={product.name} />
-        <section className={styles.summary}>
-          <div className={styles.hero}>
-            <div className={styles.meta}><StatusBadge label={t(product.status)}
-              variant={caps.canReturn ? "success" : "warning"} /><span>{product.sku}</span></div>
-            <h2 className={styles.title}>{product.name}</h2>
-            <p className={styles.brand}>{product.brand}</p>
-            <p className={styles.price} aria-label={t("cost_price")}>
-              NT$ {product.cost_price.toLocaleString()}</p>
-          </div>
-          <Surface className={styles.infoCard}>
-            <h3>{t("basicInfo")}</h3>
-            <dl className={styles.details}>{basic.map(([label, value]) => <div key={String(label)}>
-              <dt>{label}</dt><dd>{String(value ?? "").trim() || "—"}</dd>
-            </div>)}</dl>
-          </Surface>
-        </section>
-      </div>
+      <section className={styles.summary}>
+        <div className={styles.hero}>
+          <div className={styles.meta}><StatusBadge label={t(product.status)}
+            variant={caps.canReturn ? "success" : "warning"} /><span>{product.sku}</span></div>
+          <h2 className={styles.title}>{product.name}</h2>
+          <p className={styles.brand}>{product.brand}</p>
+          <p className={styles.price} aria-label={t("cost_price")}>
+            NT$ {product.cost_price.toLocaleString()}</p>
+        </div>
+        <Surface className={styles.infoCard}>
+          <h3>{t("basicInfo")}</h3>
+          <dl className={styles.details}>{basic.map(([label, value]) => <div key={String(label)}>
+            <dt>{label}</dt><dd>{String(value ?? "").trim() || "—"}</dd>
+          </div>)}</dl>
+        </Surface>
+      </section>
       <QuotePanel product={product} quotes={quotes} vendors={vendors} />
       <SaleHistory sales={sales} />
       <StatusTimeline histories={histories} createdAt={product.created_at} />
     </div>
+    {action === "photos" && <Modal title={t("photos")} open
+      onOpenChange={(open) => { if (!open) setAction(null) }}>
+      <ProductGallery photos={photos} name={product.name} />
+    </Modal>}
     {action === "edit" && caps.canEdit && <Modal title={t("edit")} open
       onOpenChange={(open) => { if (!open) setAction(null) }}>
       <div className={styles.stack}>

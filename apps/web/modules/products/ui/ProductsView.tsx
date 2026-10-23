@@ -35,13 +35,10 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
         <Button icon={<Plus size={ICON_SIZE.md} aria-hidden />}
           onClick={() => router.push("/products/new")}>{t("create")}</Button>
       </>} />
-    <div className={styles.toolbar}>
-      <Link className={styles.clear} href="/products">{t("clear")}</Link>
-      <div className={styles.actions}>
-        {meta.hasPrevious && <Button variant="outlined" icon={<RefreshCw size={ICON_SIZE.sm} />}
-          onClick={() => router.push(resetHref)}>{t("reload")}</Button>}
-      </div>
-    </div>
+    {meta.hasPrevious && <div className={styles.toolbar}>
+      <Button variant="outlined" icon={<RefreshCw size={ICON_SIZE.sm} />}
+        onClick={() => router.push(resetHref)}>{t("reload")}</Button>
+    </div>}
     <ProductFilters key={filterOpen ? JSON.stringify(filters) : "closed"}
       brands={brands} filters={filters} open={filterOpen} onClose={() => setFilterOpen(false)} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}

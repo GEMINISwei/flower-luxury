@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import { ImageOff } from "lucide-react"
-import { ICON_SIZE } from "@/shared/ui"
+import { ICON_SIZE, StatusBadge } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import type { PhotoInfo } from "../types"
 import { gallerySelection } from "../capabilities"
@@ -12,21 +11,21 @@ import styles from "./product-detail.module.css"
 
 export default function ProductGallery({ photos, name }: { photos: PhotoInfo[]; name: string }) {
   const t = useT(productMessages)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const gallery = gallerySelection(photos, selectedId)
+  const gallery = gallerySelection(photos, null)
   return <section className={styles.imagePanel} aria-label={t("photos")}>
-    {gallery.selected ? <a className={styles.imageFrame} href={gallery.selected.url}
-      target="_blank" rel="noreferrer">
-      <Image unoptimized width={800} height={800} src={gallery.selected.url}
-        alt={name} className={styles.mainImage} loading="eager" />
-    </a> : <div className={styles.placeholder}>
+    {!gallery.selected && <div className={styles.placeholder}>
       <ImageOff size={ICON_SIZE.lg} aria-hidden /><span>{t("noPhotos")}</span>
     </div>}
-    <div className={styles.thumbnails}>{gallery.photos.map((photo, index) =>
-      <button type="button" key={photo.id} className={styles.thumbnail}
-        aria-label={`${t("photoPreview")} ${index + 1}`} aria-pressed={photo.id === gallery.selected?.id}
-        onClick={() => setSelectedId(photo.id)}>
-        <Image unoptimized width={160} height={160} src={photo.url} alt="" />
-      </button>)}</div>
+    {gallery.photos.map((photo, index) => <figure key={photo.id} className={styles.imageCard}
+      data-main={photo.id === gallery.selected?.id}>
+      <figcaption className={styles.photoCaption}>
+        {photo.id === gallery.selected?.id ? <StatusBadge label={t("main")} variant="warning" />
+          : `${t("photoPreview")} ${index + 1}`}
+      </figcaption>
+      <a className={styles.imageFrame} href={photo.url} target="_blank" rel="noreferrer">
+        <Image unoptimized width={800} height={800} src={photo.url}
+          alt={`${name} · ${t("photoPreview")} ${index + 1}`} className={styles.mainImage} />
+      </a>
+    </figure>)}
   </section>
 }
