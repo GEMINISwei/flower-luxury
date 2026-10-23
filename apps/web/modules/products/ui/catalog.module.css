@@ -4,6 +4,8 @@
 .actions { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; }
 .card { padding: var(--space-5); display: grid; gap: var(--space-4); min-width: 0; overflow-wrap: anywhere; }
 .card h2, .card h3, .card p { margin: 0; }
+.cardHeader { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.cardHeader > button { flex-shrink: 0; }
 .link { color: var(--color-primary); font-weight: var(--fw-semibold); text-decoration: none; }
 .link:hover { text-decoration: underline; }
 .muted { color: var(--color-text-secondary); font-size: var(--fs-sm); }

@@ -136,6 +136,11 @@
   border-bottom: var(--border-width-hairline) solid var(--color-border-subtle);
 }
 
+.details > div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
 .details dt {
   color: var(--color-text-muted);
   font-size: var(--fs-sm);

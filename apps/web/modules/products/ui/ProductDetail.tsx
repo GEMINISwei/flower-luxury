@@ -54,7 +54,7 @@ export default function ProductDetail({
           <div className={styles.identity}>
             <div className={styles.meta}><StatusBadge label={t(product.status)}
               variant={caps.canReturn ? "success" : "warning"} />
-              <StatusBadge label={t(CATEGORIES[product.category])} variant="muted" />
+              <StatusBadge label={t(CATEGORIES[product.category])} variant="info" />
               <span>{product.sku}</span></div>
             <h2 className={styles.title}>{product.name}</h2>
             <p className={styles.brand}>{product.brand}</p>
@@ -66,10 +66,10 @@ export default function ProductDetail({
           <h3>{t("basicInfo")}</h3>
           <dl className={styles.details}>
             {basic.map(([label, value]) => <div key={String(label)}>
-              <dt>{label}</dt><dd>{String(value ?? "").trim() || "—"}</dd>
+              <dt>{label}</dt><dd>{String(value ?? "").trim() || "-"}</dd>
             </div>)}
             <div className={styles.notes}>
-              <dt>{t("internal_note")}</dt><dd>{product.internal_note?.trim() || "—"}</dd>
+              <dt>{t("internal_note")}</dt><dd>{product.internal_note?.trim() || "-"}</dd>
             </div>
           </dl>
         </Surface>
