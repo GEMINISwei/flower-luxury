@@ -211,6 +211,8 @@ GitHub 端要設定一次，流程才不是靠自覺：
   **Pull request title and commit details**，並勾 **Automatically delete head branches**
 - [ ] Settings → Rules：替 `main` 建 ruleset，開 **Require a pull request before merging**，
   並把 CI 的三個 job（`check`、`integration`、`images`）設成 **required status check**
+- [ ] Settings → Advanced Security（有的帳號叫 Code security）：打開 **Dependabot alerts** 與
+  **Dependabot security updates**。套件只收安全更新（見〈相依升級〉），沒開的話漏洞修補完全不會來
 
 ## 提交與 CI
 
@@ -225,7 +227,16 @@ CI（`.github/workflows/ci.yml`）跑的就是本機指令：`check`（`make che
 
 ### 相依升級
 
-升版 PR 由 Dependabot 每週開（`.github/dependabot.yml`）。
+系統上線後**不追最新版，只在有漏洞時升**（`.github/dependabot.yml`）：
+
+- **套件與 GitHub Actions**：Dependabot 只開安全更新，一般的版本更新關掉了。要在 repo 的
+  Settings 打開 Dependabot alerts 與 security updates 才會運作，警示在 Security 分頁。
+- **Docker image**：漏洞資料庫不涵蓋 image，所以每月開一次 PR，只送 patch（例如 nginx 1.31.7 → 1.31.8）。
+- **整批升級**：在發版前盤點落後多少再決定範圍——開分支、升級、`make check`、實際建置 image 跑起來，
+  再開 PR。api Dockerfile 用 `COPY --from` 複製的 uv 不在 Dependabot 的範圍內，盤點時要用
+  `docker scout` 之類的工具掃 image 才看得到。Insights → Dependency graph → Dependabot 的
+  「Check for updates」在版本更新關掉後不會開 PR，不能拿來取代盤點。
+
 遇到 peer 相容性阻擋就**停在最新的相容版**，不要 `--force`／`--legacy-peer-deps`，並在設定檔裡
 寫下「為什麼停」與「移除條件」。目前：ESLint 停在 9.x（見 `eslint.config.mjs`）、TypeScript 停在
 5.x（見 `package.json` 的 `//devDependencies`），兩者在 `dependabot.yml` 也 ignore 了 major，
