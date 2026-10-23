@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+- 參考 Project Starter PR #55、#56，將 Dependabot 改為套件與 Actions 只收安全更新、Docker 映像每月只提 patch 更新，並補齊 GitHub 安全設定及發版前相依盤點文件。
+
 - 參考 Project Starter PR #54，將正式環境的 anyio 升至 4.14.2、API 映像的 uv 升至 0.13.5，以及 nginx 升至 1.31.8-alpine，修補已知安全問題。
 
 - 商品只保留未收購與已出售，由詢價成交自動售出；舊在庫商品與歷程遷移為未收購。詳情改為大圖與縮圖列、上方成本、逐行基本資訊和橫向流向記錄，右上角集中編輯、刪除與售出後的退回視窗。
