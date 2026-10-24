@@ -1,10 +1,11 @@
-"""DB 管理 CLI — seed / reset / migrate / create-superuser
+"""DB 管理 CLI — seed / reset / migrate / create-superuser / revoke-sessions
 
 在 api 容器裡執行 (`docker exec -it <專案名>-api python scripts/db.py <子指令>`):
   python scripts/db.py seed                 # 補齊缺少的 seed 資料
   python scripts/db.py reset                # 清空所有資料表 (dev only)
   python scripts/db.py migrate              # alembic upgrade head (migrate service 用它)
   python scripts/db.py create-superuser     # 互動式建立超級管理者
+  python scripts/db.py revoke-sessions      # 讓所有使用者都要重新登入
 """
 
 import asyncio
@@ -129,8 +130,7 @@ def _prompt_password() -> str:
 async def cmd_create_superuser():
     """建立一個擁有全部權限的超級管理者。
 
-    這是唯一的建立路徑 (網頁上沒有入口, 見 `modules.users.superuser`), 用途有三個:
-    部署完成後建立第一個超管、需要第二個超管的場景, 以及唯一超管失聯時的救援。
+    首次部署與帳號失聯時由主機建立店長; 網頁註冊另由 registration 模組驗證共用註冊碼。
     """
     from pydantic import ValidationError
 
@@ -165,6 +165,21 @@ async def cmd_create_superuser():
     print(f"已建立超級管理者：{username}（id: {user.id}）")
 
 
+async def cmd_revoke_sessions():
+    """讓所有使用者既有的 session 失效, 確認由 `make db revoke-sessions` 負責。"""
+    from modules.users.public import revoke_all_sessions
+    from shared.db.session import session_scope
+
+    engine = _engine()
+    try:
+        async with session_scope():
+            result = await revoke_all_sessions()
+    finally:
+        await engine.dispose()
+
+    print(f"已讓 {result.affected} 位使用者的登入失效，所有人都要重新登入")
+
+
 # ── 入口 ──────────────────────────────────────────────────────────────────────
 
 COMMANDS = {
@@ -172,6 +187,7 @@ COMMANDS = {
     "reset": lambda: asyncio.run(cmd_reset()),
     "migrate": cmd_migrate,
     "create-superuser": lambda: asyncio.run(cmd_create_superuser()),
+    "revoke-sessions": lambda: asyncio.run(cmd_revoke_sessions()),
 }
 
 if __name__ == "__main__":

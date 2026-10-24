@@ -59,6 +59,11 @@ def test_signup_route_is_registered_without_bootstrap_bypass():
     assert "/api/users/bootstrap-status" not in paths
 
 
+def test_revoke_all_sessions_is_not_exposed_over_http():
+    for operation_ids in _openapi_operations().values():
+        assert not any("revoke_all_sessions" in operation_id for operation_id in operation_ids)
+
+
 # --- 需要真的資料庫 (PostgreSQL) -------------------------------------------
 
 

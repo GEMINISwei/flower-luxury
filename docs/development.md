@@ -48,6 +48,7 @@ make start lan  # 同 make start，但對區網開放，結束時印出手機要
 | `port is already allocated` | 改 `.env` 的 `SYSTEM_PORT`，`make services down && make start` |
 | api 一直重啟、`relation "users" does not exist` | migration 失敗了，`make services logs migrate` 看原因 |
 | 容器裡 `ModuleNotFoundError` | 改了相依但 image 沒重建，重建後再 `make start` |
+| api 一直重啟、`password authentication failed` 或 `role "app" does not exist` | 帳號、資料庫名稱與密碼只在第一次建立 volume 時寫入；改 `.env` 不會更新資料庫內的密碼，舊版 volume 也不會自動改名。開發機確定不要資料時才可重建：`make services down`、`docker volume rm <專案>_development_postgres_data`，再 `make start` 與 `make db superuser`；需要保留資料時先安排備份與遷移 |
 | `make init dev` 抱怨 Node 版本 | `nvm use` |
 | `make init dev` 說專案名稱已有 docker 服務在使用 | 換一個名稱；確定是不要的舊專案，就用 `docker rm`／`docker volume rm` 清掉列出的資源 |
 
@@ -60,7 +61,7 @@ make init dev|prod                           # 產生 .env 並寫入 MODE；prod
 make start [lan]                             # 依 .env 的 MODE 啟動；lan = 開放區網讓手機連（僅 development）
 make services [volumes|logs [服務]|restart|down]   # 不帶參數 = 版本與 MODE、服務狀態、volume；restart = 原地重啟
 make backup                                  # 資料庫與上傳檔案一起備份，期間對外服務暫停
-make db   psql|restore [檔案]|reset|migrate|migration "說明"|superuser
+make db   psql|restore [檔案]|reset|migrate|migration "說明"|superuser|revoke-sessions
 make uploads restore [檔案]
 make check [lint|contract|types|test|build|portable|integration]   # 不帶參數 = 前六項，送出前跑
 make gen-types                               # 改過後端 schema／權限／語系後必跑

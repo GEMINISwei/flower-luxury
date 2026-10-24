@@ -5,7 +5,7 @@
 [`architecture.md`](docs/architecture.md)（依賴規則、模組介面）、
 [`development.md`](docs/development.md)（指令、測試、風格）、
 [`extending.md`](docs/extending.md)（新增模組／權限／migration／i18n）、
-[`operations.md`](docs/operations.md)（部署、Session、限流）。
+[`operations.md`](docs/operations.md)（部署、備份、主機設定與救援）。
 
 ## 硬規則（`make check` 會擋）
 
@@ -31,6 +31,8 @@
 - **PR 描述固定三段：摘要、驗證（成功失敗都寫）、檢查（給審查者的 checkbox）**。
   `gh pr create --body` 會跳過 [`PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md)，
   自己帶內文時也照這三段；之後推新 commit 要回頭補摘要與驗證。
+- **AI 參與撰寫或修改的 commit 須加共同作者署名**，提交前查核實際 Agent、模型與版本，
+  squash merge 時保留全部署名（[說明](docs/development.md#ai-協作與署名)）。
 - **動手前先寫驗收條件，每條對應一個測試名稱**；寫不出測試名稱的那條就是要先問清楚的地方
   （[說明](docs/development.md#驗收條件與測試名稱)）。
 - **先寫測試，寫好才開始實作**，不要邊寫功能邊改測試。`actions.ts` 與 `ui/*.tsx` 不寫執行期測試；
