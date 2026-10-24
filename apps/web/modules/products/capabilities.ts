@@ -1,4 +1,6 @@
 import type { PhotoInfo, ProductStatus, StatusHistoryInfo } from "./types"
+import type { Language } from "@/shared/api/entities"
+import { validatePhotoBatch } from "./validation"
 
 type Capabilities = { canEdit: boolean; canDelete: boolean; canReturn: boolean }
 const CAPABILITIES: Record<ProductStatus, Capabilities> = {
@@ -54,4 +56,24 @@ export function appendProducts<T extends { id: string }>(current: T[], incoming:
     seen.add(product.id)
     return true
   })]
+}
+
+export function selectProductPhotos<T extends { size: number; name: string; type: string }>(
+  current: T[], incoming: T[], locale: Language,
+): { files: T[]; error?: string } {
+  if (!incoming.length) return { files: current }
+  const files = [...current, ...incoming]
+  const error = validatePhotoBatch(files, locale)
+  return error ? { files: current, error } : { files }
+}
+
+export function productFormCapabilities(
+  editing: boolean, createdId: string | null, pending: boolean,
+) {
+  return {
+    fieldsDisabled: pending || Boolean(createdId),
+    showPhotos: !editing,
+    canSelectPhotos: !editing && !pending,
+    retryPhotos: Boolean(createdId),
+  }
 }
