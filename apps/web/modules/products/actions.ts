@@ -1,5 +1,6 @@
 "use server"
 
+import { redirect } from "next/navigation"
 import { apiDelete, apiPatch, apiPost } from "@/shared/api/request.server"
 import type { ApiRequestBody } from "@/shared/api/contract"
 import { fetchPaginatedList } from "@/shared/pagination/fetch.server"
@@ -27,7 +28,12 @@ export async function updateProduct(id: string, data: ApiRequestBody<"/products/
 }
 
 export async function deleteProduct(id: string) {
-  return apiDelete({ url: "/products/{id}", params: { id }, refresh })
+  const result = await apiDelete({ url: "/products/{id}", params: { id }, refresh })
+  if (result.status === "success" || result.status === "info") {
+    // 刪除後不再算繪目前詳情頁, 直接讓 Server Action 導向列表.
+    redirect(PRODUCTS_PATH)
+  }
+  return result
 }
 
 export async function returnStatus(id: string, to_status: ProductStatus, reason: string) {
