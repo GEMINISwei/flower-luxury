@@ -25,7 +25,7 @@ def upgrade() -> None:
     op.create_unique_constraint(op.f("uq_product_photos_original_storage_key"),
                                 "product_photos", ["original_storage_key"])
     op.create_check_constraint(
-        "ck_product_photos_original_complete", "product_photos",
+        op.f("ck_product_photos_original_complete"), "product_photos",
         "(original_storage_key IS NULL AND original_filename IS NULL "
         "AND original_media_type IS NULL) OR (original_storage_key IS NOT NULL "
         "AND original_filename IS NOT NULL AND original_media_type IS NOT NULL)",
@@ -33,7 +33,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("ck_product_photos_original_complete", "product_photos", type_="check")
+    op.drop_constraint(op.f("ck_product_photos_original_complete"),
+                       "product_photos", type_="check")
     op.drop_constraint(op.f("uq_product_photos_original_storage_key"),
                        "product_photos", type_="unique")
     op.drop_column("product_photos", "original_media_type")

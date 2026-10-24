@@ -84,7 +84,7 @@ class ProductPhotoTable(BaseTable):
             "(original_storage_key IS NULL AND original_filename IS NULL "
             "AND original_media_type IS NULL) OR (original_storage_key IS NOT NULL "
             "AND original_filename IS NOT NULL AND original_media_type IS NOT NULL)",
-            name="ck_product_photos_original_complete",
+            name="original_complete",
         ),
     )
 
