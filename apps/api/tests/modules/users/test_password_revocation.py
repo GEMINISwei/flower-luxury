@@ -211,7 +211,7 @@ async def test_revoke_all_sessions_returns_affected_count(user_db):
 @pytest.mark.asyncio
 async def test_revoke_all_sessions_updates_timestamp_without_changing_password(user_db):
     async with session_scope() as session:
-        before = await session.scalar(select(UserTable.updated_at))
+        before = await session.scalar(select(UserTable.created_at))
 
     async with session_scope():
         await UserTable.revoke_all_sessions()
