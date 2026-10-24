@@ -12,7 +12,6 @@
 
 .imageCard {
   margin: 0;
-  padding: var(--space-3);
   border: var(--border-width-accent) solid transparent;
   border-radius: var(--radius-lg);
   background: var(--color-surface-card);
@@ -24,13 +23,21 @@
   box-shadow: var(--shadow-md);
 }
 
-.photoCaption {
-  margin-bottom: var(--space-3);
-  font-size: var(--fs-sm);
-  color: var(--color-text-secondary);
+.photoActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3);
 }
+.photoActions > button { min-width: 0; padding-inline: var(--space-2); }
+
+.photoActions .deletePhotoButton { color: var(--color-danger-fg); border-color: var(--color-danger-fg); }
+.photoActions .deletePhotoButton:hover:not(:disabled) { color: var(--color-danger-fg); background: var(--color-danger-bg); border-color: var(--color-danger-fg); }
+.photoError { color: var(--color-danger-fg); }
+.mainBadge { position: absolute; top: var(--space-3); left: var(--space-3); }
 
 .imageFrame, .placeholder {
+  position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 1;
@@ -63,11 +70,29 @@
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: var(--size-media-preview) minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-6);
   min-width: 0;
 }
+
+.mainPhotoTrigger {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: var(--border-width-accent) solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+  cursor: pointer;
+}
+
+.mainPhotoTrigger:hover { box-shadow: var(--shadow-md); }
+.photoPlaceholder { display: grid; place-content: center; gap: var(--space-2); height: 100%; color: var(--color-text-muted); font: var(--fs-xs) var(--font-sans); }
+.photoPlaceholder svg { justify-self: center; }
+.photoCount { position: absolute; bottom: var(--space-2); left: var(--space-2); display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); color: var(--color-text-on-primary); background: var(--color-action-primary); font: var(--fs-xs) var(--font-sans); }
 
 .identity {
   display: grid;
@@ -98,6 +123,8 @@
 }
 
 .price {
+  display: grid;
+  gap: var(--space-1);
   margin: 0;
   justify-self: end;
   text-align: right;
@@ -107,6 +134,8 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
+
+.priceLabel { font: var(--fs-xs) var(--font-sans); color: var(--color-text-secondary); }
 
 .infoCard, .flowCard {
   min-width: 0;
@@ -237,18 +266,27 @@
 }
 
 @media (max-width: 720px) {
-  .hero, .details {
+  .details {
     grid-template-columns: minmax(0, 1fr);
   }
+  .hero { grid-template-columns: var(--size-media-preview-compact) minmax(0, 1fr); gap: var(--space-2) var(--space-4); align-items: start; }
+  .identity { display: contents; }
+  .meta { grid-column: 1 / -1; grid-row: 1; }
+  .mainPhotoTrigger { grid-column: 1; grid-row: 2 / span 3; }
+  .title { grid-column: 2; grid-row: 2; }
+  .brand { grid-column: 2; grid-row: 3; font-size: var(--fs-sm); }
   .price {
+    grid-column: 2;
+    grid-row: 4;
     justify-self: start;
     text-align: left;
+    font-size: var(--fs-h2);
   }
   .infoCard, .flowCard {
     padding: var(--space-4);
   }
   .title {
-    font-size: var(--fs-h2);
+    font-size: var(--fs-lg);
   }
   .summary {
     gap: var(--space-5);

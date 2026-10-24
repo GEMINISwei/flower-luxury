@@ -1,75 +1,71 @@
 "use client"
 
 import { useRef, useState } from "react"
-import Image from "next/image"
+import { Upload } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Button, ConfirmDialog, StatusBadge, useActionSubmit } from "@/shared/ui"
+import { Button, ConfirmDialog, ICON_SIZE, Modal, useActionSubmit } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
-import type { PhotoInfo } from "../types"
+import type { PhotoInfo, ProductStatus } from "../types"
 import { productMessages } from "../i18n"
 import { validatePhotoBatch } from "../validation"
+import { productCapabilities } from "../capabilities"
 import { deletePhoto, setMainPhoto, uploadPhotos } from "../actions"
-import styles from "./catalog.module.css"
+import ProductGallery from "./ProductGallery"
+import styles from "./product-detail.module.css"
 
-export default function PhotoPanel({ id, photos, canEdit }: {
-  id: string; photos: PhotoInfo[]; canEdit: boolean
+export default function PhotoPanel({ id, name, photos, status, onClose }: {
+  id: string; name: string; photos: PhotoInfo[]; status: ProductStatus; onClose: () => void
 }) {
   const t = useT(productMessages)
   const locale = useLocale()
   const router = useRouter()
   const input = useRef<HTMLInputElement>(null)
-  const [files, setFiles] = useState<File[]>([])
   const [error, setError] = useState("")
   const [removing, setRemoving] = useState<string | null>(null)
   const { isPending, submit } = useActionSubmit()
+  const { canEdit } = productCapabilities(status)
   function done() { setRemoving(null); setError(""); router.refresh() }
-  function upload() {
+  function upload(files: File[]) {
+    if (!files.length) return
     const validation = validatePhotoBatch(files, locale)
     if (validation) { setError(validation); return }
     const body = new FormData()
     files.forEach((file) => body.append("files", file))
-    submit(() => uploadPhotos(id, body), { onError: setError, onSuccess: () => {
-      setFiles([]); if (input.current) input.current.value = ""; done()
-    } })
+    setError("")
+    submit(() => uploadPhotos(id, body), { onError: setError, onSuccess: done })
   }
   function remove() {
     if (!removing) return
     submit(() => deletePhoto(id, removing), { onSuccess: done, onError: setError })
   }
-  return <div className={styles.stack}>
-    <h2>{t("photos")}</h2>
-    {!removing && error && <p className={styles.error} role="alert">{error}</p>}
-    {!photos.length && <p className={styles.muted}>{t("noPhotos")}</p>}
-    <div className={styles.gallery}>{photos.map((photo) =>
-      <div key={photo.id} className={styles.photo}>
-      <a href={photo.url} target="_blank" rel="noreferrer">
-        <Image unoptimized width={512} height={512} src={photo.url} alt={t("photos")} />
-      </a>
-      {photo.is_main && <StatusBadge label={t("main")} variant="success" />}
-      {canEdit && <div className={styles.actions}>
-        {!photo.is_main && <Button variant="outlined" disabled={isPending} onClick={() =>
-          submit(() => setMainPhoto(id, photo.id), { onSuccess: done, onError: setError })}>
-          {t("setMain")}</Button>}
-        <Button variant="outlined" disabled={isPending}
-          onClick={() => { setError(""); setRemoving(photo.id) }}>
-          {t("delete")}</Button>
-      </div>}
-    </div>)}</div>
-    {canEdit && <div className={styles.upload}>
-      <label>{t("upload")}<input ref={input} type="file" multiple
+  function close(open: boolean) {
+    if (open) return
+    if (removing) { setRemoving(null); return }
+    onClose()
+  }
+  return <>
+    <Modal title={t("photos")} open onOpenChange={close}
+      headerActions={canEdit && <Button variant="outlined" disabled={isPending}
+        icon={<Upload size={ICON_SIZE.sm} aria-hidden />} onClick={() => input.current?.click()}>
+        {isPending ? t("saving") : t("upload")}</Button>}>
+      <input ref={input} type="file" multiple hidden aria-label={t("upload")}
         accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-        disabled={isPending} onChange={(event) => {
-          const selected = Array.from(event.target.files ?? [])
-          setFiles(selected); setError(validatePhotoBatch(selected, locale) ?? "")
-        }} /></label>
-      <p className={styles.muted}>{t("uploadHint")}</p>
-      <div><Button disabled={isPending || !files.length || Boolean(error)} onClick={upload}>
-        {isPending ? t("saving") : t("upload")}</Button></div>
-    </div>}
+        disabled={isPending || !canEdit} onChange={(event) => {
+          const files = Array.from(event.target.files ?? [])
+          event.target.value = ""; upload(files)
+        }} />
+      <div className={styles.stack}>
+        {!removing && error && <p className={styles.photoError} role="alert">{error}</p>}
+        <ProductGallery photos={photos} name={name} status={status} isPending={isPending}
+          onSetMain={(photoId) => submit(() => setMainPhoto(id, photoId),
+            { onSuccess: done, onError: setError })}
+          onDelete={(photoId) => { setError(""); setRemoving(photoId) }} />
+      </div>
+    </Modal>
     <ConfirmDialog title={t("delete")} open={Boolean(removing)} isPending={isPending}
       confirmText={t("delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
       <p>{t("deletePhotoConfirm")}</p>
-      {error && <p className={styles.error} role="alert">{error}</p>}
+      {error && <p className={styles.photoError} role="alert">{error}</p>}
     </ConfirmDialog>
-  </div>
+  </>
 }

@@ -1,18 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { Images, Pencil, Trash2, Undo2 } from "lucide-react"
-import { Button, FormPageShell, ICON_SIZE, Modal, StatusBadge, Surface } from "@/shared/ui"
+import { Pencil, Trash2, Undo2 } from "lucide-react"
+import { Button, FormPageShell, ICON_SIZE, Modal, Surface } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
 import type { PhotoInfo, ProductInfo, QuoteInfo, SaleInfo, StatusHistoryInfo } from "../types"
 import { productMessages } from "../i18n"
-import { CATEGORIES } from "../constants"
 import { productCapabilities } from "../capabilities"
 import ProductForm from "./ProductForm"
-import ProductGallery from "./ProductGallery"
+import ProductOverview from "./ProductOverview"
 import StatusTimeline from "./StatusTimeline"
 import PhotoPanel from "./PhotoPanel"
 import QuotePanel from "./QuotePanel"
@@ -45,23 +44,10 @@ export default function ProductDetail({
         onClick={() => setAction("delete")}>{t("deleteProduct")}</Button>}
       {caps.canReturn && <Button variant="outlined" icon={<Undo2 size={ICON_SIZE.md} />}
         onClick={() => setAction("return")}>{t("return")}</Button>}
-      <Button variant="outlined" icon={<Images size={ICON_SIZE.md} aria-hidden />}
-        onClick={() => setAction("photos")}>{t("photos")}</Button>
     </>}>
     <div className={styles.stack}>
       <section className={styles.summary}>
-        <div className={styles.hero}>
-          <div className={styles.identity}>
-            <div className={styles.meta}><StatusBadge label={t(product.status)}
-              variant={caps.canReturn ? "success" : "warning"} />
-              <StatusBadge label={t(CATEGORIES[product.category])} variant="info" />
-              <span>{product.sku}</span></div>
-            <h2 className={styles.title}>{product.name}</h2>
-            <p className={styles.brand}>{product.brand}</p>
-          </div>
-          <p className={styles.price} aria-label={t("cost_price")}>
-            NT$ {product.cost_price.toLocaleString()}</p>
-        </div>
+        <ProductOverview product={product} photos={photos} onPhotos={() => setAction("photos")} />
         <Surface className={styles.infoCard}>
           <h3>{t("basicInfo")}</h3>
           <dl className={styles.details}>
@@ -78,17 +64,12 @@ export default function ProductDetail({
       <SaleHistory sales={sales} />
       <StatusTimeline histories={histories} createdAt={product.created_at} />
     </div>
-    {action === "photos" && <Modal title={t("photos")} open
-      onOpenChange={(open) => { if (!open) setAction(null) }}>
-      <ProductGallery photos={photos} name={product.name} />
-    </Modal>}
+    {action === "photos" && <PhotoPanel id={product.id} name={product.name}
+      photos={photos} status={product.status} onClose={() => setAction(null)} />}
     {action === "edit" && caps.canEdit && <Modal title={t("edit")} open
       onOpenChange={(open) => { if (!open) setAction(null) }}>
-      <div className={styles.stack}>
-        <ProductForm key={product.id} product={product} brands={brands}
-          onSaved={() => setAction(null)} />
-        <PhotoPanel id={product.id} photos={photos} canEdit={caps.canEdit} />
-      </div>
+      <ProductForm key={product.id} product={product} brands={brands}
+        onSaved={() => setAction(null)} />
     </Modal>}
     {action === "delete" && caps.canDelete && <DeleteProductDialog id={product.id}
       name={product.name} onClose={() => setAction(null)} />}

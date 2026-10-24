@@ -10,6 +10,11 @@ export function productCapabilities(status: ProductStatus): Capabilities {
   return CAPABILITIES[status]
 }
 
+export function photoCapabilities(status: ProductStatus, isMain: boolean) {
+  const canChange = productCapabilities(status).canEdit && !isMain
+  return { canSetMain: canChange, canDelete: canChange }
+}
+
 export function gallerySelection(photos: readonly PhotoInfo[], selectedId: string | null) {
   const ordered = [...photos].sort((left, right) =>
     Number(right.is_main) - Number(left.is_main) || left.sort_order - right.sort_order)

@@ -13,11 +13,12 @@ type ModalProps = {
   title?: string
   open: boolean
   children?: ReactNode
+  headerActions?: ReactNode
   width?: number
   onOpenChange?: (open: boolean) => void
 }
 
-export function Modal({ title, open, children, width, onOpenChange }: ModalProps) {
+export function Modal({ title, open, children, headerActions, width, onOpenChange }: ModalProps) {
   const t = useT(uiMessages)
   const onOpenChangeRef = useRef(onOpenChange)
   const dialogRef = useRef<HTMLElement>(null)
@@ -54,9 +55,13 @@ export function Modal({ title, open, children, width, onOpenChange }: ModalProps
       >
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>{title}</h2>
-          <button type="button" className={styles.modalClose} aria-label={t("close")} onClick={() => onOpenChange?.(false)}>
-            <X size={ICON_SIZE.sm} aria-hidden="true" />
-          </button>
+          <div className={styles.modalHeaderActions}>
+            {headerActions}
+            <button type="button" className={styles.modalClose} aria-label={t("close")}
+              onClick={() => onOpenChange?.(false)}>
+              <X size={ICON_SIZE.sm} aria-hidden="true" />
+            </button>
+          </div>
         </div>
         <div className={styles.modalBody}>{children}</div>
       </section>
