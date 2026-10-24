@@ -92,6 +92,12 @@
   color: var(--color-text-secondary);
 }
 
+.badgeInfo {
+  background: var(--color-info-bg);
+  border-color: color-mix(in srgb, var(--color-info-fg) 30%, transparent);
+  color: var(--color-info-fg);
+}
+
 @media (max-width: 720px) {
 
   .dataTable {

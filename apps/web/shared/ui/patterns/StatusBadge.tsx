@@ -1,10 +1,11 @@
 import ui from "../styles/table.module.css"
 
-export type BadgeVariant = "success" | "warning" | "muted"
+export type BadgeVariant = "success" | "warning" | "info" | "muted"
 
 const variantClass: Record<BadgeVariant, string> = {
   success: ui.badgeSuccess,
   warning: ui.badgeWarning,
+  info: ui.badgeInfo,
   muted: ui.badgeMuted,
 }
 

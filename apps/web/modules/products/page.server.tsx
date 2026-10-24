@@ -3,6 +3,7 @@ import { fetchPaginatedList, parsePagination } from "@/shared/pagination/fetch.s
 import { getBrandOptions } from "@/modules/brands/public.server"
 import { getT } from "@/shared/i18n/locale.server"
 import { productMessages } from "./i18n"
+import { productListQuery } from "./capabilities"
 import ProductsView from "./ui/ProductsView"
 
 export type ProductsPageProps = { searchParams?: Promise<Record<string, string>> }
@@ -16,12 +17,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const { cursor, direction, seq } = parsePagination(params)
   const fields = ["keyword", "brand_id", "category", "status", "color", "year"]
   const filters = Object.fromEntries(fields.map((key) => [key, params?.[key] ?? ""]))
-  const query = Object.fromEntries(Object.entries(filters).filter(([, value]) => value))
+  const query = productListQuery(filters)
   const [result, brands] = await Promise.all([
     fetchPaginatedList({ url: "/products/", cursor, direction, limit: 20, query,
       errorFallback: t("failed") }), getBrandOptions(),
   ])
-  return <ProductsView products={result.items} filters={filters} meta={result.meta} seq={seq}
+  // 篩選, 分頁或重新整理後重建列表, 避免續載中的舊請求混進新的結果.
+  return <ProductsView key={JSON.stringify([params, result])}
+    products={result.items} filters={filters} meta={result.meta} seq={seq}
     brands={brands.status === "success" ? brands.data.list_data : []}
     errorMessage={result.errorMessage || (brands.status === "success" ? "" : t("failed"))} />
 }

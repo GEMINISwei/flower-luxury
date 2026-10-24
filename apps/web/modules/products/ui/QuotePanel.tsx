@@ -37,7 +37,7 @@ export default function QuotePanel({ product, quotes, vendors }: {
     })
   }
   return <Surface className={styles.card}>
-    <div className={styles.actions}><h2>{t("title")}</h2>
+    <div className={styles.cardHeader}><h2>{t("title")}</h2>
       {canEdit && <Button variant="outlined" disabled={!available.length}
         onClick={() => setEditor("new")}>
         {t("create")}</Button>}</div>

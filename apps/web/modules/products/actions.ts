@@ -2,11 +2,21 @@
 
 import { apiDelete, apiPatch, apiPost } from "@/shared/api/request.server"
 import type { ApiRequestBody } from "@/shared/api/contract"
+import { fetchPaginatedList } from "@/shared/pagination/fetch.server"
+import { getT } from "@/shared/i18n/locale.server"
 import type { ProductStatus } from "./types"
+import { productListQuery } from "./capabilities"
+import { productMessages } from "./i18n"
 import { PRODUCTS_PATH } from "./manifest"
 import { sendPhotoBatch } from "./photo-upload.server"
 
 const refresh = { path: PRODUCTS_PATH }
+
+export async function loadProductPage(filters: Record<string, string>, cursor: string) {
+  const t = await getT(productMessages)
+  return fetchPaginatedList({ url: "/products/", cursor, direction: "next", limit: 20,
+    query: productListQuery(filters), errorFallback: t("failed") })
+}
 
 export async function createProduct(data: ApiRequestBody<"/products/", "post">) {
   return apiPost({ url: "/products/", data, refresh })
