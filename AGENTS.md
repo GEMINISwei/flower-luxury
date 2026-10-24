@@ -1,6 +1,7 @@
 # 給 AI agent 的專案指引
 
 這是給 AI agent 的**唯一**指引（不另設 `CLAUDE.md`）。只寫無法從程式碼推導的規則，細節見：
+[`features.md`](docs/features.md)（產品規則的唯一來源）、
 [`architecture.md`](docs/architecture.md)（依賴規則、模組介面）、
 [`development.md`](docs/development.md)（指令、測試、風格）、
 [`extending.md`](docs/extending.md)（新增模組／權限／migration／i18n）、
@@ -22,6 +23,8 @@
 
 ## 寫程式
 
+- **系統功能的產品規則統一維護在 `docs/features.md`**：開發前先讀，新增或變更功能時同步更新，
+  不按功能另建文件。開發計畫、驗收條件與驗證結果寫在 commit message 或 PR 描述。
 - **開發流程：Feature Branch → Draft PR → Incremental Commits → Code Review → Squash Merge**。
   不直接 push `main`；PR 標題用 Conventional Commits，因為 squash 後它就是 `main` 的 commit
   （[說明](docs/development.md#開發流程)）。

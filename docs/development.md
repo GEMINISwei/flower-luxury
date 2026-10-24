@@ -170,7 +170,9 @@ cd apps/web && npm run test:watch           # 前端 watch 模式
 
 ### 驗收條件與測試名稱
 
-PR 描述「驗證」段的每條驗收條件後面接一個測試名稱與結果。**寫不出測試名稱的那一條，就是動手前要先問清楚的地方。**
+動手前在 PR 描述「驗證」段列出驗收條件，每條後面接一個測試名稱，完成後補上結果。
+尚未開 PR 時先整理於提交說明，開 PR 時帶入，不另建驗收文件。
+**寫不出測試名稱的那一條，就是動手前要先問清楚的地方。**
 
 - 前端：讀得通的中文句子（`未登入導向 /login`）
 - 後端：`test_<動作>_<條件>_<結果>`（`test_get_users_without_permission_returns_403`）
@@ -225,6 +227,33 @@ CI（`.github/workflows/ci.yml`）跑的就是本機指令：`check`（`make che
 建得起來，且 web image 裡沒有真的 Server Action 金鑰）。**本機綠，CI 就綠。** 部署另由
 `deploy.yml` 在 Publish release 時執行，見 [`operations.md`](operations.md#自動部署)。
 
+### AI 協作與署名
+
+AI 實際參與程式、測試、設定或文件的撰寫與修改時，該 commit 必須在訊息末尾加上共同作者署名。
+只有討論或審查時，在 PR 記錄參與情形即可，不列為共同作者。
+
+使用 [GitHub 的共同作者格式](https://docs.github.com/en/pull-requests/how-tos/commit-changes/creating-a-commit-with-multiple-authors)，
+Agent 與 Model 一起放在名稱欄位，email 使用角括號，與提交說明之間空一行：
+
+```text
+feat: add product filters
+
+補上商品篩選，沿用既有分頁條件。
+
+Co-authored-by: AgentName (ModelName) <noreply@provider.example>
+```
+
+- **Agent**：實際使用的開發工具名稱；**Model**：實際使用且能確認的模型名稱與版本，兩者分開記錄。
+  模型名稱或版本無法確認時，以「未揭露」標示無法確認的部分，不自行推測。
+- **email**：依實際模型供應商的主網域，使用 `noreply@<供應商網域>`，例如 OpenAI 使用
+  `noreply@openai.com`、Anthropic 使用 `noreply@anthropic.com`。Agent 工具與模型供應商不同時，
+  以模型供應商為準；供應商無法確認時先詢問使用者，不借用使用者的 email 替 AI 署名。
+  這是專案的署名慣例；GitHub 要將貢獻關聯到帳號時，email 仍須與該帳號關聯。
+- **多 Agent／多模型**：每個實際參與該提交的 Agent／Model 組合各列一行 `Co-authored-by`，同一組不重複列。
+- **原作者**：保留原本的 Git author，以共同作者 trailer 記錄 AI 協作，不為加入 AI 署名而覆寫 author。
+- **Squash merge**：合併前確認最終 commit 保留這個 PR 所有實際共同作者的 trailer，去除重複項目，
+  避免署名只留在分支提交中；即使使用預設合併訊息，也要檢查。
+
 ### 相依升級
 
 系統上線後**不追最新版，只在有漏洞時升**（`.github/dependabot.yml`）：
@@ -268,3 +297,9 @@ CI（`.github/workflows/ci.yml`）跑的就是本機指令：`check`（`make che
 `，：（）` 會被編輯器標成「可能與 ASCII 字元混淆」。Markdown 文件與使用者看得到的字串（i18n、
 終端訊息、測試名稱）維持全形。
 文件**一個主題一個 owner**，其他地方只放連結；範例指向 repo 內的真實檔案。
+
+系統功能的產品規則統一維護在 [`features.md`](features.md)，它是產品規則的唯一來源。
+開發前先讀相關規則，新增或變更功能時同步更新這份文件，不按功能另建文件；其他文件需要提及產品規則時，
+以連結指向對應章節。其餘 `docs/` 文件保存架構與依賴規則、開發慣例、擴充方式及維運等長期知識。
+實作計畫、驗收條件、測試結果與開發過程寫在 commit message 或 PR 描述。
+功能開發若產生長期適用的開發知識，整理到對應的既有文件；使用者可見的行為變更仍依規定記入 `CHANGELOG.md`。
