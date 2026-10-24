@@ -47,14 +47,14 @@ flowchart LR
 
 ## 業務功能
 
-提供品牌、商品、照片、售出鎖定與退回、人民幣匯率、廠商詢價、成交與利潤快照。
-所有登入者共用業務資料，匯率設定限店長使用。結帳批次不在系統範圍內。
+系統功能與產品規則統一見 [`docs/features.md`](docs/features.md)。
 
 ## 文件
 
 | | |
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | 給 AI agent 的規則與陷阱 |
+| [`docs/features.md`](docs/features.md) | 產品規則的唯一來源 |
 | [`docs/architecture.md`](docs/architecture.md) | 依賴規則、模組介面、目錄結構、前後端契約 |
 | [`docs/development.md`](docs/development.md) | 指令、測試策略、程式碼風格、CI |
 | [`docs/extending.md`](docs/extending.md) | 新增模組、權限、migration、語系 |

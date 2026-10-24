@@ -4,7 +4,8 @@
 ## 摘要
 
 <!-- 這個 PR 改了哪些內容、為什麼。之後再推 commit 時回來補，讓這段一直對得上最新的 diff。
-     個別功能的開發說明與計畫寫在 PR 或 commit message；docs/ 只放長期適用的專案開發知識背景。 -->
+     產品規則統一維護在 docs/features.md，不按功能另建文件；實作計畫寫在 PR 或 commit message。
+     新增或變更系統功能時，同步更新 docs/features.md 的相關規則。 -->
 
 -
 
