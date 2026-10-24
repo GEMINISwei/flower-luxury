@@ -1,9 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
-import { Upload } from "lucide-react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button, ConfirmDialog, ICON_SIZE, Modal, useActionSubmit } from "@/shared/ui"
+import { ConfirmDialog, Modal, useActionSubmit } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import type { PhotoInfo, ProductStatus } from "../types"
 import { productMessages } from "../i18n"
@@ -11,6 +10,7 @@ import { validatePhotoBatch } from "../validation"
 import { productCapabilities } from "../capabilities"
 import { deletePhoto, setMainPhoto, uploadPhotos } from "../actions"
 import ProductGallery from "./ProductGallery"
+import PhotoPicker from "./PhotoPicker"
 import styles from "./product-detail.module.css"
 
 export default function PhotoPanel({ id, name, photos, status, onClose }: {
@@ -19,7 +19,6 @@ export default function PhotoPanel({ id, name, photos, status, onClose }: {
   const t = useT(productMessages)
   const locale = useLocale()
   const router = useRouter()
-  const input = useRef<HTMLInputElement>(null)
   const [error, setError] = useState("")
   const [removing, setRemoving] = useState<string | null>(null)
   const { isPending, submit } = useActionSubmit()
@@ -45,15 +44,7 @@ export default function PhotoPanel({ id, name, photos, status, onClose }: {
   }
   return <>
     <Modal title={t("photos")} open onOpenChange={close}
-      headerActions={canEdit && <Button variant="outlined" disabled={isPending}
-        icon={<Upload size={ICON_SIZE.sm} aria-hidden />} onClick={() => input.current?.click()}>
-        {isPending ? t("saving") : t("upload")}</Button>}>
-      <input ref={input} type="file" multiple hidden aria-label={t("upload")}
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-        disabled={isPending || !canEdit} onChange={(event) => {
-          const files = Array.from(event.target.files ?? [])
-          event.target.value = ""; upload(files)
-        }} />
+      headerActions={canEdit && <PhotoPicker compact disabled={isPending} onSelect={upload} />}>
       <div className={styles.stack}>
         {!removing && error && <p className={styles.photoError} role="alert">{error}</p>}
         <ProductGallery photos={photos} name={name} status={status} isPending={isPending}
