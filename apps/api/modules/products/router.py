@@ -52,6 +52,15 @@ async def get_photo_file_route(
                         headers={"Cache-Control": "private, no-store", "Vary": "Cookie"})
 
 
+@router.get("/photos/{photo_id}/download")
+async def download_photo_route(
+    photo_id: UuidText, _: CurrentUser = Depends(check_user_permission()),
+) -> FileResponse:
+    original = await photos.original_file(photo_id)
+    return FileResponse(original.path, media_type=original.media_type, filename=original.filename,
+                        headers={"Cache-Control": "private, no-store", "Vary": "Cookie"})
+
+
 @router.get("/{id}")
 async def get_product_route(
     id: UuidText, _: CurrentUser = Depends(check_user_permission()),

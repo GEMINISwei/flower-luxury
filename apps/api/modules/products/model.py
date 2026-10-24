@@ -72,10 +72,21 @@ class ProductPhotoTable(BaseTable):
 
     product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"))
     storage_key: Mapped[str] = mapped_column(unique=True)
+    original_storage_key: Mapped[str | None] = mapped_column(unique=True)
+    original_filename: Mapped[str | None]
+    original_media_type: Mapped[str | None]
     sort_order: Mapped[int]
     uploaded_by: Mapped[str]
 
-    __table_args__ = (Index("ix_product_photos_product_id", "product_id"),)
+    __table_args__ = (
+        Index("ix_product_photos_product_id", "product_id"),
+        CheckConstraint(
+            "(original_storage_key IS NULL AND original_filename IS NULL "
+            "AND original_media_type IS NULL) OR (original_storage_key IS NOT NULL "
+            "AND original_filename IS NOT NULL AND original_media_type IS NOT NULL)",
+            name="ck_product_photos_original_complete",
+        ),
+    )
 
 
 class ProductQuoteTable(BaseTable):

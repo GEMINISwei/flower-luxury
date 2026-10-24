@@ -41,6 +41,7 @@ async def test_upload_preserves_original_and_pairs_display(db, tmp_path, format,
     photo = (await photos.upload_photos(item.id, [file], ACTOR)).list_data[0]
     row = await active_session().get(ProductPhotoTable, photo.id)
     assert row is not None
+    assert row.original_storage_key is not None
     display = tmp_path / row.storage_key.removeprefix("products/")
     original_path = tmp_path / row.original_storage_key.removeprefix("products/")
     assert original_path.parent.name == "originals" and display.parent.name == "display"

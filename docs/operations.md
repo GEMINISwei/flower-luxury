@@ -315,8 +315,11 @@ make db superuser
 
 ## 商品照片與匯率
 
-商品照片的顯示檔保存在 `/app/uploads/products/`，由既有 uploads volume 備份。
-nginx 僅開放 `/api/products/photos/<id>/file` 的讀取代理，每次由後端檢查登入，回應禁止快取；
+新商品照片原檔保存在 `/app/uploads/products/originals/`，WebP 顯示檔保存在
+`/app/uploads/products/display/`，由既有 uploads volume 一起備份。兩份檔案使用相同識別碼，
+資料庫明確記錄兩個路徑；舊照片路徑維持原樣，沒有原圖時不提供下載。
+nginx 僅開放 `/api/products/photos/<id>/file` 與 `/api/products/photos/<id>/download` 的讀取代理，
+前者提供顯示圖，後者以原始檔名提供原檔附件；每次由後端檢查登入，回應禁止快取；
 其他業務 API 仍由 Server Component／Server Action 在內網呼叫。
 
 人民幣匯率由店長在 `/admin/exchange-rates` 手動設定，定義為 1 CNY 換算的新臺幣金額。

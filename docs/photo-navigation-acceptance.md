@@ -8,6 +8,7 @@
 - 無效整批上傳、寫檔失敗與交易回滾不留下檔案；刪除照片同時清理兩份 → `test_invalid_batch_creates_no_files`、`test_write_failure_cleans_both_files`、`test_photo_rollback_removes_both_files`、`test_delete_photo_removes_both_files`。
 - 舊照片繼續顯示，不假造原圖下載；已刪除商品的原圖也不可下載 → `test_legacy_photo_has_no_original_download`、`test_deleted_product_original_is_not_accessible`。
 - 原圖下載採登入驗證、禁止快取，開發與正式 nginx 都轉接下載路徑 → `test_original_download_requires_login_and_uses_attachment`、`test_photo_download_proxy_is_available_in_both_templates`。
+- 原圖類型依真實內容決定，下載檔名不帶路徑或控制字元；整批讀取驗證容量與內容 → `test_original_format_uses_content_instead_of_filename`、`test_original_download_filename_removes_paths_and_control_characters`、`test_read_batch_checks_total_size_before_converting`、`test_read_batch_rejects_invalid_content_even_with_supported_filename`。
 
 ## 手機導覽
 
