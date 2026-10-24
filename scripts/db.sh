@@ -39,8 +39,8 @@ require_running() {
 # 帳號與資料庫名稱在容器裡讀, 理由同 postgres_tool。psql 要 TTY, 而 postgres_tool 只給 -i。
 # 每套系統的資料庫都叫 app, 預設提示字元 (%/ = 資料庫名稱) 分不出是哪一套, 所以換成專案名稱。
 cmd_psql() {
-    local prompt="${COMPOSE_PROJECT_NAME}%R%x%# "
     require_running
+    local prompt="${COMPOSE_PROJECT_NAME}%R%x%# "
     # shellcheck disable=SC2016 # 刻意不在主機展開
     docker exec -it "${COMPOSE_PROJECT_NAME}-postgres" \
         sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" "$@"' sh \
