@@ -1,6 +1,7 @@
 # 擴充指南
 
-「要做 X 該怎麼做」的步驟。依賴邊界與模組介面的**規則**在 [`architecture.md`](architecture.md)。
+擴充現有專案或開新案時新增模組、權限、migration 與語系的做法。現有功能與產品規則見
+[`features.md`](features.md)，依賴邊界與模組介面的**規則**在 [`architecture.md`](architecture.md)。
 
 範例一律照抄現成模組，兩邊都從 **roles** 開始（標準的 CRUD：列表、建立、修改、停用）：
 後端 `apps/api/modules/roles/`、前端 `apps/web/modules/roles/`。需要更進一步的寫法時再參考
@@ -140,7 +141,7 @@ shared 綁著這裡的版本，升級時一起升。
    `pydantic`、`PyJWT`、`bcrypt`（版本見 `apps/api/pyproject.toml`）。
 2. 組裝層提供三樣東西，再呼叫 `shared/platform.py` 的 `create_platform_app()`（範例：`app/server.py`）：
    - 滿足 `PlatformEnv` 的設定物件：`project_name`、`postgres_url`、`jwt_secret_key`、
-     `jwt_algorithm`、`expire_hours`、`token_version`（範例：`app/config.py`）。
+     `jwt_algorithm`、`expire_hours`（範例：`app/config.py`）。
    - 繼承 `BasePermission`、含一個 `ALL = WILDCARD` 成員的權限 enum（範例：`app/permissions.py`）。
    - 啟用的 module manifest 清單（範例：`app/registry.py`）。
 3. 要用 `check_user_permission()` 的話，某一個 module 的 manifest 要提供 `current_user_resolver`
@@ -277,8 +278,7 @@ autogenerate 固定會漏三件事，產出一定要讀：
 
 ## 語系（i18n）
 
-前後端同一個語系：語系存在 `locale` cookie，每個 API 請求都帶 `Accept-Language`，
-後端的錯誤訊息跟著 UI 走。
+語系如何在前後端傳遞見 [`features.md`](features.md#語系)。
 
 **字串放在擁有它的那一層的 `i18n.ts`**，沒有全站字典：
 

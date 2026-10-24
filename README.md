@@ -58,7 +58,7 @@ flowchart LR
 | [`docs/architecture.md`](docs/architecture.md) | 依賴規則、模組介面、目錄結構、前後端契約 |
 | [`docs/development.md`](docs/development.md) | 指令、測試策略、程式碼風格、CI |
 | [`docs/extending.md`](docs/extending.md) | 新增模組、權限、migration、語系 |
-| [`docs/operations.md`](docs/operations.md) | 部署、帳號、Session、限流、備份 |
+| [`docs/operations.md`](docs/operations.md) | 部署、主機設定、備份與救援 |
 
 ## 開新專案時
 

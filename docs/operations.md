@@ -1,6 +1,7 @@
 # 部署與維運
 
-正式環境的部署、帳號、Session 與安全設定。本機開發見 [`development.md`](development.md)。
+正式環境的部署、主機設定、備份與救援。產品規則見 [`features.md`](features.md)，
+本機開發見 [`development.md`](development.md)。
 
 ## 生產部署
 
@@ -39,7 +40,8 @@ compose 本身看不出來，所以由 `scripts/lib/compose.sh` 把內容的雜�
 
 `make services restart` 原地重啟現有的容器（migrate 除外），在正式環境也要先確認。它不重建容器、不拉也不建 image，
 所以主機上不必知道 image 名稱、不必登入 GHCR，跑的是本機建置的還是 registry 拉的都照原樣。
-**它不套用任何變更**：`.env`、compose、image 變了要用 `make start`；容器已經 `down` 掉時也只能 `make start`。
+**它不套用任何變更**：`.env`、compose、image 變了要重建容器，接 CD 的主機依
+〈[套用 `.env` 的變更](#套用-env-的變更)〉重新部署；手動建置的主機用 `make start`。
 nginx 模板改了也用 `make start`：它會先跑 `nginx -t` 再重建 nginx。restart 雖然也會重新展開模板，
 但**不會先檢查**，模板寫錯時 nginx 起不來，整個站就停了。
 
@@ -65,7 +67,7 @@ api 週期性重啟時，先懷疑記憶體上限。
 - [ ] `.env` 的密碼、`JWT_SECRET_KEY` 都是這台主機自己產的
 - [ ] 備份排程與異地保存，並做過一次還原演練
 - [ ] 依平台補上監控與錯誤追蹤（見下一節）
-- [ ] 使用者知道忘記密碼要找誰（沒有寄信重設的功能）
+- [ ] 使用者知道忘記密碼要找誰（見 [`features.md`](features.md#密碼救援)）
 
 要改成 CI 建 image、主機只拉 image，見下一節〈自動部署〉。
 
@@ -184,7 +186,7 @@ GitHub 同一個排隊群組最多「一個在跑、一個在等」，再排進�
 - [ ] 想要「發布之後再核准一次」：在 environment 開 Required reviewers
       （每個 environment 各自核准，一組有三套就要核准三次）
 
-第一次部署完成後，在主機上用 `make db superuser` 建立超級管理者（見〈[超級管理者](#超級管理者)〉）。
+第一次部署完成後，在主機上用 `make db superuser` 建立店長（見〈[建立店長](#建立店長)〉）。
 這是系統初始化的一環，部署流程刻意不代建。
 
 主機以前手動 `make start` 建過 image 的話，那些 image 與建置快取 CD 用不到，
@@ -279,22 +281,55 @@ gh workflow run deploy.yml --ref main -f tag=v0.1.0 -f target="production stagin
 
 ## 帳號
 
-### 超級管理者
+帳號、權限、註冊與 Session 的產品規則見 [`features.md`](features.md#帳號與權限)。
+
+### 建立店長
 
 ```bash
 make db superuser
 ```
 
-系統採用固定的「店長／員工」身分。`make db superuser` 建立店長, 用於首次建置或帳號救援。
-第一位店長建立後, 在管理後台「註冊碼設定」設定共用註冊碼。
+互動式輸入暱稱、帳號與密碼（密碼不回顯），可重複執行，用於首次建置或帳號救援。
+第一位店長建立後，在管理後台「註冊碼設定」設定共用註冊碼。
 
 註冊碼的設定入口、輪替效果及帳號管理規則見 [`features.md`](features.md#帳號與權限)。
 
-### 角色的內部表示
+### 套用 `.env` 的變更
 
-內部沿用角色機制: 店長使用系統角色 `super_admin` (權限 `*`),
-員工在建立時不指派角色。原有角色 API 保留為內部管理基礎。
-系統角色仍由程式種子資料維護, 一般 API 不能修改。
+`.env` 改了要重建容器才會生效，`make services restart` 不會套用。接了 CD 的主機使用重新部署：
+
+1. 在主機上修改 `.env`。
+2. Actions → Deploy → **Run workflow**，branch 選 `main`，`tag` 填目前線上的版本
+   （`make services` 上方顯示的），`target` 填該主機所在的組。
+3. 等待部署完成，確認服務健康與新設定生效。
+
+部署會拉取 image 並以新的 `.env` 重建容器。主機 shell 沒有 `API_IMAGE`／`WEB_IMAGE` 時，
+直接 `make start` 會改為在主機上建置 image；接 CD 的主機因此使用上述流程。
+這會重新部署整組系統，包含其他系統的備份與短暫服務暫停；從修改 `.env` 到部署完成之間仍使用舊值。
+沒有接 CD 的主機使用 `make start`，在主機建置並重建容器。
+
+PostgreSQL 帳號與資料庫名稱固定為 `app`，`POSTGRES_PASSWORD` 只在初次建立 volume 時寫入資料庫。
+單改 `.env` 的密碼不會改變資料庫內的密碼，反而會使 API 連線失敗；已有資料時須另安排密碼輪替。
+
+### 讓所有人登出
+
+```bash
+make db revoke-sessions
+```
+
+開發與正式環境都須確認。確認後所有使用者（包含執行者）的既有 token 都會在下一個需驗證的請求被拒絕，
+指令回報影響人數，不用改 `.env` 或重新部署。適用情境與重新登入負擔見
+[`features.md`](features.md#撤銷)。
+
+### 更換 `JWT_SECRET_KEY`
+
+金鑰外洩時，僅撤銷登入不足以阻止持有金鑰者偽造 token，必須更換金鑰本身。
+在主機產生新值後寫入 `.env` 的 `JWT_SECRET_KEY`，再依〈[套用 `.env` 的變更](#套用-env-的變更)〉
+重新部署，所有舊金鑰簽發的 token 都會失效：
+
+```bash
+openssl rand -hex 32
+```
 
 ## 商品照片與匯率
 
@@ -307,33 +342,6 @@ nginx 僅開放 `/api/products/photos/<id>/file` 與 `/api/products/photos/<id>/
 
 照片與匯率的產品規則見 [`features.md`](features.md#商品照片) 與
 [`features.md`](features.md#匯率與詢價)。
-
-## Session
-
-### 撤銷
-
-| | 存在哪 | 作用範圍 | 怎麼觸發 |
-|---|---|---|---|
-| `TOKEN_VERSION` | `.env` | **所有人** | 手動 +1 後重啟，例如 `JWT_SECRET_KEY` 外洩時 |
-| `auth_version` | `users` 資料表 | **單一使用者** | 換密碼（管理者重設或自己改）或登出時自動 +1 |
-
-`auth_version` +1 只影響那一個帳號，其他使用者的 token 照常有效：
-
-- 使用者自己改密碼：其他裝置全部登出，這一台會拿到新 token 繼續用。
-- 管理者重設密碼：那個人的所有裝置都登出。
-- 登出：這個帳號的**所有裝置**一起登出，不只是按下登出的那一台。token 是無狀態的，只刪
-  cookie 的話，已經被複製出去的 token 到期前仍然有效，所以登出走的是同一條撤銷路徑。
-
-### 不會續期
-
-沒有 refresh token，也沒有「有在操作就延長」。`EXPIRE_HOURS` 是**登入後多久一定要重新登入**
-的硬上限，跟有沒有在用無關 —— 設 8 小時的話，早上九點登入的人下午五點會被導回登入頁。
-
-### 密碼
-
-- 記得舊密碼 → 自己在設定頁改。
-- 忘記密碼 → 請超級管理者在後台重設（超級管理者全部失聯時用 `make db superuser` 另建一個）。
-  模板沒有 email，所以沒有寄重設連結。
 
 ## 主機的 reverse proxy
 
@@ -417,7 +425,8 @@ ssh -N -L 8080:127.0.0.1:<SYSTEM_PORT> <使用者>@<主機 IP>
 
 ## 用戶端 IP 與限流
 
-登入與註冊以用戶端 IP 限流（`shared/http/rate_limit.py`，數字在 `modules/users/router.py`）。
+登入、改密碼與公開註冊的計數依據、次數及成功後行為見 [`features.md`](features.md#限流)。
+以下是主機必須提供的 IP 轉送與執行環境條件。
 後端只讀 `X-Real-IP`：容器 nginx 先依主機送來的值換掉 `$remote_addr`（見上一節），再以它覆寫這個標頭，
 `apps/api/tests/test_nginx_templates.py` 確保每個 location 都有覆寫。
 
