@@ -1,6 +1,7 @@
 """建立店長帳號, 由 CLI 或已驗證共用註冊碼的 registration 模組使用。
 
 與員工建立流程分開, 避免一般的角色指派繞過店長註冊碼驗證。
+全員撤銷只供握有主機 shell 的 CLI 使用, 不提供 HTTP 入口。
 """
 
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +13,7 @@ from shared.http.errors import LangException
 
 from .errors import UserError
 from .model import UserTable
-from .schema import SuperAdminCreate, UserOperate
+from .schema import SessionRevocation, SuperAdminCreate, UserOperate
 
 
 async def create_super_admin(form_data: SuperAdminCreate) -> UserOperate:
@@ -38,3 +39,8 @@ async def create_super_admin(form_data: SuperAdminCreate) -> UserOperate:
         # 上面查過一次, 這裡只會是查完之後才被別人搶走的 username。
         raise LangException(409, UserError.USERNAME_EXISTS) from exc
     return UserOperate.model_validate(created)
+
+
+async def revoke_all_sessions() -> SessionRevocation:
+    """撤銷所有使用者的登入, 金鑰外洩時仍須更換 JWT_SECRET_KEY。"""
+    return SessionRevocation(affected=await UserTable.revoke_all_sessions())

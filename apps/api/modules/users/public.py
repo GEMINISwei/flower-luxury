@@ -2,6 +2,8 @@
 
 from .model import UserTable
 from .schema import SuperAdminCreate, UserOperate
-from .superuser import create_super_admin
+from .superuser import create_super_admin, revoke_all_sessions
 
-__all__ = ["SuperAdminCreate", "UserOperate", "UserTable", "create_super_admin"]
+__all__ = [
+    "SuperAdminCreate", "UserOperate", "UserTable", "create_super_admin", "revoke_all_sessions",
+]
