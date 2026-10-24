@@ -15,6 +15,7 @@ import { type AccountMenuEntry, type AccountMenuLabel, getAccountMenuEntries } f
 import { NAV_ICONS } from "./nav-icons"
 import { getShellRoutes, isShellLinkActive } from "./navigation"
 import styles from "./shell.module.css"
+import MobileNavigation from "./MobileNavigation"
 
 type NavLinkProps = {
   href: string
@@ -162,23 +163,8 @@ export default function AppShell({
         )}
       </aside>
 
-      <nav className={styles.bottomNavigation} aria-label={t("mobileNav")}>
-        <ShellNavigation area={area} permissions={permissions} variant="bottom" />
-        {/* 手機沒有側欄: 切換區域與登出都在這一格的選單裡。 */}
-        <Menu
-          placement="above"
-          fullWidth
-          triggerLabel={t("accountMenu")}
-          triggerClassName={styles.bottomNavItem}
-          items={accountItems}
-          trigger={
-            <>
-              <span className={styles.bottomNavAvatar} aria-hidden>{avatarText}</span>
-              <span>{t("account")}</span>
-            </>
-          }
-        />
-      </nav>
+      <MobileNavigation area={area} permissions={permissions} nickname={nickname}
+        userRole={userRole} accountItems={accountItems} />
 
       {children}
     </div>

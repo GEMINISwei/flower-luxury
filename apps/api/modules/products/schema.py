@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
@@ -72,6 +73,13 @@ class PhotoInfo(BaseModel):
     url: str
     is_main: bool
     sort_order: int
+    download_url: str | None = None
+
+
+class OriginalPhotoFile(BaseModel):
+    path: Path
+    filename: str
+    media_type: str
 
 
 class PhotoList(SimpleListResponse[PhotoInfo]):

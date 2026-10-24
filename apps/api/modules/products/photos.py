@@ -12,10 +12,10 @@ from shared.db.transaction import transaction
 from shared.http.errors import ensure_found
 from shared.time import utc_now
 
-from .images import MAX_BATCH_BYTES, decode_photo, validate_batch_size
+from .images import MAX_BATCH_BYTES, PreparedPhoto, prepare_photo, validate_batch_size
 from .model import ProductPhotoTable, ProductTable, lock_product
 from .rules import ProductError
-from .schema import PhotoInfo, PhotoList
+from .schema import OriginalPhotoFile, PhotoInfo, PhotoList
 from .storage import track_files
 
 UPLOADS_DIR = Path("/app/uploads/products")
@@ -23,7 +23,9 @@ UPLOADS_DIR = Path("/app/uploads/products")
 
 def info(row: ProductPhotoTable, main_id: str | None) -> PhotoInfo:
     return PhotoInfo(id=str(row.id), url=f"/api/products/photos/{row.id}/file",
-                     is_main=str(row.id) == main_id, sort_order=row.sort_order)
+                     is_main=str(row.id) == main_id, sort_order=row.sort_order,
+                     download_url=(f"/api/products/photos/{row.id}/download"
+                                   if row.original_storage_key else None))
 
 
 async def rows_for(id: str) -> list[ProductPhotoTable]:
@@ -32,7 +34,7 @@ async def rows_for(id: str) -> list[ProductPhotoTable]:
     ).order_by(ProductPhotoTable.sort_order, ProductPhotoTable.id))).all())
 
 
-async def read_batch(files: list[UploadFile]) -> list[bytes]:
+async def read_batch(files: list[UploadFile]) -> list[PreparedPhoto]:
     data: list[bytes] = []
     total = 0
     for file in files:
@@ -41,7 +43,32 @@ async def read_batch(files: list[UploadFile]) -> list[bytes]:
         validate_batch_size([len(item) for item in data] + [len(content)])
         data.append(content)
     validate_batch_size([len(item) for item in data])
-    return [await run_in_threadpool(decode_photo, content) for content in data]
+    return [await run_in_threadpool(prepare_photo, content, file.filename)
+            for content, file in zip(data, files, strict=True)]
+
+
+def storage_path(key: str) -> Path:
+    return UPLOADS_DIR / Path(key).relative_to("products")
+
+
+async def store_photo(
+    photo: PreparedPhoto, product: ProductTable, order: int, actor: CurrentUser, paths: list[Path],
+) -> ProductPhotoTable:
+    key = uuid.uuid4().hex
+    original_key = f"products/originals/{key}.{photo.extension}"
+    display_key = f"products/display/{key}.webp"
+    for storage_key, data in [(original_key, photo.original), (display_key, photo.display)]:
+        path = storage_path(storage_key)
+        paths.append(path)
+        await run_in_threadpool(path.parent.mkdir, parents=True, exist_ok=True)
+        await run_in_threadpool(path.write_bytes, data)
+    row = ProductPhotoTable(product_id=product.id, storage_key=display_key,
+                            original_storage_key=original_key, original_filename=photo.filename,
+                            original_media_type=photo.media_type, sort_order=order,
+                            uploaded_by=actor["id"])
+    active_session().add(row)
+    await active_session().flush()
+    return row
 
 
 async def upload_photos(id: str, files: list[UploadFile], actor: CurrentUser) -> PhotoList:
@@ -52,16 +79,8 @@ async def upload_photos(id: str, files: list[UploadFile], actor: CurrentUser) ->
             product = await lock_product(id)
             existing = await rows_for(id)
             order = max((row.sort_order for row in existing), default=0)
-            await run_in_threadpool(UPLOADS_DIR.mkdir, parents=True, exist_ok=True)
             for offset, content in enumerate(converted, 1):
-                path = UPLOADS_DIR / f"{uuid.uuid4().hex}.webp"
-                paths.append(path)
-                await run_in_threadpool(path.write_bytes, content)
-                row = ProductPhotoTable(product_id=product.id,
-                                        storage_key=f"products/{path.name}",
-                                        sort_order=order + offset, uploaded_by=actor["id"])
-                active_session().add(row)
-                await active_session().flush()
+                row = await store_photo(content, product, order + offset, actor, paths)
                 if product.main_photo_id is None:
                     product.main_photo_id = str(row.id)
             product.updated_by, product.updated_at = actor["id"], utc_now()
@@ -102,7 +121,9 @@ async def delete_photo(id: str, photo_id: str, actor: CurrentUser) -> PhotoList:
     async with transaction():
         product = await lock_product(id)
         row = await owned_photo(id, photo_id)
-        path = UPLOADS_DIR / Path(row.storage_key).name
+        paths = [storage_path(row.storage_key)]
+        if row.original_storage_key:
+            paths.append(storage_path(row.original_storage_key))
         await active_session().delete(row)
         await active_session().flush()
         if product.main_photo_id == photo_id:
@@ -110,16 +131,33 @@ async def delete_photo(id: str, photo_id: str, actor: CurrentUser) -> PhotoList:
             product.main_photo_id = str(remaining[0].id) if remaining else None
         product.updated_by, product.updated_at = actor["id"], utc_now()
         await active_session().flush()
-        track_files(created=[], deleted=[path])
+        track_files(created=[], deleted=paths)
         return await list_photos(id)
 
 
-async def photo_path(photo_id: str) -> Path:
-    row = ensure_found(await active_session().scalar(select(ProductPhotoTable).join(
+async def readable_photo(photo_id: str) -> ProductPhotoTable:
+    return ensure_found(await active_session().scalar(select(ProductPhotoTable).join(
         ProductTable, ProductPhotoTable.product_id == ProductTable.id,
     ).where(ProductPhotoTable.id == parse_uuid(photo_id), ProductTable.deleted_at.is_(None))),
         ProductError.PHOTO_NOT_FOUND)
-    path = UPLOADS_DIR / Path(row.storage_key).name
+
+
+async def photo_path(photo_id: str) -> Path:
+    row = await readable_photo(photo_id)
+    path = storage_path(row.storage_key)
     exists = await run_in_threadpool(path.is_file)
     ensure_found(exists or None, ProductError.PHOTO_NOT_FOUND)
     return path
+
+
+async def original_file(photo_id: str) -> OriginalPhotoFile:
+    row = await readable_photo(photo_id)
+    key = ensure_found(row.original_storage_key, ProductError.ORIGINAL_UNAVAILABLE)
+    path = storage_path(key)
+    exists = await run_in_threadpool(path.is_file)
+    ensure_found(exists or None, ProductError.ORIGINAL_UNAVAILABLE)
+    return OriginalPhotoFile(path=path,
+                             filename=ensure_found(row.original_filename,
+                                                   ProductError.ORIGINAL_UNAVAILABLE),
+                             media_type=ensure_found(row.original_media_type,
+                                                     ProductError.ORIGINAL_UNAVAILABLE))

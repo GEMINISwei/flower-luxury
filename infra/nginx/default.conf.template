@@ -25,7 +25,7 @@ server {
     # 另一半在 next.config.ts (那裡也沒有 `/api/:path*` rewrite), 兩處要一起看。
 
     # 僅開放登入驗證的照片讀取, 一般 API 仍由 Server Component/Action 呼叫.
-    location ~ ^/api/products/photos/[0-9a-f-]+/file$ {
+    location ~ ^/api/products/photos/[0-9a-f-]+/(file|download)$ {
         limit_except GET { deny all; }
         set $photo_upstream http://api:8000;
         proxy_pass $photo_upstream;

@@ -8,6 +8,8 @@ class ProductError(BaseError):
     )
     INVALID_TRANSITION = LangText(zh="不允許此狀態轉換", en="This status transition is not allowed")
     PHOTO_NOT_FOUND = LangText(zh="照片不存在", en="Photo not found")
+    ORIGINAL_UNAVAILABLE = LangText(zh="這張照片沒有可下載的原圖",
+                                   en="The original file is unavailable for this photo")
 
 
 def ensure_transition(source: str, target: str, *, returning: bool = False) -> None:

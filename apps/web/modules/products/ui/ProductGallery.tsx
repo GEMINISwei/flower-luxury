@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { ImageOff, Check, Trash2 } from "lucide-react"
+import { ImageOff, Check, Trash2, Download } from "lucide-react"
 import { Button, ICON_SIZE, StatusBadge } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import type { PhotoInfo, ProductStatus } from "../types"
@@ -29,7 +29,10 @@ export default function ProductGallery({ photos, name, status, isPending, onSetM
           {isMain && <span className={styles.mainBadge}>
             <StatusBadge label={t("main")} variant="warning" /></span>}
         </a>
-        {(caps.canSetMain || caps.canDelete) && <figcaption className={styles.photoActions}>
+        <figcaption className={styles.photoActions}>
+          {photo.download_url ? <a className={styles.downloadPhoto} href={photo.download_url}
+            download><Download size={ICON_SIZE.sm} aria-hidden />{t("downloadOriginal")}</a>
+            : <span className={styles.originalUnavailable}>{t("originalUnavailable")}</span>}
           {caps.canSetMain && <Button variant="outlined" disabled={isPending}
             icon={<Check size={ICON_SIZE.sm} aria-hidden />}
             onClick={() => onSetMain(photo.id)}>
@@ -37,7 +40,7 @@ export default function ProductGallery({ photos, name, status, isPending, onSetM
           {caps.canDelete && <Button variant="outlined" disabled={isPending}
             className={styles.deletePhotoButton} icon={<Trash2 size={ICON_SIZE.sm} aria-hidden />}
             onClick={() => onDelete(photo.id)}>{t("delete")}</Button>}
-        </figcaption>}
+        </figcaption>
       </figure>
     })}
   </section>
