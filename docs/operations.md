@@ -324,7 +324,6 @@ nginx 僅開放 `/api/products/photos/<id>/file` 與 `/api/products/photos/<id>/
 
 人民幣匯率由店長在 `/admin/exchange-rates` 手動設定，定義為 1 CNY 換算的新臺幣金額。
 初始不提供預設匯率。未來詢價保存當次匯率，更換設定不回寫歷史金額。
-功能規格見 [`catalog-workflow.md`](catalog-workflow.md)。
 
 ## Session
 

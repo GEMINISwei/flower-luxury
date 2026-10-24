@@ -47,10 +47,8 @@ flowchart LR
 
 ## 業務功能
 
-品牌、商品、照片、售出鎖定與退回、人民幣匯率的規格與驗收見
-[`docs/catalog-workflow.md`](docs/catalog-workflow.md)。所有登入者共用業務資料，匯率設定限店長使用。
-廠商、詢價匯率保存、成交與利潤快照見
-[`docs/vendor-quotation-workflow.md`](docs/vendor-quotation-workflow.md)。結帳批次不在系統範圍內。
+提供品牌、商品、照片、售出鎖定與退回、人民幣匯率、廠商詢價、成交與利潤快照。
+所有登入者共用業務資料，匯率設定限店長使用。結帳批次不在系統範圍內。
 
 ## 文件
 
