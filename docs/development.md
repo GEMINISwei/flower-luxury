@@ -227,6 +227,33 @@ CI（`.github/workflows/ci.yml`）跑的就是本機指令：`check`（`make che
 建得起來，且 web image 裡沒有真的 Server Action 金鑰）。**本機綠，CI 就綠。** 部署另由
 `deploy.yml` 在 Publish release 時執行，見 [`operations.md`](operations.md#自動部署)。
 
+### AI 協作與署名
+
+AI 實際參與程式、測試、設定或文件的撰寫與修改時，該 commit 必須在訊息末尾加上共同作者署名。
+只有討論或審查時，在 PR 記錄參與情形即可，不列為共同作者。
+
+使用 [GitHub 的共同作者格式](https://docs.github.com/en/pull-requests/how-tos/commit-changes/creating-a-commit-with-multiple-authors)，
+Agent 與 Model 一起放在名稱欄位，email 使用角括號，與提交說明之間空一行：
+
+```text
+feat: add product filters
+
+補上商品篩選，沿用既有分頁條件。
+
+Co-authored-by: AgentName (ModelName) <noreply@provider.example>
+```
+
+- **Agent**：實際使用的開發工具名稱；**Model**：實際使用且能確認的模型名稱與版本，兩者分開記錄。
+  模型名稱或版本無法確認時，以「未揭露」標示無法確認的部分，不自行推測。
+- **email**：依實際模型供應商的主網域，使用 `noreply@<供應商網域>`，例如 OpenAI 使用
+  `noreply@openai.com`、Anthropic 使用 `noreply@anthropic.com`。Agent 工具與模型供應商不同時，
+  以模型供應商為準；供應商無法確認時先詢問使用者，不借用使用者的 email 替 AI 署名。
+  這是專案的署名慣例；GitHub 要將貢獻關聯到帳號時，email 仍須與該帳號關聯。
+- **多 Agent／多模型**：每個實際參與該提交的 Agent／Model 組合各列一行 `Co-authored-by`，同一組不重複列。
+- **原作者**：保留原本的 Git author，以共同作者 trailer 記錄 AI 協作，不為加入 AI 署名而覆寫 author。
+- **Squash merge**：合併前確認最終 commit 保留這個 PR 所有實際共同作者的 trailer，去除重複項目，
+  避免署名只留在分支提交中；即使使用預設合併訊息，也要檢查。
+
 ### 相依升級
 
 系統上線後**不追最新版，只在有漏洞時升**（`.github/dependabot.yml`）：
