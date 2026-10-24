@@ -123,8 +123,6 @@
 }
 
 .price {
-  display: grid;
-  gap: var(--space-1);
   margin: 0;
   justify-self: end;
   text-align: right;
@@ -134,8 +132,6 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-
-.priceLabel { font: var(--fs-xs) var(--font-sans); color: var(--color-text-secondary); }
 
 .infoCard, .flowCard {
   min-width: 0;

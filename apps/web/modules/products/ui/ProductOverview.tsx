@@ -38,8 +38,7 @@ export default function ProductOverview({ product, photos, onPhotos }: {
       <p className={styles.brand}>{product.brand}</p>
     </div>
     <p className={styles.price} aria-label={t("cost_price")}>
-      <span className={styles.priceLabel}>{t("purchaseAmount")}</span>
-      <span>NT$ {product.cost_price.toLocaleString()}</span>
+      NT$ {product.cost_price.toLocaleString()}
     </p>
   </div>
 }
