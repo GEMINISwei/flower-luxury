@@ -144,8 +144,7 @@ cmd_migration() {
     echo "  - 不能在交易裡跑的 DDL（CREATE INDEX CONCURRENTLY）"
 }
 
-# 建立超管的唯一途徑 (第一個、第二個、唯一超管失聯時的救援都是)。做成 CLI 而不是網頁上的
-# 註冊碼: 後者會讓一條公開、未登入、能造出全權限帳號的端點留在網路上。
+# 第一位店長與失聯救援使用 CLI, 公開註冊須先由店長設定共用註冊碼。
 cmd_superuser() {
     require_running
     confirm "將建立一個擁有全部權限的超級管理者帳號，確定要繼續？"
