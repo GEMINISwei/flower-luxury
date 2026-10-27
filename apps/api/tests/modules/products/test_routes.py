@@ -27,5 +27,5 @@ async def test_staff_can_list_products(client, set_current_users, monkeypatch):
         list_data=[], next_cursor=None, prev_cursor=None, has_next=False,
         has_previous=False, total_count=0,
     )))
-    result = await client.get("/api/products/")
+    result = await client.get("/api/products/?limit=20")
     assert result.status_code == 200 and result.json()["total_count"] == 0
