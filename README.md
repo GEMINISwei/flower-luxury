@@ -20,7 +20,7 @@ make start      # 啟動開發環境（首次建置約 2–5 分鐘）
 | 前端 | Next.js 16、React 19、TypeScript、CSS Modules；Vitest、ESLint、knip |
 | 基礎設施 | PostgreSQL 17、Docker Compose（dev／prod）、nginx、GitHub Actions |
 | 功能 | JWT 認證、店長／員工、共用註冊碼、Session 撤銷、登入及註冊限流、游標分頁 |
-| 業務功能 | 共用品牌與廠商、店長匯率設定、商品核心、手機更多導覽與既有視覺主題；照片與商品交易流程後續移入 |
+| 業務功能 | 共用品牌與廠商、店長匯率設定、商品核心與照片、手機更多導覽與既有視覺主題；商品交易流程後續移入 |
 | 前後端契約 | 後端產生 OpenAPI → 前端型別，端點、權限、語系寫錯都是編譯錯誤 |
 | i18n | 前後端一致的中英雙語，漏翻譯會編譯失敗 |
 
