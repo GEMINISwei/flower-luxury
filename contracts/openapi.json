@@ -15,6 +15,23 @@
         "title": "AppVersion",
         "type": "object"
       },
+      "Body_upload_photos_route_api_products__id__photos_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "title": "Body_upload_photos_route_api_products__id__photos_post",
+        "type": "object"
+      },
       "BrandCreate": {
         "properties": {
           "name": {
@@ -237,6 +254,19 @@
         "title": "LanguageList",
         "type": "object"
       },
+      "MainPhotoUpdate": {
+        "properties": {
+          "photo_id": {
+            "title": "Photo Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "photo_id"
+        ],
+        "title": "MainPhotoUpdate",
+        "type": "object"
+      },
       "PasswordChange": {
         "description": "使用者更換**自己**的密碼 (`UserResetPassword` 是管理者替別人重設, 不需要舊密碼)。\n\n`current_password` 用 `Password` (只要求非空) 而不是 `NewPassword`: 它要比對的是一把\n**已經存在**的密碼, 可能是在規則變嚴之前設的。拿新規則去擋它, 會讓最應該換密碼的那批\n人反而換不了 —— 而且那個錯誤會出現在「目前密碼」欄位上, 看起來像打錯了。",
         "properties": {
@@ -308,6 +338,66 @@
           "count"
         ],
         "title": "PermissionOptionList",
+        "type": "object"
+      },
+      "PhotoInfo": {
+        "properties": {
+          "download_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Download Url"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_main": {
+            "title": "Is Main",
+            "type": "boolean"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "is_main",
+          "sort_order"
+        ],
+        "title": "PhotoInfo",
+        "type": "object"
+      },
+      "PhotoList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "list_data": {
+            "items": {
+              "$ref": "#/components/schemas/PhotoInfo"
+            },
+            "title": "List Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "list_data",
+          "count"
+        ],
+        "title": "PhotoList",
         "type": "object"
       },
       "ProductCategory": {
@@ -1885,6 +1975,86 @@
         ]
       }
     },
+    "/api/products/photos/{photo_id}/download": {
+      "get": {
+        "operationId": "download_photo_route_api_products_photos__photo_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Photo Route",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/products/photos/{photo_id}/file": {
+      "get": {
+        "operationId": "get_photo_file_route_api_products_photos__photo_id__file_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Photo File Route",
+        "tags": [
+          "products"
+        ]
+      }
+    },
     "/api/products/{id}": {
       "delete": {
         "operationId": "delete_product_route_api_products__id__delete",
@@ -2054,6 +2224,201 @@
           }
         },
         "summary": "Get History Route",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/products/{id}/photos": {
+      "get": {
+        "operationId": "get_photos_route_api_products__id__photos_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Photos Route",
+        "tags": [
+          "products"
+        ]
+      },
+      "post": {
+        "operationId": "upload_photos_route_api_products__id__photos_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_photos_route_api_products__id__photos_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Photos Route",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/products/{id}/photos/main": {
+      "patch": {
+        "operationId": "set_main_photo_route_api_products__id__photos_main_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MainPhotoUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Main Photo Route",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/products/{id}/photos/{photo_id}": {
+      "delete": {
+        "operationId": "delete_photo_route_api_products__id__photos__photo_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Photo Route",
         "tags": [
           "products"
         ]

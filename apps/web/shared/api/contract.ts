@@ -192,3 +192,17 @@ export type DeleteRequest<P extends ApiPathsFor<"delete">> = {
  *     export async function createRole(data: ApiRequestBody<"/roles/", "post">) { … }
  */
 export type ApiRequestBody<P extends string, M extends HttpMethod> = RequestBody<P, M>
+
+/** 只允許 OpenAPI 宣告 multipart/form-data 的 POST 端點. */
+export type ApiUploadPaths = {
+  [P in ApiPathsFor<"post">]: [RequestBodyContent<P, "post">] extends [never]
+    ? never
+    : RequestBodyContent<P, "post"> extends { "multipart/form-data": unknown } ? P : never
+}[ApiPathsFor<"post">]
+
+export type UploadRequest<P extends ApiUploadPaths> = {
+  url: P
+  auth?: AuthPolicy
+  data: FormData
+  refresh?: RefreshInfo
+} & PathParamsField<P, "post">

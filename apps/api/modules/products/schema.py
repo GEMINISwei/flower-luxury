@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
@@ -55,3 +56,29 @@ class StatusHistoryInfo(BaseModel):
 
 class StatusHistoryList(SimpleListResponse[StatusHistoryInfo]):
     pass
+
+
+class PhotoFile(BaseModel):
+    path: Path
+
+
+class PhotoInfo(BaseModel):
+    id: str
+    url: str
+    is_main: bool
+    sort_order: int
+    download_url: str | None = None
+
+
+class OriginalPhotoFile(BaseModel):
+    path: Path
+    filename: str
+    media_type: str
+
+
+class PhotoList(SimpleListResponse[PhotoInfo]):
+    pass
+
+
+class MainPhotoUpdate(BaseModel):
+    photo_id: UuidText
