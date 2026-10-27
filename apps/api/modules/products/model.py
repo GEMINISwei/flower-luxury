@@ -106,3 +106,45 @@ def product_filters(keyword: str | None, **filters: Any) -> list[Condition]:
             column = getattr(ProductTable, field)
             where.append(ilike_contains(column, value) if field == "color" else column == value)
     return where
+
+
+class ProductPhotoTable(BaseTable):
+    __tablename__ = "product_photos"
+
+    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"))
+    storage_key: Mapped[str] = mapped_column(unique=True)
+    original_storage_key: Mapped[str | None] = mapped_column(unique=True)
+    original_filename: Mapped[str | None]
+    original_media_type: Mapped[str | None]
+    sort_order: Mapped[int]
+    uploaded_by: Mapped[str]
+
+    __table_args__ = (
+        Index("ix_product_photos_product_id", "product_id"),
+        CheckConstraint(
+            "(original_storage_key IS NULL AND original_filename IS NULL "
+            "AND original_media_type IS NULL) OR (original_storage_key IS NOT NULL "
+            "AND original_filename IS NOT NULL AND original_media_type IS NOT NULL)",
+            name="original_complete",
+        ),
+    )
+
+
+
+async def rows_for(id: str) -> list[ProductPhotoTable]:
+    return list((await active_session().scalars(select(ProductPhotoTable).where(
+        ProductPhotoTable.product_id == parse_uuid(id),
+    ).order_by(ProductPhotoTable.sort_order, ProductPhotoTable.id))).all())
+
+async def owned_photo(id: str, photo_id: str) -> ProductPhotoTable:
+    row = await active_session().scalar(select(ProductPhotoTable).where(
+        ProductPhotoTable.id == parse_uuid(photo_id),
+        ProductPhotoTable.product_id == parse_uuid(id),
+    ))
+    return ensure_found(row, ProductError.PHOTO_NOT_FOUND)
+
+async def readable_photo(photo_id: str) -> ProductPhotoTable:
+    return ensure_found(await active_session().scalar(select(ProductPhotoTable).join(
+        ProductTable, ProductPhotoTable.product_id == ProductTable.id,
+    ).where(ProductPhotoTable.id == parse_uuid(photo_id), ProductTable.deleted_at.is_(None))),
+        ProductError.PHOTO_NOT_FOUND)

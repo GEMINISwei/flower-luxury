@@ -1,4 +1,4 @@
-// **不要在這個檔案加上 "use server"。** 這四個泛用 helper 會變成公開端點, 任何人都能拿來打
+// **不要在這個檔案加上 "use server"。** 這些泛用 helper 會變成公開端點, 任何人都能拿來打
 // **任意**後端路徑 —— 等於把 nginx 刻意關掉的 `/api/` 代理開回來, 而且介面更寬。
 // 要開放寫入請在各模組的 actions.ts 包一層具名、窄介面的 Server Action。
 import "server-only"
@@ -19,6 +19,8 @@ import {
 } from "@/shared/session/login-contract"
 import type {
   ApiPathsFor,
+  ApiUploadPaths,
+  UploadRequest,
   ApiResponse,
   ApiSuccessData,
   AuthPolicy,
@@ -146,11 +148,27 @@ type RequestOptions = {
   auth?: AuthPolicy
   query?: DataObject
   body?: { contentType: "json" | "form-data"; data: DataObject }
+    | { contentType: "multipart"; data: FormData }
   revalidate?: RevalidateInfo
   refresh?: RefreshInfo
   // 只有 POST/PATCH/DELETE 會把 204 當成成功的「無內容」回應; GET 維持原行為,
   // 不特別處理 204 (若後端真的對 GET 回 204, 會落入下方 res.json() 而被 catch 包成 error)。
   noContentMessage?: string
+}
+
+function requestContentType(body: RequestOptions["body"]) {
+  if (!body || body.contentType === "multipart") return undefined
+  return body.contentType
+}
+
+function buildRequestBody(body: RequestOptions["body"]): BodyInit | undefined {
+  if (!body) return undefined
+  // fetch 自己設定含 boundary 的 Content-Type, 才能保留原始檔案與重複欄位.
+  if (body.contentType === "multipart") return body.data
+  const data = getBodyData(body.data)
+  return body.contentType === "form-data"
+    ? new URLSearchParams(Object.entries(data).map(([key, value]) => [key, String(value)]))
+    : JSON.stringify(data)
 }
 
 /**
@@ -167,22 +185,13 @@ async function buildRequestInit(
       locale: await getLocale(),
       authRequired: isAuthRequired(options),
       token,
-      contentType: options.body?.contentType,
+      contentType: requestContentType(options.body),
       requestId: await getRequestId(),
       clientIp: await getClientIp(),
     }),
   }
 
-  if (options.body) {
-    const bodyData = getBodyData(options.body.data)
-    if (options.body.contentType === "form-data") {
-      config.body = new URLSearchParams(
-        Object.entries(bodyData).map(([key, value]) => [key, String(value)])
-      )
-    } else {
-      config.body = JSON.stringify(bodyData)
-    }
-  }
+  config.body = buildRequestBody(options.body)
 
   if (options.method === "GET") {
     const hasRevalidate = options.revalidate && Object.keys(options.revalidate).length > 0
@@ -253,7 +262,7 @@ async function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
   }
 }
 
-// 四個 helper 的回應型別都由 `url` 與 method 推導 (`ApiSuccessData<P, method>`); 呼叫端
+// 請求 helper 的回應型別都由 `url` 與 method 推導 (`ApiSuccessData<P, method>`); 呼叫端
 // 不需也不能自行指定泛型, 端點與回應形狀會維持一致。
 
 export async function apiGet<P extends ApiPathsFor<"get">>(
@@ -306,6 +315,19 @@ export async function apiDelete<P extends ApiPathsFor<"delete">>(
     auth: deleteRequest.auth,
     query: deleteRequest.query as DataObject | undefined,
     refresh: deleteRequest.refresh,
+    noContentMessage: "No Content",
+  })
+}
+
+export async function apiUpload<P extends ApiUploadPaths>(
+  uploadRequest: UploadRequest<P>,
+): Promise<ApiResponse<ApiSuccessData<P, "post">>> {
+  return request<ApiSuccessData<P, "post">>({
+    method: "POST",
+    url: resolvePath(uploadRequest.url, uploadRequest.params as PathParamValues | undefined),
+    auth: uploadRequest.auth,
+    body: { contentType: "multipart", data: uploadRequest.data },
+    refresh: uploadRequest.refresh,
     noContentMessage: "No Content",
   })
 }

@@ -1,0 +1,14 @@
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.section { display: grid; gap: var(--space-4); padding-top: var(--space-5); border-top: var(--border-width-hairline) solid var(--color-border-subtle); }
+.hint { color: var(--color-text-secondary); font-size: var(--fs-sm); }
+.error { color: var(--color-danger-fg); }
+.previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--size-media-preview)), 1fr)); gap: var(--space-4); }
+.photo { display: grid; align-content: start; gap: var(--space-2); margin: 0; min-width: 0; }
+.photo figcaption { overflow-wrap: anywhere; color: var(--color-text-secondary); font-size: var(--fs-xs); }
+.preview, .previewFallback { width: 100%; height: var(--size-media-preview); border-radius: var(--radius-sm); background: var(--color-surface-input); }
+.preview { object-fit: contain; }
+.previewFallback { display: grid; place-items: center; padding: var(--space-3); color: var(--color-text-muted); font-size: var(--fs-sm); text-align: center; }
+
+@media (max-width: 720px) {
+  .compact { flex-direction: column; }
+}

@@ -1,4 +1,6 @@
-import type { ProductStatus, StatusHistoryInfo } from "./types"
+import type { Language } from "@/shared/api/entities"
+import { validatePhotoBatch } from "./validation"
+import type { PhotoInfo, ProductStatus, StatusHistoryInfo } from "./types"
 
 export function productCapabilities(status: ProductStatus) {
   return { canEdit: status === "not_acquired", canDelete: status === "not_acquired" }
@@ -42,3 +44,38 @@ export function appendProducts<T extends { id: string }>(current: T[], incoming:
   })]
 }
 
+
+export function photoCapabilities(status: ProductStatus, isMain: boolean) {
+  const canChange = productCapabilities(status).canEdit && !isMain
+  return { canSetMain: canChange, canDelete: canChange }
+}
+
+export function gallerySelection(photos: readonly PhotoInfo[], selectedId: string | null) {
+  const ordered = [...photos].sort((left, right) =>
+    Number(right.is_main) - Number(left.is_main) || left.sort_order - right.sort_order)
+  return {
+    photos: ordered,
+    selected: ordered.find((photo) => photo.id === selectedId) ?? ordered[0] ?? null,
+  }
+}
+
+
+export function selectProductPhotos<T extends { size: number; name: string; type: string }>(
+  current: T[], incoming: T[], locale: Language,
+): { files: T[]; error?: string } {
+  if (!incoming.length) return { files: current }
+  const files = [...current, ...incoming]
+  const error = validatePhotoBatch(files, locale)
+  return error ? { files: current, error } : { files }
+}
+
+export function productFormCapabilities(
+  editing: boolean, createdId: string | null, pending: boolean,
+) {
+  return {
+    fieldsDisabled: pending || Boolean(createdId),
+    showPhotos: !editing,
+    canSelectPhotos: !editing && !pending,
+    retryPhotos: Boolean(createdId),
+  }
+}

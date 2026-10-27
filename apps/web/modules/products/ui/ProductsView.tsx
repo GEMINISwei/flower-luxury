@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronRight, Plus, SlidersHorizontal, RefreshCw } from "lucide-react"
+import Image from "next/image"
+import { ChevronRight, ImageOff, Plus, SlidersHorizontal, RefreshCw } from "lucide-react"
 import { Button, Container, ErrorState, ICON_SIZE, PageHeader, Pagination,
   StatusBadge, usePaginationResetHref } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
@@ -52,6 +53,12 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
           className={index >= products.length ? styles.appended : undefined}>
           <td className={styles.primary}>
             <Link href={`/products/${product.id}`} className={styles.product}>
+              <span className={styles.thumbnail}>
+                {product.main_photo_id
+                  ? <Image unoptimized width={64} height={64}
+                    src={`/api/products/photos/${product.main_photo_id}/file`} alt="" />
+                  : <ImageOff size={ICON_SIZE.md} aria-hidden />}
+              </span>
               <span className={styles.identity}><strong>{product.name}</strong>
                 <span className={styles.sku}>{product.sku}</span></span>
             </Link>

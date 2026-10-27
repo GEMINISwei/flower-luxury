@@ -226,6 +226,10 @@ export async function updateRole(id: string, data: ApiRequestBody<"/roles/{id}",
 - 需要目前登入者時用 `@/modules/auth/public.server` 的 `getCurrentUser()`；密碼規則在
   `@/modules/auth/public.client`。
 
+檔案上傳使用 `apiUpload({ url, params, data: formData, refresh })`，只接受 OpenAPI 宣告 multipart 的 POST。
+它沿用相同的認證、Session 過期導向與錯誤處理；不要在模組另寫一份 fetch 或手動指定 multipart boundary。
+檔案格式與功能容量限制仍由模組驗證，規則見[商品照片](features/product-photos.md)。
+
 ## Migration 注意事項
 
 資料表**只由 migration 建立**（Alembic，revision 在 `apps/api/migrations/versions/`）。

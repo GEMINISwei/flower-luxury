@@ -25,3 +25,16 @@ function validInteger(value: string, min: number, max: number): boolean {
   const number = Number(value)
   return Boolean(value.trim()) && Number.isInteger(number) && number >= min && number <= max
 }
+
+export function validatePhotoBatch(
+  files: readonly { size: number; name: string; type: string }[], locale: Language,
+): string | undefined {
+  const t = translate(productMessages, locale)
+  if (!files.length || files.some((file) => file.size <= 0)
+      || files.reduce((sum, file) => sum + file.size, 0) > 15 * 1024 * 1024) {
+    return t("batchInvalid")
+  }
+  if (files.some((file) => !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name))) {
+    return t("formatInvalid")
+  }
+}

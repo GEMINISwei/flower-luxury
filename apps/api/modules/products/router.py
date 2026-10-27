@@ -1,13 +1,17 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile
+from fastapi.responses import FileResponse
 
 from shared.auth.contracts import CurrentUser
 from shared.auth.dependency import check_user_permission
+from shared.db.session import release_connection
 from shared.http.schema import PaginationParams, UuidText
 
-from . import service
+from . import photos, service
 from .schema import (
+    MainPhotoUpdate,
+    PhotoList,
     ProductCategory,
     ProductCreate,
     ProductInfo,
@@ -39,6 +43,23 @@ async def create_product_route(
     return await service.create_product(form_data, actor)
 
 
+@router.get("/photos/{photo_id}/file")
+async def get_photo_file_route(
+    photo_id: UuidText, _: CurrentUser = Depends(check_user_permission()),
+) -> FileResponse:
+    return FileResponse((await photos.photo_path(photo_id)).path, media_type="image/webp",
+                        headers={"Cache-Control": "private, no-store", "Vary": "Cookie"})
+
+
+@router.get("/photos/{photo_id}/download")
+async def download_photo_route(
+    photo_id: UuidText, _: CurrentUser = Depends(check_user_permission()),
+) -> FileResponse:
+    original = await photos.original_file(photo_id)
+    return FileResponse(original.path, media_type=original.media_type, filename=original.filename,
+                        headers={"Cache-Control": "private, no-store", "Vary": "Cookie"})
+
+
 @router.get("/{id}")
 async def get_product_route(
     id: UuidText, _: CurrentUser = Depends(check_user_permission()),
@@ -66,3 +87,34 @@ async def get_history_route(
     id: UuidText, _: CurrentUser = Depends(check_user_permission()),
 ) -> StatusHistoryList:
     return await service.get_history(id)
+
+
+@router.get("/{id}/photos")
+async def get_photos_route(
+    id: UuidText, _: CurrentUser = Depends(check_user_permission()),
+) -> PhotoList:
+    return await photos.list_photos(id)
+
+
+@router.post("/{id}/photos")
+async def upload_photos_route(
+    id: UuidText, files: list[UploadFile],
+    actor: CurrentUser = Depends(check_user_permission()),
+) -> PhotoList:
+    await release_connection()
+    return await photos.upload_photos(id, files, actor)
+
+
+@router.patch("/{id}/photos/main")
+async def set_main_photo_route(
+    id: UuidText, form_data: MainPhotoUpdate,
+    actor: CurrentUser = Depends(check_user_permission()),
+) -> PhotoList:
+    return await photos.set_main_photo(id, form_data.photo_id, actor)
+
+
+@router.delete("/{id}/photos/{photo_id}")
+async def delete_photo_route(
+    id: UuidText, photo_id: UuidText, actor: CurrentUser = Depends(check_user_permission()),
+) -> PhotoList:
+    return await photos.delete_photo(id, photo_id, actor)

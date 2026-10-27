@@ -96,6 +96,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/products/photos/{photo_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Photo Route */
+        get: operations["download_photo_route_api_products_photos__photo_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/photos/{photo_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Photo File Route */
+        get: operations["get_photo_file_route_api_products_photos__photo_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/products/{id}": {
         parameters: {
             query?: never;
@@ -127,6 +161,58 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Photos Route */
+        get: operations["get_photos_route_api_products__id__photos_get"];
+        put?: never;
+        /** Upload Photos Route */
+        post: operations["upload_photos_route_api_products__id__photos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}/photos/main": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set Main Photo Route */
+        patch: operations["set_main_photo_route_api_products__id__photos_main_patch"];
+        trace?: never;
+    };
+    "/api/products/{id}/photos/{photo_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Photo Route */
+        delete: operations["delete_photo_route_api_products__id__photos__photo_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -459,6 +545,11 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** Body_upload_photos_route_api_products__id__photos_post */
+        Body_upload_photos_route_api_products__id__photos_post: {
+            /** Files */
+            files: string[];
+        };
         /** BrandCreate */
         BrandCreate: {
             /** Name */
@@ -537,6 +628,11 @@ export interface components {
             /** List Data */
             list_data: components["schemas"]["LanguageInfo"][];
         };
+        /** MainPhotoUpdate */
+        MainPhotoUpdate: {
+            /** Photo Id */
+            photo_id: string;
+        };
         /**
          * PasswordChange
          * @description 使用者更換**自己**的密碼 (`UserResetPassword` 是管理者替別人重設, 不需要舊密碼)。
@@ -576,6 +672,26 @@ export interface components {
             count: number;
             /** List Data */
             list_data: components["schemas"]["PermissionInfo"][];
+        };
+        /** PhotoInfo */
+        PhotoInfo: {
+            /** Download Url */
+            download_url?: string | null;
+            /** Id */
+            id: string;
+            /** Is Main */
+            is_main: boolean;
+            /** Sort Order */
+            sort_order: number;
+            /** Url */
+            url: string;
+        };
+        /** PhotoList */
+        PhotoList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["PhotoInfo"][];
         };
         /** @enum {string} */
         ProductCategory: "鞋子" | "配飾" | "皮件" | "包包" | "帽子" | "衣服" | "其他";
@@ -1199,6 +1315,68 @@ export interface operations {
             };
         };
     };
+    download_photo_route_api_products_photos__photo_id__download_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                photo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_photo_file_route_api_products_photos__photo_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                photo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_product_route_api_products__id__get: {
         parameters: {
             query?: never;
@@ -1314,6 +1492,139 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusHistoryList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_photos_route_api_products__id__photos_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_photos_route_api_products__id__photos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_photos_route_api_products__id__photos_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_main_photo_route_api_products__id__photos_main_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MainPhotoUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_photo_route_api_products__id__photos__photo_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                photo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoList"];
                 };
             };
             /** @description Validation Error */

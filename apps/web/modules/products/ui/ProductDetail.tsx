@@ -6,9 +6,10 @@ import { Button, FormPageShell, ICON_SIZE, Modal, Surface } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { BrandInfo } from "@/modules/brands/public.client"
-import type { ProductInfo, StatusHistoryInfo } from "../types"
+import type { PhotoInfo, ProductInfo, StatusHistoryInfo } from "../types"
 import { productMessages } from "../i18n"
 import { productCapabilities } from "../capabilities"
+import PhotoPanel from "./PhotoPanel"
 import ProductForm from "./ProductForm"
 import ProductOverview from "./ProductOverview"
 import StatusTimeline from "./StatusTimeline"
@@ -16,12 +17,12 @@ import DeleteProductDialog from "./DeleteProductDialog"
 import styles from "./product-detail.module.css"
 
 export default function ProductDetail({
-  product, brands, histories,
+  product, brands, histories, photos,
 }: {
-  product: ProductInfo; brands: BrandInfo[]; histories: StatusHistoryInfo[]
+  product: ProductInfo; brands: BrandInfo[]; histories: StatusHistoryInfo[]; photos: PhotoInfo[]
 }) {
   const t = useT(productMessages)
-  const [action, setAction] = useState<"edit" | "delete" | null>(null)
+  const [action, setAction] = useState<"edit" | "delete" | "photos" | null>(null)
   const caps = productCapabilities(product.status)
   const basic = [
     [t("model_name"), product.model_name], [t("serial_number"), product.serial_number],
@@ -39,7 +40,7 @@ export default function ProductDetail({
     </>}>
     <div className={styles.stack}>
       <section className={styles.summary}>
-        <ProductOverview product={product} />
+        <ProductOverview product={product} photos={photos} onPhotos={() => setAction("photos")} />
         <Surface className={styles.infoCard}>
           <h3>{t("basicInfo")}</h3>
           <dl className={styles.details}>
@@ -59,6 +60,8 @@ export default function ProductDetail({
       <ProductForm key={product.id} product={product} brands={brands}
         onSaved={() => setAction(null)} />
     </Modal>}
+    {action === "photos" && <PhotoPanel id={product.id} name={product.name} photos={photos}
+      status={product.status} onClose={() => setAction(null)} />}
     {action === "delete" && caps.canDelete && <DeleteProductDialog id={product.id}
       name={product.name} onClose={() => setAction(null)} />}
   </FormPageShell>
