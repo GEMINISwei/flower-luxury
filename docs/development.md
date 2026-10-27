@@ -13,9 +13,12 @@ make init dev   # 產生 .env（MODE=development，金鑰自動產生）、安�
 make start      # 啟動 postgres → migrate → api → web → nginx（首次建置約 2–5 分鐘）
 ```
 
-環境起來之後用 `make db superuser` 建立第一個帳號（網頁上沒有註冊入口），再打開
-`http://localhost:{SYSTEM_PORT}`（預設 3000）登入。`migrate` 停在 `Exited (0)`、`nginx` 沒有 `(healthy)`
-都是正常的。
+環境起來之後用 `make db superuser` 建立第一位店長，再打開 `http://localhost:{SYSTEM_PORT}`
+（預設 3000）登入。店長在 `/admin/registration` 設定共用註冊碼後，持有有效碼者可從 `/signup`
+註冊店長；尚未設定註冊碼時無法公開註冊店長。員工由店長在使用者管理建立，CLI 仍可用於新增店長
+與失聯救援，見[帳號、角色與密碼](features/accounts-roles.md)及[店長註冊](features/registration.md)。
+
+`migrate` 停在 `Exited (0)`、`nginx` 沒有 `(healthy)` 都是正常的。
 
 ### 用手機測試
 

@@ -1,7 +1,7 @@
-# Project Starter
+# Flower Luxury
 
-FastAPI + Next.js 全端起始模板，開箱即有認證、角色權限、中英雙語與 migration。
-以**模組化**與**可測試**為優先：功能切成模組，模組邊界由測試強制執行。
+精品商品與交易管理系統，供店長與員工共用品牌、廠商、商品照片、詢價與成交記錄。
+以 FastAPI + Next.js 建置，支援中英雙語與手機操作；功能以模組劃分，模組邊界由測試強制執行。
 
 ## Quickstart
 
@@ -12,17 +12,31 @@ make init dev   # 產生 .env（MODE=development，金鑰自動產生）並安�
 make start      # 啟動開發環境（首次建置約 2–5 分鐘）
 ```
 
+環境啟動後執行 `make db superuser` 建立第一位店長，再開啟 `http://localhost:{SYSTEM_PORT}`
+（預設 3000）登入。店長可在管理區設定共用註冊碼，讓持有有效碼者從 `/signup` 註冊店長；
+員工由店長在使用者管理建立。詳細規則見[帳號、角色與密碼](docs/features/accounts-roles.md)及
+[店長註冊](docs/features/registration.md)。
+
 ## 包含什麼
 
 | | |
 |---|---|
-| 後端 | FastAPI、SQLAlchemy 2.0 async、Alembic、Python 3.14；pytest、ruff、mypy |
+| 後端 | FastAPI、SQLAlchemy 2.1 async、Alembic、Python 3.14；pytest、ruff、mypy |
 | 前端 | Next.js 16、React 19、TypeScript、CSS Modules；Vitest、ESLint、knip |
-| 基礎設施 | PostgreSQL 17、Docker Compose（dev／prod）、nginx、GitHub Actions |
+| 基礎設施 | Node.js 24、PostgreSQL 17、Docker Compose（dev／prod）、nginx、GitHub Actions |
 | 功能 | JWT 認證、店長／員工、共用註冊碼、Session 撤銷、登入及註冊限流、游標分頁 |
-| 業務功能 | 共用品牌與廠商、店長匯率設定、商品核心與照片、詢價成交退回、手機更多導覽與既有視覺主題 |
+| 業務功能 | 共用品牌與廠商、店長匯率設定、商品建檔與照片、詢價、成交快照、帶原因退回與再次成交 |
 | 前後端契約 | 後端產生 OpenAPI → 前端型別，端點、權限、語系寫錯都是編譯錯誤 |
 | i18n | 前後端一致的中英雙語，漏翻譯會編譯失敗 |
+
+相依版本以後端 [`pyproject.toml`](apps/api/pyproject.toml) 與 [`uv.lock`](apps/api/uv.lock)、
+前端 [`package.json`](apps/web/package.json) 與 [`package-lock.json`](apps/web/package-lock.json)
+為準；Node.js 版本線見 [`.nvmrc`](apps/web/.nvmrc)，容器版本見
+[`docker-compose.yml`](infra/docker/docker-compose.yml)。
+
+店長可管理員工、註冊碼與匯率；員工可操作商品、照片與交易。所有登入者共用業務資料，沒有多店資料隔離。
+照片支援 JPEG、PNG、WebP、HEIC，保留原檔並提供需登入的下載；已出售商品唯讀，退回後可再次成交，
+過去成交快照與退回原因持續保留。
 
 ## 架構
 
@@ -43,7 +57,8 @@ flowchart LR
     G["migrate"] -.->|"跑完才啟動 api"| A
 ```
 
-瀏覽器只認得 nginx，碰不到 api。
+瀏覽器經 nginx 存取系統；業務 API 由 Next.js 在 compose 內網呼叫。
+照片顯示與原圖下載另外經 nginx 轉送至 API，仍由後端驗證 Session。
 
 ## 文件
 
@@ -52,16 +67,16 @@ flowchart LR
 | [`AGENTS.md`](AGENTS.md) | 給 AI agent 的規則與陷阱 |
 | [`docs/architecture.md`](docs/architecture.md) | 依賴規則、模組介面、目錄結構、前後端契約 |
 | [`docs/development.md`](docs/development.md) | 指令、測試策略、程式碼風格、CI |
-| [`docs/features/`](docs/features/README.md) | 功能怎麼運作，一個主題一份：帳號與角色、Session、限流、語系 |
-| [`docs/extending.md`](docs/extending.md) | 開新案時的擴充項目：新增模組、權限、migration、語系 |
+| [`docs/features/`](docs/features/README.md) | 帳號與註冊、Session、品牌與廠商、商品照片、詢價與成交等功能規則 |
+| [`docs/extending.md`](docs/extending.md) | 擴充系統：新增模組、權限、migration、語系 |
 | [`docs/operations.md`](docs/operations.md) | 部署、主機設定、備份與救援 |
 | [`docs/decisions/`](docs/decisions/README.md) | 設計決策（ADR）：刻意不採用主流做法的地方與理由 |
 
-## 開新專案時
+## 移植狀態
 
-1. 複製這份目錄，`make init dev` 會順便 `git init`。
-2. 改寫這份 README、[`LICENSE`](LICENSE) 與 `.env.example` 的 `COMPOSE_PROJECT_NAME` 預設值。
-3. 照 [`docs/development.md`](docs/development.md#開發流程) 的 checklist 設定 GitHub 一次
-   （squash merge、`main` 的 ruleset、Dependency graph、Dependabot 警示與安全更新）。
-4. 在 `apps/web/app/theme.css` 覆寫設計變數決定視覺（名字與預設值在 `shared/ui/styles/tokens.css`）。
-5. 照 [`docs/extending.md`](docs/extending.md#新增一個功能模組) 加入第一個模組。
+店長／員工、共用註冊碼、品牌與廠商、匯率、商品、照片及交易功能已移植。
+目前照片與交易分別有 E2E；員工從建商品、上傳照片到成交、退回與再成交的單一完整案例，
+以及英文完整操作、手機原生相機與真實 HEIC 選檔／下載，仍待驗收。
+
+舊資料與照片搬移、正式發版與部署另案處理。主機設定確認及備份還原演練也尚未完成；
+現有操作文件見[部署與維運](docs/operations.md)，功能變更見[變更紀錄](CHANGELOG.md)。
