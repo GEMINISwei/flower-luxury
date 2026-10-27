@@ -20,12 +20,12 @@ test("店長新增員工後，列表看得到該員工", async ({ page }) => {
   await expect(page.getByRole("cell", { name: member.nickname, exact: true })).toBeVisible()
 })
 
-test("一般帳號進入管理區會被導回首頁", async ({ page }) => {
+test("一般帳號進入管理區會被導回商品列表", async ({ page }) => {
   await login(page, member)
 
   await page.goto("/admin/users")
 
-  await expect(page).toHaveURL("/")
+  await expect(page).toHaveURL("/products")
 })
 
 test("登出後其他已登入的裝置也會被登出", async ({ browser }) => {
