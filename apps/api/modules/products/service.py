@@ -1,0 +1,91 @@
+from typing import Literal
+
+from sqlalchemy import select
+
+from modules.brands.public import require_active_brand
+from shared.auth.contracts import CurrentUser
+from shared.db.session import active_session
+from shared.db.table import parse_uuid
+from shared.db.transaction import transaction
+from shared.http.errors import ensure_found
+from shared.time import utc_now
+
+from .errors import ProductError
+from .model import (
+    ProductHistoryTable,
+    ProductTable,
+    generate_sku,
+    lock_product,
+    product_fields,
+    product_filters,
+)
+from .schema import ProductCreate, ProductInfo, ProductList, StatusHistoryInfo, StatusHistoryList
+
+
+async def record_status(row: ProductTable, source: str | None, actor: CurrentUser,
+                        action: str, reason: str | None) -> None:
+    await ProductHistoryTable.create(data={
+        "product_id": row.id, "from_status": source, "to_status": row.status,
+        "action": action, "reason": reason, "changed_by": actor["id"],
+        "operator_name": actor["username"], "changed_at": utc_now(),
+    })
+
+
+async def create_product(form_data: ProductCreate, actor: CurrentUser) -> ProductInfo:
+    async with transaction():
+        await require_active_brand(form_data.brand_id)
+        row = ProductTable(**product_fields(form_data), sku=generate_sku(),
+                           status="not_acquired", created_by=actor["id"])
+        active_session().add(row)
+        await active_session().flush()
+        await record_status(row, None, actor, "create", None)
+        return await get_product(str(row.id))
+
+
+async def get_product(id: str) -> ProductInfo:
+    result = ensure_found(await ProductTable.find_detail_by_id(id), ProductError.NOT_FOUND)
+    ensure_found(result if result["deleted_at"] is None else None, ProductError.NOT_FOUND)
+    return ProductInfo.model_validate(result)
+
+
+async def update_product(id: str, form_data: ProductCreate, actor: CurrentUser) -> ProductInfo:
+    async with transaction():
+        row = await lock_product(id)
+        await require_active_brand(form_data.brand_id, existing_id=str(row.brand_id))
+        for field, value in product_fields(form_data).items():
+            setattr(row, field, value)
+        row.updated_by, row.updated_at = actor["id"], utc_now()
+        await active_session().flush()
+        # 品牌可能在同一個 session 變更, 避免關聯快取顯示舊名稱.
+        active_session().expire(row, ["brand_record"])
+        return await get_product(id)
+
+
+async def delete_product(id: str, actor: CurrentUser) -> ProductInfo:
+    async with transaction():
+        row = await lock_product(id)
+        result = await get_product(id)
+        row.deleted_at, row.updated_at, row.updated_by = utc_now(), utc_now(), actor["id"]
+        await active_session().flush()
+        return result
+
+
+async def get_history(id: str) -> StatusHistoryList:
+    await get_product(id)
+    rows = (await active_session().scalars(select(ProductHistoryTable).where(
+        ProductHistoryTable.product_id == parse_uuid(id),
+    ).order_by(ProductHistoryTable.changed_at.desc(), ProductHistoryTable.id.desc()))).all()
+    return StatusHistoryList(list_data=[StatusHistoryInfo.model_validate(row.to_dict())
+                                       for row in rows], count=len(rows))
+
+
+async def get_product_list(
+    limit: int, cursor: str | None = None, direction: Literal["next", "prev"] = "next",
+    keyword: str | None = None, brand_id: str | None = None, category: str | None = None,
+    status: str | None = None, color: str | None = None, year: int | None = None,
+) -> ProductList:
+    return ProductList.model_validate(await ProductTable.get_page(
+        limit=limit, cursor=cursor, direction=direction,
+        where=product_filters(keyword, brand_id=parse_uuid(brand_id) if brand_id else None,
+                              category=category, status=status, color=color, year=year),
+    ))

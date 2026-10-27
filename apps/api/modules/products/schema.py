@@ -1,0 +1,57 @@
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, Field
+
+from shared.http.schema import (
+    NonEmptyText,
+    PaginatedResponse,
+    SimpleListResponse,
+    UtcDateTime,
+    UuidText,
+)
+
+type ProductStatus = Literal["not_acquired", "sold"]
+type ProductCategory = Literal["鞋子", "配飾", "皮件", "包包", "帽子", "衣服", "其他"]
+
+
+class ProductCreate(BaseModel):
+    name: NonEmptyText
+    brand_id: UuidText
+    category: ProductCategory
+    model_name: str | None = None
+    serial_number: str | None = None
+    color: str | None = None
+    year: Annotated[int, Field(ge=1, le=9999)] | None = None
+    cost_price: Annotated[int, Field(ge=0, le=2147483647)]
+    internal_note: str | None = None
+
+
+class ProductInfo(ProductCreate):
+    id: str
+    sku: str
+    brand: str
+    status: ProductStatus
+    main_photo_id: str | None = None
+    created_by: str
+    updated_by: str | None = None
+    created_at: UtcDateTime
+    updated_at: UtcDateTime | None = None
+
+
+class ProductList(PaginatedResponse[ProductInfo]):
+    pass
+
+
+class StatusHistoryInfo(BaseModel):
+    id: str
+    from_status: ProductStatus | None
+    to_status: ProductStatus
+    action: str
+    reason: str | None
+    changed_by: str
+    operator_name: str
+    changed_at: UtcDateTime
+
+
+class StatusHistoryList(SimpleListResponse[StatusHistoryInfo]):
+    pass

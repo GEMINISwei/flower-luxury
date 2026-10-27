@@ -1,3 +1,4 @@
+import { PRODUCTS_PATH } from "@/modules/products/manifest"
 import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/modules/auth/public.server"
 import AreaLayout from "@/config/shell/AreaLayout"
@@ -12,7 +13,7 @@ export default async function AdminLayout({ children }: React.PropsWithChildren)
   const { isSuperUser } = await getCurrentUser()
 
   if (!isSuperUser) {
-    redirect("/")
+    redirect(PRODUCTS_PATH)
   }
 
   return <AreaLayout area="admin">{children}</AreaLayout>

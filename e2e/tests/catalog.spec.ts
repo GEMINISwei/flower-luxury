@@ -82,7 +82,7 @@ test("店長儲存兩位匯率且員工無法進入匯率設定", async ({ page 
   await logout(page)
   await login(page, staff)
   await page.goto("/admin/exchange-rates")
-  await expect(page).toHaveURL("/")
+  await expect(page).toHaveURL("/products")
   await expect(page.getByRole("link", { name: "匯率設定", exact: true })).toHaveCount(0)
 })
 

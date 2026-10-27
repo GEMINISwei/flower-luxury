@@ -24,7 +24,7 @@ export async function login(page: Page, account: { username: string; password: s
   await page.getByRole("textbox", { name: "帳號" }).fill(account.username)
   await page.getByLabel("密碼", { exact: true }).fill(account.password)
   await page.getByRole("button", { name: "登入", exact: true }).click()
-  await expect(page).toHaveURL("/")
+  await expect(page).toHaveURL("/products")
 }
 
 export async function logout(page: Page) {

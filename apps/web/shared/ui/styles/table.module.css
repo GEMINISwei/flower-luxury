@@ -147,3 +147,8 @@
     border-bottom: 0 !important;
   }
 }
+
+.badgeInfo {
+  background: var(--color-info-bg);
+  color: var(--color-info-fg);
+}

@@ -16,7 +16,7 @@ describe("getAccountMenuEntries", () => {
     const entries = getAccountMenuEntries("admin", ["*"])
 
     expect(labels(entries)).toEqual(["goUserArea", "accountSettings", "logout"])
-    expect(entries[0]).toMatchObject({ href: "/" })
+    expect(entries[0]).toMatchObject({ href: "/products" })
   })
 
   it("一般帳號沒有切換區域的項目，只有設定與登出", () => {

@@ -65,6 +65,6 @@ test("員工不能進入註冊碼設定且店長新增員工不提供角色指�
   await logout(page)
   await login(page, staff)
   await page.goto("/admin/registration")
-  await expect(page).toHaveURL("/")
+  await expect(page).toHaveURL("/products")
   await expect(page.getByRole("link", { name: "註冊碼設定", exact: true })).toHaveCount(0)
 })
