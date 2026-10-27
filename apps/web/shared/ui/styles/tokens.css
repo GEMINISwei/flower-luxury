@@ -66,6 +66,9 @@
   /* ---- 字體與字級 ---- */
   /* 系統字型, 不載入網路字型 (build 不必連網, 使用者也不必下載)。導入 DS 時在這裡換掉。 */
   --font-serif: "Songti TC", "STSong", "Noto Serif CJK TC", serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --size-flow-node: 64px;
+  --size-flow-step: 160px;
   --font-sans: "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", system-ui, sans-serif;
   --fs-h1: 1.875rem;
   --fs-h2: 1.4375rem;

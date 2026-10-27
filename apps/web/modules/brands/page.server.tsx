@@ -5,7 +5,7 @@ import { getT } from "@/shared/i18n/locale.server"
 import { brandMessages } from "./i18n"
 import BrandsView from "./ui/BrandsView"
 
-async function getBrandOptions() {
+export async function getBrandOptions() {
   return apiGet({ url: "/brands/", query: { include_inactive: true } })
 }
 export async function generateMetadata() {

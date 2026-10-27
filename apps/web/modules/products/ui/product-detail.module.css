@@ -1,0 +1,209 @@
+.stack { display: grid; gap: var(--space-5); }
+
+.summary {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.identity {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-display);
+  overflow-wrap: anywhere;
+}
+
+.brand {
+  color: var(--color-text-secondary);
+  font-size: var(--fs-lg);
+}
+
+.price {
+  margin: 0;
+  justify-self: end;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--fs-h1);
+  color: var(--color-text-display);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.infoCard, .flowCard {
+  min-width: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+}
+
+.infoCard h3, .flowCard h2 {
+  margin: 0 0 var(--space-5);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--space-8);
+  margin: 0;
+}
+
+.details > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  align-items: start;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: var(--border-width-hairline) solid var(--color-border-subtle);
+}
+
+.details > div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.details dt {
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.details dd {
+  margin: 0;
+  text-align: right;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.details .notes {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.notes dd {
+  text-align: left;
+}
+
+.timeline {
+  display: flex;
+  margin: 0;
+  padding: var(--space-2) 0;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  flex: 1 0 var(--size-flow-step);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-inline: var(--space-3);
+  text-align: center;
+}
+
+.step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--size-flow-node) / 2);
+  left: calc(50% + var(--size-flow-node) / 2);
+  width: calc(100% - var(--size-flow-node));
+  border-top: var(--border-width-hairline) solid var(--color-border-brand);
+}
+
+.step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--size-flow-node) / 2 - var(--space-1));
+  left: calc(150% - var(--size-flow-node) / 2 - var(--space-2));
+  width: var(--space-2);
+  height: var(--space-2);
+  border-top: var(--border-width-hairline) solid var(--color-border-brand);
+  border-right: var(--border-width-hairline) solid var(--color-border-brand);
+  transform: rotate(45deg);
+}
+
+.statusIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-flow-node);
+  height: var(--size-flow-node);
+  border: var(--border-width-thick) solid var(--color-border-brand);
+  border-radius: var(--radius-round);
+  color: var(--color-primary);
+  background: var(--color-primary-container);
+}
+
+.step strong {
+  font-size: var(--fs-sm);
+}
+
+.step time {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+
+.eventNote {
+  max-width: 100%;
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero { grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-4); align-items: start; }
+  .identity { display: contents; }
+  .meta { grid-column: 1 / -1; grid-row: 1; }
+  .title { grid-column: 1; grid-row: 2; }
+  .brand { grid-column: 1; grid-row: 3; font-size: var(--fs-sm); }
+  .price {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    justify-self: start;
+    text-align: left;
+    font-size: var(--fs-h2);
+  }
+  .infoCard, .flowCard {
+    padding: var(--space-4);
+  }
+  .title {
+    font-size: var(--fs-lg);
+  }
+  .summary {
+    gap: var(--space-5);
+  }
+}

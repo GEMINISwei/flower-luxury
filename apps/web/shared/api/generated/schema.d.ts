@@ -78,6 +78,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Products Route */
+        get: operations["get_products_route_api_products__get"];
+        put?: never;
+        /** Create Product Route */
+        post: operations["create_product_route_api_products__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Product Route */
+        get: operations["get_product_route_api_products__id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Product Route */
+        delete: operations["delete_product_route_api_products__id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Product Route */
+        patch: operations["update_product_route_api_products__id__patch"];
+        trace?: never;
+    };
+    "/api/products/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get History Route */
+        get: operations["get_history_route_api_products__id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/registration/settings": {
         parameters: {
             query?: never;
@@ -523,6 +577,85 @@ export interface components {
             /** List Data */
             list_data: components["schemas"]["PermissionInfo"][];
         };
+        /** @enum {string} */
+        ProductCategory: "鞋子" | "配飾" | "皮件" | "包包" | "帽子" | "衣服" | "其他";
+        /** ProductCreate */
+        ProductCreate: {
+            /** Brand Id */
+            brand_id: string;
+            category: components["schemas"]["ProductCategory"];
+            /** Color */
+            color?: string | null;
+            /** Cost Price */
+            cost_price: number;
+            /** Internal Note */
+            internal_note?: string | null;
+            /** Model Name */
+            model_name?: string | null;
+            /** Name */
+            name: string;
+            /** Serial Number */
+            serial_number?: string | null;
+            /** Year */
+            year?: number | null;
+        };
+        /** ProductInfo */
+        ProductInfo: {
+            /** Brand */
+            brand: string;
+            /** Brand Id */
+            brand_id: string;
+            category: components["schemas"]["ProductCategory"];
+            /** Color */
+            color?: string | null;
+            /** Cost Price */
+            cost_price: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string;
+            /** Id */
+            id: string;
+            /** Internal Note */
+            internal_note?: string | null;
+            /** Main Photo Id */
+            main_photo_id?: string | null;
+            /** Model Name */
+            model_name?: string | null;
+            /** Name */
+            name: string;
+            /** Serial Number */
+            serial_number?: string | null;
+            /** Sku */
+            sku: string;
+            status: components["schemas"]["ProductStatus"];
+            /** Updated At */
+            updated_at?: string | null;
+            /** Updated By */
+            updated_by?: string | null;
+            /** Year */
+            year?: number | null;
+        };
+        /** ProductList */
+        ProductList: {
+            /** Has Next */
+            has_next: boolean;
+            /** Has Previous */
+            has_previous: boolean;
+            /** List Data */
+            list_data: components["schemas"]["ProductInfo"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Prev Cursor */
+            prev_cursor?: string | null;
+            /** Total Count */
+            total_count: number;
+        };
+        /** @enum {string} */
+        ProductStatus: "not_acquired" | "sold";
         /** ProfileUpdate */
         ProfileUpdate: {
             /** Nickname */
@@ -610,6 +743,33 @@ export interface components {
             registration_key: string;
             /** Username */
             username: string;
+        };
+        /** StatusHistoryInfo */
+        StatusHistoryInfo: {
+            /** Action */
+            action: string;
+            /**
+             * Changed At
+             * Format: date-time
+             */
+            changed_at: string;
+            /** Changed By */
+            changed_by: string;
+            from_status: components["schemas"]["ProductStatus"] | null;
+            /** Id */
+            id: string;
+            /** Operator Name */
+            operator_name: string;
+            /** Reason */
+            reason: string | null;
+            to_status: components["schemas"]["ProductStatus"];
+        };
+        /** StatusHistoryList */
+        StatusHistoryList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["StatusHistoryInfo"][];
         };
         /** UserCreate */
         UserCreate: {
@@ -963,6 +1123,206 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LanguageList"];
+                };
+            };
+        };
+    };
+    get_products_route_api_products__get: {
+        parameters: {
+            query: {
+                keyword?: string | null;
+                brand_id?: string | null;
+                category?: components["schemas"]["ProductCategory"] | null;
+                status?: components["schemas"]["ProductStatus"] | null;
+                color?: string | null;
+                year?: number | null;
+                cursor?: string | null;
+                direction?: "next" | "prev";
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_product_route_api_products__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_product_route_api_products__id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_product_route_api_products__id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_product_route_api_products__id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_history_route_api_products__id__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusHistoryList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
