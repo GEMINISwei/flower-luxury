@@ -134,8 +134,8 @@ def _prompt_password() -> str:
 async def cmd_create_superuser():
     """建立一個擁有全部權限的超級管理者。
 
-    這是唯一的建立路徑 (網頁上沒有入口, 見 `modules.users.superuser`), 用途有三個:
-    部署完成後建立第一個超管、需要第二個超管的場景, 以及唯一超管失聯時的救援。
+    第一位店長需由 CLI 建立, 也可用於新增店長或失聯救援。
+    店長設定共用註冊碼後, 持有有效碼者也可從網頁註冊店長; 員工由店長在後台建立。
     """
     from pydantic import ValidationError
 
