@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+import { SIGNUP_PATH } from "@/modules/registration/manifest"
 import { Lock, Shield, User } from "lucide-react"
 import { ICON_SIZE } from "@/shared/ui"
 import { Button } from "@/shared/ui"
@@ -89,6 +91,8 @@ export default function LoginForm({ reason }: LoginFormProps) {
             {isPending ? t("loggingIn") : t("login")}
           </Button>
         </div>
+
+        <Link className={styles.signupLink} href={SIGNUP_PATH}>{t("signupLink")}</Link>
 
         <div className={styles.securityNote}>
           <Shield size={ICON_SIZE.sm} color="var(--color-primary)" />

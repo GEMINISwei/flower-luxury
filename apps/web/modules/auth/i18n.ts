@@ -7,6 +7,7 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 export const authMessages = defineMessages({
   zh: {
     loginTitle: "登入帳號",
+    signupLink: "註冊店長帳號",
     login: "登入",
     loggingIn: "登入中",
     username: "帳號",
@@ -24,6 +25,7 @@ export const authMessages = defineMessages({
   },
   en: {
     loginTitle: "Sign in",
+    signupLink: "Create a store manager account",
     login: "Sign in",
     loggingIn: "Signing in",
     username: "Username",

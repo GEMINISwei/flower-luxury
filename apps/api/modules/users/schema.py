@@ -36,7 +36,7 @@ class UserCreate(BaseModel):
     role_ids: list[UuidText] | None = None
 
 
-# CLI 專用 (`scripts/db.py create-superuser`), 不掛在任何端點上, 所以不會進 OpenAPI。
+# CLI 與驗證註冊碼後的店長建立流程共用約束, 不接受角色指派。
 # 存在的理由是讓 CLI 與 API 的建立使用者共用同一組 username/password 約束, 而不是各寫一套規則。
 # 不重用 UserCreate: 那個模型帶 role_ids, 而這裡的角色是固定的,
 # 收一個會被忽略的欄位遲早會有人以為它有效。

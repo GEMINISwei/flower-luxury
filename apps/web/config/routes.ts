@@ -3,6 +3,7 @@
 import type { ModuleManifest, RouteArea } from "@/shared/module"
 import { canAccessRoute } from "@/shared/access/permissions"
 import { AUTH_MODULE } from "@/modules/auth/manifest"
+import { REGISTRATION_MODULE } from "@/modules/registration/manifest"
 import { ROLES_MODULE } from "@/modules/roles/manifest"
 import { SETTINGS_MODULE } from "@/modules/settings/manifest"
 import { USERS_MODULE } from "@/modules/users/manifest"
@@ -18,6 +19,7 @@ import { USERS_MODULE } from "@/modules/users/manifest"
 const ENABLED_MODULES = [
   AUTH_MODULE,
   USERS_MODULE,
+  REGISTRATION_MODULE,
   ROLES_MODULE,
   SETTINGS_MODULE,
 ] as const satisfies readonly ModuleManifest[]

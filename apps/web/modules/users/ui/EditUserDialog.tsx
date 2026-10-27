@@ -5,7 +5,7 @@ import { FormDialog, SelectInput, TextInput, useActionSubmit, useActiveStatusOpt
 import { useT } from "@/shared/i18n/context"
 import { usersMessages } from "../i18n"
 import { updateUser } from "../actions"
-import { getEditableUserFields, roleIdsForUpdate } from "../capabilities"
+import { getEditableUserFields } from "../capabilities"
 import type { CurrentUser, RoleInfo, UserInfo } from "../types"
 
 type EditUserDialogProps = {
@@ -15,7 +15,6 @@ type EditUserDialogProps = {
   onError: (message: string) => void
   currentUser: CurrentUser | null
   roles: RoleInfo[]
-  roleOptions: Array<{ value: string; label: string }>
 }
 
 export default function EditUserDialog({
@@ -25,17 +24,15 @@ export default function EditUserDialog({
   onError,
   currentUser,
   roles,
-  roleOptions,
 }: EditUserDialogProps) {
   const t = useT(usersMessages)
   const statusOptions = useActiveStatusOptions()
   const [nickname, setNickname] = useState(user?.nickname ?? "")
   const [isDisabled, setIsDisabled] = useState(user?.is_disabled ?? false)
-  const [selectedRoleId, setSelectedRoleId] = useState(user?.role_ids[0] ?? "")
   const { isPending, submit, fieldError } = useActionSubmit()
-  const { canAssignRole, canToggleStatus } = user
-    ? getEditableUserFields(user, currentUser?.id, roles, roleOptions.length > 0)
-    : { canAssignRole: false, canToggleStatus: false }
+  const { canToggleStatus } = user
+    ? getEditableUserFields(user, currentUser?.id, roles, false)
+    : { canToggleStatus: false }
 
   function submitEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -48,7 +45,6 @@ export default function EditUserDialog({
       () => updateUser(user.id, {
         nickname: nickname.trim(),
         is_disabled: isDisabled,
-        role_ids: roleIdsForUpdate(canAssignRole, selectedRoleId),
       }),
       {
         onSuccess: () => onSuccess(t("userUpdated")),
@@ -78,16 +74,6 @@ export default function EditUserDialog({
         autoFocus
         onChange={setNickname}
       />
-      {canAssignRole && (
-        <SelectInput
-          label={t("colRole")}
-          value={selectedRoleId}
-          error={fieldError("role_ids")}
-          disabled={isPending}
-          options={[{ value: "", label: t("roleUnassigned") }, ...roleOptions]}
-          onChange={setSelectedRoleId}
-        />
-      )}
       {canToggleStatus && (
         <SelectInput
           label={t("colStatus")}
