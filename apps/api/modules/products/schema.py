@@ -82,3 +82,13 @@ class PhotoList(SimpleListResponse[PhotoInfo]):
 
 class MainPhotoUpdate(BaseModel):
     photo_id: UuidText
+
+
+class StatusChange(BaseModel):
+    to_status: ProductStatus
+    reason: str | None = None
+
+
+class StatusReturn(BaseModel):
+    to_status: ProductStatus
+    reason: NonEmptyText

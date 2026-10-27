@@ -14,12 +14,22 @@ from .errors import ProductError
 from .model import (
     ProductHistoryTable,
     ProductTable,
+    current_sale,
     generate_sku,
     lock_product,
     product_fields,
     product_filters,
 )
-from .schema import ProductCreate, ProductInfo, ProductList, StatusHistoryInfo, StatusHistoryList
+from .rules import ensure_transition
+from .schema import (
+    ProductCreate,
+    ProductInfo,
+    ProductList,
+    StatusChange,
+    StatusHistoryInfo,
+    StatusHistoryList,
+    StatusReturn,
+)
 
 
 async def record_status(row: ProductTable, source: str | None, actor: CurrentUser,
@@ -89,3 +99,28 @@ async def get_product_list(
         where=product_filters(keyword, brand_id=parse_uuid(brand_id) if brand_id else None,
                               category=category, status=status, color=color, year=year),
     ))
+
+
+async def apply_status(id: str, to_status: str, reason: str | None,
+                       actor: CurrentUser, *, returning: bool) -> ProductInfo:
+    async with transaction():
+        row = await lock_product(id, editable=not returning)
+        ensure_transition(row.status, to_status, returning=returning)
+        source = row.status
+        if returning and source == "sold":
+            sale = await current_sale(row.id)
+            if sale is not None:
+                sale.is_current, sale.returned_at = False, utc_now()
+                sale.returned_by, sale.return_reason = actor["id"], reason
+        row.status, row.updated_at, row.updated_by = to_status, utc_now(), actor["id"]
+        await record_status(row, source, actor, "return" if returning else "change", reason)
+        await active_session().flush()
+        return await get_product(id)
+
+
+async def change_status(id: str, form_data: StatusChange, actor: CurrentUser) -> ProductInfo:
+    return await apply_status(id, form_data.to_status, form_data.reason, actor, returning=False)
+
+
+async def return_status(id: str, form_data: StatusReturn, actor: CurrentUser) -> ProductInfo:
+    return await apply_status(id, form_data.to_status, form_data.reason, actor, returning=True)

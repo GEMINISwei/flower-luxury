@@ -17,7 +17,9 @@ from .schema import (
     ProductInfo,
     ProductList,
     ProductStatus,
+    StatusChange,
     StatusHistoryList,
+    StatusReturn,
 )
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -118,3 +120,17 @@ async def delete_photo_route(
     id: UuidText, photo_id: UuidText, actor: CurrentUser = Depends(check_user_permission()),
 ) -> PhotoList:
     return await photos.delete_photo(id, photo_id, actor)
+
+
+@router.post("/{id}/status")
+async def change_status_route(
+    id: UuidText, form_data: StatusChange, actor: CurrentUser = Depends(check_user_permission()),
+) -> ProductInfo:
+    return await service.change_status(id, form_data, actor)
+
+
+@router.post("/{id}/return")
+async def return_status_route(
+    id: UuidText, form_data: StatusReturn, actor: CurrentUser = Depends(check_user_permission()),
+) -> ProductInfo:
+    return await service.return_status(id, form_data, actor)
