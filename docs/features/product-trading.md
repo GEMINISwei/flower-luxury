@@ -43,4 +43,5 @@ ORM 查詢留在 model，詢價、成交與商品服務對外回傳 Pydantic mod
   [`test_trading_service.py`](../../apps/api/tests/modules/products/test_trading_service.py)
 - 金額規則：[`test_quote_rules.py`](../../apps/api/tests/modules/products/test_quote_rules.py)
 - 前端分支與中英驗證：[`quote-validation.test.ts`](../../apps/web/tests/modules/products/quote-validation.test.ts)
-- 完整瀏覽器流程：[`product-trading.spec.ts`](../../e2e/tests/product-trading.spec.ts)
+- 詢價與匯率瀏覽器流程：[`product-trading.spec.ts`](../../e2e/tests/product-trading.spec.ts)
+- 員工建檔、照片與成交退回完整流程：[`product-lifecycle.spec.ts`](../../e2e/tests/product-lifecycle.spec.ts)
