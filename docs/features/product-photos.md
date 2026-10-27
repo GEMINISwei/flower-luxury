@@ -43,3 +43,4 @@ OpenAPI 推導，只允許宣告 multipart 的 POST；共用原有的認證、�
 - 共用上傳：[`upload.server.test.ts`](../../apps/web/tests/shared/api/upload.server.test.ts)
 - 新增與補傳：[`creation.test.ts`](../../apps/web/tests/modules/products/creation.test.ts)
 - 瀏覽器流程：[`product-photos.spec.ts`](../../e2e/tests/product-photos.spec.ts)
+- 員工建檔、照片與成交退回完整流程：[`product-lifecycle.spec.ts`](../../e2e/tests/product-lifecycle.spec.ts)
