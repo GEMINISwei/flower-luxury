@@ -8,17 +8,18 @@ const staff = { username: "registration-staff", password: "registration-staff-pa
 
 async function signup(page: Page, username: string, key: string) {
   await page.goto("/signup")
-  await page.getByLabel("暱稱", { exact: true }).fill("註冊店長")
-  await page.getByLabel("帳號", { exact: true }).fill(username)
-  await page.getByLabel("密碼", { exact: true }).fill(registered.password)
-  await page.getByLabel("確認密碼", { exact: true }).fill(registered.password)
-  await page.getByLabel("註冊碼", { exact: true }).fill(key)
+  await page.getByLabel(/^暱稱\*?$/).fill("註冊店長")
+  await page.getByLabel(/^帳號\*?$/).fill(username)
+  await page.getByLabel(/^密碼\*?$/).fill(registered.password)
+  await page.getByLabel(/^確認密碼\*?$/).fill(registered.password)
+  await page.getByLabel(/^註冊碼\*?$/).fill(key)
   await page.getByRole("button", { name: "註冊店長", exact: true }).click()
 }
 
 test("註冊碼控制店長註冊且換碼立即生效", async ({ page, context }) => {
   await signup(page, registered.username, firstKey)
-  await expect(page.getByRole("alert")).toContainText("註冊碼錯誤或尚未設定")
+  await expect(page.getByRole("alert").filter({ hasText: "註冊碼錯誤或尚未設定" }))
+    .toContainText("註冊碼錯誤或尚未設定")
 
   await login(page, admin)
   await page.goto("/admin/registration")
@@ -41,7 +42,8 @@ test("註冊碼控制店長註冊且換碼立即生效", async ({ page, context 
   await logout(page)
 
   await signup(page, "rotated-manager", firstKey)
-  await expect(page.getByRole("alert")).toContainText("註冊碼錯誤或尚未設定")
+  await expect(page.getByRole("alert").filter({ hasText: "註冊碼錯誤或尚未設定" }))
+    .toContainText("註冊碼錯誤或尚未設定")
   await signup(page, "rotated-manager", secondKey)
   await expect(page.getByRole("status")).toContainText("店長帳號已建立")
 })
@@ -55,7 +57,7 @@ test("員工不能進入註冊碼設定且店長新增員工不提供角色指�
   await expect(dialog.getByRole("combobox")).toHaveCount(0)
   await dialog.getByLabel("暱稱").fill("註冊測試員工")
   await dialog.getByLabel("帳號").fill(staff.username)
-  await dialog.getByLabel("密碼", { exact: true }).fill(staff.password)
+  await dialog.getByLabel(/^密碼\*?$/).fill(staff.password)
   await dialog.getByRole("button", { name: "建立", exact: true }).click()
   await expect(dialog).toBeHidden()
   const row = page.getByRole("row").filter({ hasText: "註冊測試員工" })
