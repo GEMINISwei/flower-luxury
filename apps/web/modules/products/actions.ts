@@ -1,10 +1,12 @@
 "use server"
 
 import { redirect } from "next/navigation"
-import { apiDelete, apiPatch, apiPost } from "@/shared/api/request.server"
+import { apiDelete, apiPatch, apiPost, apiUpload } from "@/shared/api/request.server"
 import type { ApiRequestBody } from "@/shared/api/contract"
 import { fetchPaginatedList } from "@/shared/pagination/fetch.server"
 import { getT } from "@/shared/i18n/locale.server"
+import { getLocale } from "@/shared/i18n/locale.server"
+import { validatePhotoBatch } from "./validation"
 import { productListQuery } from "./capabilities"
 import { productMessages } from "./i18n"
 import { PRODUCTS_PATH } from "./manifest"
@@ -32,4 +34,21 @@ export async function deleteProduct(id: string) {
     redirect(PRODUCTS_PATH)
   }
   return result
+}
+
+export async function uploadPhotos(id: string, data: FormData) {
+  const files = data.getAll("files").filter((file): file is File => file instanceof File)
+  const error = validatePhotoBatch(files, await getLocale())
+  if (error) return { status: "failure" as const, code: 422, data: { detail: error }, message: error }
+  const body = new FormData()
+  files.forEach((file) => body.append("files", file))
+  return apiUpload({ url: "/products/{id}/photos", params: { id }, data: body, refresh })
+}
+
+export async function setMainPhoto(id: string, photo_id: string) {
+  return apiPatch({ url: "/products/{id}/photos/main", params: { id }, data: { photo_id }, refresh })
+}
+
+export async function deletePhoto(id: string, photo_id: string) {
+  return apiDelete({ url: "/products/{id}/photos/{photo_id}", params: { id, photo_id }, refresh })
 }

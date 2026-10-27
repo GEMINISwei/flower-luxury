@@ -17,14 +17,15 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const { id } = await params
   const product = await apiGet({ url: "/products/{id}", params: { id } })
   if (product.code === 404 || product.code === 422) notFound()
-  const [brands, histories] = await Promise.all([
+  const [brands, histories, photos] = await Promise.all([
     getBrandOptions(), apiGet({ url: "/products/{id}/history", params: { id } }),
+    apiGet({ url: "/products/{id}/photos", params: { id } }),
   ])
   const t = await getT(productMessages)
   if (product.status !== "success" || brands.status !== "success"
-      || histories.status !== "success") {
+      || histories.status !== "success" || photos.status !== "success") {
     return <Container padded><ErrorState>{t("failed")}</ErrorState></Container>
   }
   return <ProductDetail product={product.data} brands={brands.data.list_data}
-    histories={histories.data.list_data} />
+    histories={histories.data.list_data} photos={photos.data.list_data} />
 }

@@ -10,8 +10,10 @@ import type { ProductCategory, ProductInfo } from "../types"
 import { productMessages } from "../i18n"
 import { CATEGORIES } from "../constants"
 import { validateProduct } from "../validation"
-import { createProduct, updateProduct } from "../actions"
-import { availableProductBrands } from "../capabilities"
+import { createProduct, updateProduct, uploadPhotos } from "../actions"
+import { saveProductWithPhotos } from "../creation"
+import { availableProductBrands, productFormCapabilities, selectProductPhotos } from "../capabilities"
+import NewProductPhotos from "./NewProductPhotos"
 import styles from "./catalog.module.css"
 
 type Values = {
@@ -36,7 +38,15 @@ export default function ProductForm({ product, brands, onSaved }: {
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({})
   const [failure, setFailure] = useState("")
   const [message, setMessage] = useState("")
+  const [files, setFiles] = useState<File[]>([])
+  const [photoError, setPhotoError] = useState("")
+  const [createdId, setCreatedId] = useState<string | null>(null)
   const { isPending, submit, fieldError } = useActionSubmit()
+  const state = productFormCapabilities(Boolean(product), createdId, isPending)
+  function selectPhotos(incoming: File[]) {
+    const selection = selectProductPhotos(files, incoming, locale)
+    setFiles(selection.files); setPhotoError(selection.error ?? "")
+  }
   function set(field: keyof Values, value: string) {
     setValues((previous) => ({ ...previous, [field]: value })); setMessage("")
     setErrors((previous) => ({ ...previous, [field]: undefined }))
@@ -50,7 +60,8 @@ export default function ProductForm({ product, brands, onSaved }: {
     submit(async () => {
       try {
         const result = product ? await updateProduct(product.id, data)
-          : await createProduct(data)
+          : await saveProductWithPhotos({ files, productId: createdId,
+            save: () => createProduct(data), upload: uploadPhotos, onCreated: setCreatedId })
         if (result.status === "success") {
           router.push(`/products/${result.data.id}`)
         }
@@ -67,38 +78,43 @@ export default function ProductForm({ product, brands, onSaved }: {
     <section className={styles.formSection}>
     <h3>{t("basic")}</h3><div className={styles.formFields}>
       <TextInput label={t("name")} value={values.name}
-        required disabled={isPending}
+        required disabled={state.fieldsDisabled}
         onChange={(value) => set("name", value)} error={errors.name ?? fieldError("name")} />
-      <SelectInput label={t("brand_id")} value={values.brand_id} required disabled={isPending}
+      <SelectInput label={t("brand_id")} value={values.brand_id} required disabled={state.fieldsDisabled}
         onChange={(value) => set("brand_id", value)}
         error={errors.brand_id ?? fieldError("brand_id")}
         options={[{ value: "", label: t("choose") },
           ...availableBrands.map((brand) => ({ value: brand.id, label: brand.name }))]} />
-      <SelectInput label={t("category")} value={values.category} required disabled={isPending}
+      <SelectInput label={t("category")} value={values.category} required disabled={state.fieldsDisabled}
         onChange={(value) => set("category", value)}
         error={errors.category ?? fieldError("category")}
         options={[{ value: "", label: t("choose") },
           ...Object.entries(CATEGORIES).map(([value, key]) => ({ value, label: t(key) }))]} />
       {(["model_name", "serial_number", "color", "year"] as const).map((field) =>
         <TextInput key={field} label={t(field)} value={values[field]}
-          type={field === "year" ? "number" : "text"} disabled={isPending}
+          type={field === "year" ? "number" : "text"} disabled={state.fieldsDisabled}
           onChange={(value) => set(field, value)} error={errors[field] ?? fieldError(field)} />)}
     </div></section>
     <section className={styles.formSection}>
     <h3>{t("pricing")}</h3>
     <TextInput label={t("cost_price")} value={values.cost_price} type="number"
-      required disabled={isPending} onChange={(value) => set("cost_price", value)}
+      required disabled={state.fieldsDisabled} onChange={(value) => set("cost_price", value)}
       error={errors.cost_price ?? fieldError("cost_price")} />
     <label className={styles.notes} htmlFor={noteId}>{t("internal_note")}
-      <textarea id={noteId} aria-label={t("internal_note")}
-        value={values.internal_note} disabled={isPending}
+      <textarea id={noteId} aria-label={t("internal_note")} value={values.internal_note} disabled={state.fieldsDisabled}
         onChange={(event) => set("internal_note", event.target.value)} />
     </label></section>
+    {state.showPhotos && <NewProductPhotos files={files} disabled={!state.canSelectPhotos}
+      error={photoError} onSelect={selectPhotos} onRemove={(index) => {
+        setFiles((current) => current.filter((_, position) => position !== index)); setPhotoError("")
+      }} />}
+    {state.retryPhotos && <p role="status" className={styles.note}>{t("photosPending")}{" "}
+      <Link className={styles.link} href={`/products/${createdId}`}>{t("detail")}</Link></p>}
     {!availableBrands.length && <p className={styles.note}>{t("brandsHint")}{" "}
       <Link className={styles.link} href="/brands">{t("manageBrands")}</Link></p>}
     {failure && <p role="alert" className={styles.error}>{failure}</p>}
     {message && <p role="status">{message}</p>}
     <div><Button type="submit" disabled={isPending || !availableBrands.length}>
-      {isPending ? t("saving") : t("save")}</Button></div>
+      {isPending ? t("saving") : state.retryPhotos ? t("continuePhotos") : t("save")}</Button></div>
   </form>
 }
