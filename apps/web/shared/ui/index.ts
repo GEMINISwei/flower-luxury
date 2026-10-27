@@ -37,3 +37,6 @@ export { default as RouteLoading } from "./feedback/RouteLoading"
 export { useActionSubmit } from "./hooks/useActionSubmit"
 export { useListFeedback } from "./hooks/useListFeedback"
 export { useNotify } from "./hooks/useNotify"
+
+export { ConfirmDialog } from "./ConfirmDialog"
+export { BottomSheet } from "./BottomSheet"

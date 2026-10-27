@@ -10,11 +10,12 @@
            max(var(--space-6), env(safe-area-inset-right))
            max(var(--space-6), env(safe-area-inset-bottom))
            max(var(--space-6), env(safe-area-inset-left));
-  background: var(--color-surface-sunken);
+  background:
+    linear-gradient(var(--color-bg-app), var(--color-surface-sunken));
 }
 
 .card {
-  width: min(440px, 100%);
+  width: min(var(--container-auth), 100%);
   background: var(--color-surface-card);
   border: var(--border-width-hairline) solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
@@ -26,13 +27,51 @@
 }
 
 /* ---- App name heading ---- */
-.appName {
-  font-family: var(--font-sans);
-  font-weight: var(--fw-bold);
-  font-size: var(--fs-h1);
-  letter-spacing: var(--ls-heading);
-  color: var(--color-text-display);
+.emblem {
+  width: var(--size-brand-mark-large);
+  height: var(--size-brand-mark-large);
+  object-fit: contain;
   margin-bottom: var(--space-2);
+}
+
+.appName {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-brand);
+  letter-spacing: var(--ls-wordmark);
+  padding-left: var(--ls-wordmark);
+  color: var(--color-text-display);
+}
+
+.divider,
+.brandDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  margin: var(--space-5) 0 var(--space-4);
+  color: var(--color-primary);
+}
+
+.divider::before,
+.divider::after,
+.brandDivider::before,
+.brandDivider::after {
+  content: "";
+  flex: 1;
+  height: var(--border-width-hairline);
+  background: linear-gradient(90deg, transparent, var(--color-border-brand), transparent);
+}
+
+.subtitle {
+  text-align: center;
+  text-wrap: balance;
+  font-size: var(--fs-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-6);
 }
 
 /* ---- Form fields ---- */
@@ -44,7 +83,7 @@
 }
 
 /* 定位由 kit 的 `.inputTrailing` 負責 (TextInput 的 trailing 插槽),
-   這裡只管按鈕本身的外觀 —— 兩邊都設 position 會讓它疊在錯的地方。 */
+   這裡只管按鈕本身的外觀 —— 兩邊都設 position 會讓它疊在錯的地方.  */
 .inputTrailingBtn {
   width: var(--control-height-md);
   height: var(--control-height-md);
@@ -67,7 +106,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-top: var(--space-5);
+  justify-content: center;
+  text-align: center;
   color: var(--color-text-muted);
   font-family: var(--font-sans);
   font-size: var(--fs-sm);
@@ -102,44 +142,28 @@
     padding: var(--space-8) var(--space-5) var(--space-6);
     border-radius: var(--radius-lg);
   }
+
+  .appName { font-size: var(--fs-h1); }
+  .emblem {
+    width: var(--size-brand-mark-medium);
+    height: var(--size-brand-mark-medium);
+  }
 }
 
 .signupLink {
-  margin-top: var(--space-4);
+  margin-top: var(--space-5);
   color: var(--color-primary);
   font-size: var(--fs-sm);
-}
-
-.signupPage {
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: var(--space-6);
-  background: var(--color-surface-sunken);
-}
-
-.signupCard {
-  width: min(100%, var(--container-narrow));
-  background: var(--color-surface-card);
-  border: var(--border-width-hairline) solid var(--color-border-subtle);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  text-align: center;
 }
 
 .signupTitle {
+  text-align: center;
+  font-family: var(--font-serif);
   font-size: var(--fs-h2);
-  color: var(--color-text-heading);
+  color: var(--color-text-display);
 }
 
-.signupFields {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-6);
-}
-
-.signupDescription {
-  font-size: var(--fs-sm);
-  line-height: var(--lh-snug);
-  color: var(--color-text-secondary);
-}
+.brandDivider { width: min(var(--layout-sidebar-width), 100%); }
+.signupLink { display: flex; align-items: center; justify-content: center; width: 100%; min-height: var(--control-height-md); padding: var(--space-2) var(--space-3); border: var(--border-width-hairline) solid var(--color-border-default); border-radius: var(--radius-md); color: var(--color-text-secondary); text-decoration: none; }
+.signupLink:hover { color: var(--color-primary); border-color: var(--color-border-brand); }

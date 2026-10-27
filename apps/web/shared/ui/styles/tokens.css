@@ -83,9 +83,12 @@
   --lh-normal: 1.6;
   --ls-heading: 0.04em;
   --ls-body: 0.01em;
+  --ls-wordmark: 0.08em;
+  --fs-brand: 2.5rem;
   --ls-label: 0.06em;
 
   /* ---- 版面寬度 ---- */
+  --container-auth: 440px;
   --container-toast: 480px;
   --container-narrow: 520px;
   --container-form: 720px;
@@ -129,6 +132,10 @@
   --size-icon-md: 20px;
   --size-icon-lg: 24px;
   --size-avatar-sm: 32px;
+  --size-brand-mark: 48px;
+  --size-brand-mark-medium: 64px;
+  --size-brand-mark-large: 80px;
+  --blur-surface: 12px;
   --size-avatar-md: 40px;
 
   /* ---- 疊層順序 (一律從這裡取, 不要就地寫數字) ---- */

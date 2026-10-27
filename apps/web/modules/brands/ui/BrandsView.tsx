@@ -1,0 +1,78 @@
+"use client"
+
+import { useState } from "react"
+import { Plus } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Button, ConfirmDialog, Container, ErrorState, Flex, FormDialog, ListTableCard, PageHeader,
+  ICON_SIZE, SelectInput, StatusBadge, TableRow, TextInput, useActionSubmit } from "@/shared/ui"
+import { useT } from "@/shared/i18n/context"
+import { brandMessages } from "../i18n"
+import { brandRemovalAction } from "../capabilities"
+import type { BrandInfo } from "../types"
+import { createBrand, deleteBrand, updateBrand } from "../actions"
+import styles from "./brands.module.css"
+
+export default function BrandsView({ brands, errorMessage }: {
+  brands: BrandInfo[]; errorMessage: string
+}) {
+  const t = useT(brandMessages)
+  const router = useRouter()
+  const [selected, setSelected] = useState<BrandInfo | null>(null)
+  const [removing, setRemoving] = useState<BrandInfo | null>(null)
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState("")
+  const [active, setActive] = useState("true")
+  const [error, setError] = useState("")
+  const { isPending, submit } = useActionSubmit()
+  function edit(brand: BrandInfo | null) {
+    setSelected(brand); setName(brand?.name ?? ""); setActive(String(brand?.is_active ?? true))
+    setError(""); setOpen(true)
+  }
+  function saved() { setOpen(false); setError(""); router.refresh() }
+  function save() {
+    if (!name.trim()) { setError(t("required")); return }
+    submit(() => selected ? updateBrand(selected.id, name, active === "true") : createBrand(name),
+      { onSuccess: saved, onError: setError })
+  }
+  function remove() {
+    if (!removing) return
+    submit(() => deleteBrand(removing.id), {
+      onSuccess: () => { setRemoving(null); saved() }, onError: setError,
+    })
+  }
+  const removalAction = removing ? brandRemovalAction(removing) : "delete"
+  return <Container size="lg" padded>
+    <PageHeader title={t("title")} subtitle={t("subtitle")}
+      actions={<Button icon={<Plus size={ICON_SIZE.md} />} onClick={() => edit(null)}>{t("create")}</Button>} />
+    {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
+    {!open && !removing && error && <p role="alert">{error}</p>}
+    <div className={styles.list}><ListTableCard headers={[t("name"), t("status"), t("actions")]}
+      isEmpty={!brands.length} emptyText={t("empty")}>
+      {brands.map((brand) => {
+        const action = brandRemovalAction(brand)
+        return <TableRow key={brand.id}>
+        <td data-label={t("name")}>{brand.name}</td>
+        <td data-label={t("status")}><StatusBadge label={t(brand.is_active ? "active" : "inactive")}
+          variant={brand.is_active ? "success" : "muted"} /></td>
+        <td data-label={t("actions")}><Flex gap={2} className={styles.actions}>
+          <Button variant="outlined" disabled={isPending} onClick={() => edit(brand)}>{t("edit")}</Button>
+          {action && <Button variant="outlined" disabled={isPending}
+            onClick={() => { setError(""); setRemoving(brand) }}>{t(action)}</Button>}
+        </Flex></td>
+      </TableRow>})}
+    </ListTableCard></div>
+    <FormDialog title={t(selected ? "entity" : "create")} open={open} isPending={isPending}
+      submitText={t("save")} onClose={() => setOpen(false)}
+      onSubmit={(event) => { event.preventDefault(); save() }}>
+      <TextInput label={t("name")} value={name} onChange={setName} required autoFocus />
+      {selected && <SelectInput label={t("status")} value={active} onChange={setActive}
+        options={[{ value: "true", label: t("active") }, { value: "false", label: t("inactive") }]} />}
+      {error && <p role="alert">{error}</p>}
+    </FormDialog>
+    <ConfirmDialog title={t(removalAction ?? "delete")} open={Boolean(removing)} isPending={isPending}
+      confirmText={t(removalAction ?? "delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
+      <p>{removing?.name}</p><p>{t(removalAction === "deactivate" ? "confirmDeactivate" : "confirmDelete")}</p>
+      {error && <p role="alert">{error}</p>}
+    </ConfirmDialog>
+  </Container>
+}

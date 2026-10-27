@@ -12,6 +12,8 @@ export const appMessages = defineMessages({
     // 應用外殼
     mainNav: "主要導覽",
     mobileNav: "手機主要導覽",
+    more: "更多",
+    moreFeatures: "功能與帳號",
     navSection: "導覽",
     navSectionAdmin: "管理功能",
     goAdminArea: "管理後台",
@@ -43,6 +45,8 @@ export const appMessages = defineMessages({
   en: {
     mainNav: "Main navigation",
     mobileNav: "Mobile navigation",
+    more: "More",
+    moreFeatures: "Features and account",
     navSection: "Navigation",
     navSectionAdmin: "Management",
     goAdminArea: "Admin",

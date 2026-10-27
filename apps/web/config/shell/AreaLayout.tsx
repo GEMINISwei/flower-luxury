@@ -11,9 +11,9 @@ type AreaLayoutProps = {
 }
 
 /**
- * `admin/`/`(user)` 兩區共用的外殼組裝; 登入檢查在上一層的 `(protected)/layout.tsx`。
+ * `admin/`/`(user)` 兩區共用的外殼組裝; 登入檢查在上一層的 `(protected)/layout.tsx`.
  *
- * 頁面的 `<main>` 地標由這裡提供, 所以這兩區的頁面不要再渲染 `<main>` (`tests/architecture.test.ts` 擋)。
+ * 頁面的 `<main>` 地標由這裡提供, 所以這兩區的頁面不要再渲染 `<main>` (`tests/architecture.test.ts` 擋).
  */
 export default async function AreaLayout({ area, children }: AreaLayoutProps) {
   const t = await getT(appMessages)

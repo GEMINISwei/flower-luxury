@@ -7,8 +7,9 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 export const authMessages = defineMessages({
   zh: {
     loginTitle: "登入帳號",
-    signupLink: "註冊店長帳號",
+    signupLink: "使用註冊碼建立店長帳號",
     login: "登入",
+    loginDescription: "管理二手精品庫存、商品資訊與流向，讓每件精品都被妥善記錄。",
     loggingIn: "登入中",
     username: "帳號",
     password: "密碼",
@@ -25,8 +26,9 @@ export const authMessages = defineMessages({
   },
   en: {
     loginTitle: "Sign in",
-    signupLink: "Create a store manager account",
+    signupLink: "Create a manager account with a registration code",
     login: "Sign in",
+    loginDescription: "Manage pre-owned luxury inventory, product details and movements, with every piece carefully recorded.",
     loggingIn: "Signing in",
     username: "Username",
     password: "Password",

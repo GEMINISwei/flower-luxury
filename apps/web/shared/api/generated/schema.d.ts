@@ -4,6 +4,60 @@
  */
 
 export interface paths {
+    "/api/brands/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Brands Route */
+        get: operations["get_brands_route_api_brands__get"];
+        put?: never;
+        /** Create Brand Route */
+        post: operations["create_brand_route_api_brands__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Brand Route */
+        delete: operations["delete_brand_route_api_brands__id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Brand Route */
+        patch: operations["update_brand_route_api_brands__id__patch"];
+        trace?: never;
+    };
+    "/api/exchange-rates/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Exchange Settings Route */
+        get: operations["get_exchange_settings_route_api_exchange_rates_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Exchange Settings Route */
+        patch: operations["update_exchange_settings_route_api_exchange_rates_settings_patch"];
+        trace?: never;
+    };
     "/api/languages/": {
         parameters: {
             query?: never;
@@ -303,6 +357,42 @@ export interface paths {
         patch: operations["reset_user_password_route_api_users__id__reset_password_patch"];
         trace?: never;
     };
+    "/api/vendors/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Vendors Route */
+        get: operations["get_vendors_route_api_vendors__get"];
+        put?: never;
+        /** Create Vendor Route */
+        post: operations["create_vendor_route_api_vendors__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vendors/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Vendor Route */
+        delete: operations["delete_vendor_route_api_vendors__id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Vendor Route */
+        patch: operations["update_vendor_route_api_vendors__id__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -314,6 +404,62 @@ export interface components {
         AppVersion: {
             /** Version */
             version: string;
+        };
+        /** BrandCreate */
+        BrandCreate: {
+            /** Name */
+            name: string;
+        };
+        /** BrandInfo */
+        BrandInfo: {
+            /** Id */
+            id: string;
+            /** In Use */
+            in_use: boolean;
+            /** Is Active */
+            is_active: boolean;
+            /** Name */
+            name: string;
+        };
+        /** BrandList */
+        BrandList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["BrandInfo"][];
+        };
+        /** BrandUpdate */
+        BrandUpdate: {
+            /** Is Active */
+            is_active: boolean;
+            /** Name */
+            name: string;
+        };
+        /** ExchangeRateSettings */
+        ExchangeRateSettings: {
+            /**
+             * Base Currency
+             * @default TWD
+             */
+            base_currency: string;
+            /**
+             * Currency
+             * @default CNY
+             */
+            currency: string;
+            /** Operator Name */
+            operator_name?: string | null;
+            /** Rate */
+            rate?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Updated By */
+            updated_by?: string | null;
+        };
+        /** ExchangeRateUpdate */
+        ExchangeRateUpdate: {
+            /** Rate */
+            rate: number | string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -563,6 +709,52 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** @enum {string} */
+        VendorCountry: "TW" | "CN";
+        /** VendorCreate */
+        VendorCreate: {
+            country: components["schemas"]["VendorCountry"];
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+        };
+        /** VendorInfo */
+        VendorInfo: {
+            country: components["schemas"]["VendorCountry"];
+            /** Country Locked */
+            country_locked: boolean;
+            /**
+             * Currency
+             * @enum {string}
+             */
+            readonly currency: "TWD" | "CNY";
+            /** Id */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+        };
+        /** VendorList */
+        VendorList: {
+            /** Count */
+            count: number;
+            /** List Data */
+            list_data: components["schemas"]["VendorInfo"][];
+        };
+        /** VendorUpdate */
+        VendorUpdate: {
+            country: components["schemas"]["VendorCountry"];
+            /** Is Active */
+            is_active: boolean;
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -572,6 +764,189 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_brands_route_api_brands__get: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_brand_route_api_brands__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_brand_route_api_brands__id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_brand_route_api_brands__id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_exchange_settings_route_api_exchange_rates_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExchangeRateSettings"];
+                };
+            };
+        };
+    };
+    update_exchange_settings_route_api_exchange_rates_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExchangeRateUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExchangeRateSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_language_list_route_api_languages__get: {
         parameters: {
             query?: never;
@@ -1241,6 +1616,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserOperate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_vendors_route_api_vendors__get: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_vendor_route_api_vendors__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VendorCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_vendor_route_api_vendors__id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_vendor_route_api_vendors__id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VendorUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInfo"];
                 };
             };
             /** @description Validation Error */
