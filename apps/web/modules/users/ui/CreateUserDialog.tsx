@@ -1,7 +1,7 @@
 "use client"
 
 import { type FormEvent, useState } from "react"
-import { FormDialog, SelectInput, TextInput, useActionSubmit } from "@/shared/ui"
+import { FormDialog, TextInput, useActionSubmit } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import { validateNewPassword } from "@/modules/auth/public.client"
 import { createActionFormData } from "@/shared/api/action-form-data"
@@ -13,7 +13,6 @@ type CreateUserDialogProps = {
   onClose: () => void
   onSuccess: (message: string) => void
   onError: (message: string) => void
-  roleOptions: Array<{ value: string; label: string }>
 }
 
 export default function CreateUserDialog({
@@ -21,21 +20,18 @@ export default function CreateUserDialog({
   onClose,
   onSuccess,
   onError,
-  roleOptions,
 }: CreateUserDialogProps) {
   const t = useT(usersMessages)
   const locale = useLocale()
   const [username, setUsername] = useState("")
   const [nickname, setNickname] = useState("")
   const [password, setPassword] = useState("")
-  const [selectedRoleId, setSelectedRoleId] = useState("")
   const { isPending, submit, fieldError, clearFieldErrors } = useActionSubmit()
 
   function resetState() {
     setUsername("")
     setNickname("")
     setPassword("")
-    setSelectedRoleId("")
     clearFieldErrors()
   }
 
@@ -57,7 +53,6 @@ export default function CreateUserDialog({
         username: username.trim(),
         nickname: nickname.trim(),
         password,
-        role_ids: selectedRoleId ? [selectedRoleId] : undefined,
       })),
       {
         onSuccess: () => {
@@ -75,16 +70,7 @@ export default function CreateUserDialog({
       <TextInput label={t("colNickname")} value={nickname} error={fieldError("nickname")} required disabled={isPending} autoFocus onChange={setNickname} />
       <TextInput label={t("colUsername")} value={username} error={fieldError("username")} required disabled={isPending} onChange={setUsername} />
       <TextInput label={t("password")} type="password" value={password} error={fieldError("password")} required disabled={isPending} onChange={setPassword} />
-      {roleOptions.length > 0 && (
-        <SelectInput
-          label={t("colRole")}
-          value={selectedRoleId}
-          error={fieldError("role_ids")}
-          disabled={isPending}
-          options={[{ value: "", label: t("roleUnassigned") }, ...roleOptions]}
-          onChange={setSelectedRoleId}
-        />
-      )}
+
     </FormDialog>
   )
 }

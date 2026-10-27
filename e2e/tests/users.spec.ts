@@ -4,11 +4,11 @@ import { admin, login, logout, member } from "./support"
 // 後面的測試用第一個測試建立的一般帳號; 前一個失敗時其餘的跳過, 不要接著報一串無關的錯。
 test.describe.configure({ mode: "serial" })
 
-test("超級管理者新增使用者後，列表看得到該使用者", async ({ page }) => {
+test("店長新增員工後，列表看得到該員工", async ({ page }) => {
   await login(page, admin)
   await page.goto("/admin/users")
 
-  await page.getByRole("button", { name: "新增使用者" }).click()
+  await page.getByRole("button", { name: "新增員工" }).click()
   const dialog = page.getByRole("dialog")
   await dialog.getByLabel("暱稱").fill(member.nickname)
   await dialog.getByLabel("帳號").fill(member.username)

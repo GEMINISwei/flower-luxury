@@ -199,7 +199,7 @@ run_e2e() (
         sleep 1
     done
 
-    # 超管只能從 CLI 建立 (網頁上沒有入口)。帳密每次隨機, 只存在這次執行的環境變數裡。
+    # 註冊碼尚未設定, 第一位店長由 CLI 建立。帳密隨機且只存在本次環境變數。
     export E2E_BASE_URL="${base_url}"
     export E2E_ADMIN_USERNAME=e2e-admin
     E2E_ADMIN_PASSWORD="$(openssl rand -hex 16)"

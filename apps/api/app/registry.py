@@ -6,6 +6,7 @@
 
 from app.permissions import Permission
 from modules.languages.manifest import MODULE as LANGUAGES_MODULE
+from modules.registration.manifest import MODULE as REGISTRATION_MODULE
 from modules.roles.manifest import MODULE as ROLES_MODULE
 from modules.users.manifest import MODULE as USERS_MODULE
 from shared.auth.catalog import validate_permission_coverage
@@ -16,6 +17,7 @@ ENABLED_MODULES: tuple[ModuleManifest, ...] = validate_modules(
         USERS_MODULE,
         ROLES_MODULE,
         LANGUAGES_MODULE,
+        REGISTRATION_MODULE,
     )
 )
 

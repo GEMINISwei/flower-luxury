@@ -1,12 +1,13 @@
 # 限流
 
-登入與改密碼有次數上限，每一層都是 5 分鐘內的滑動視窗：
+登入、改密碼與公開註冊有次數上限，每一層都是 5 分鐘內的滑動視窗：
 
 | 操作 | 以什麼計數 | 上限 | 成功後 |
 |---|---|---|---|
 | 登入 | 用戶端 IP + 帳號 | 10 次 | 歸零 |
 | 登入 | 用戶端 IP | 50 次 | **不歸零** |
 | 改密碼 | 使用者 | 10 次 | 歸零 |
+| 公開註冊 | 用戶端 IP | 10 次 | **不歸零** |
 
 ## 為什麼分兩層
 
@@ -22,4 +23,5 @@
 
 - 機制：[`shared/http/rate_limit.py`](../../apps/api/shared/http/rate_limit.py)、
   [`test_rate_limit.py`](../../apps/api/tests/shared/http/test_rate_limit.py)
+- 註冊限流：[`modules/registration/router.py`](../../apps/api/modules/registration/router.py)
 - 上限的數字：[`modules/users/router.py`](../../apps/api/modules/users/router.py)

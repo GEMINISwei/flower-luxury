@@ -310,12 +310,15 @@ gh workflow run deploy.yml --ref main -f tag=v0.1.0 -f target="production stagin
 
 ### 建立超級管理者
 
+本專案畫面稱為店長。第一位店長必須由本指令建立，之後由店長設定[共用註冊碼](features/registration.md)
+開放網頁註冊；本指令仍可用於新增店長或救援。
+
 ```bash
 make db superuser
 ```
 
 互動式輸入暱稱、帳號、密碼（密碼不回顯），可以重複執行。第一個超管、再加一個超管，
-以及唯一的超管失聯時的救援，都用這個指令（理由見 [帳號、角色與密碼](features/accounts-roles.md#帳號)）。
+以及唯一的超管失聯時的救援，都可以用這個指令（理由見 [帳號、角色與密碼](features/accounts-roles.md#帳號)）。
 
 ### 套用 `.env` 的變更
 

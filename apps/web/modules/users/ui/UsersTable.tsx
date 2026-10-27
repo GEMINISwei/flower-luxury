@@ -14,9 +14,9 @@ import {
 import type { ApiListMeta } from "@/shared/api/response"
 import { useT } from "@/shared/i18n/context"
 import type { Translator } from "@/shared/i18n/dictionary"
-import { rolesMessages } from "@/modules/roles/public.client"
 import { usersMessages } from "../i18n"
-import { canResetPassword, formatRoleNames } from "../capabilities"
+import { canResetPassword } from "../capabilities"
+import { accountIdentity } from "../identity"
 import type { CurrentUser, RoleInfo, UserInfo } from "../types"
 
 type UsersT = Translator<(typeof usersMessages)["zh"]>
@@ -98,7 +98,6 @@ export default function UsersTable({
   onResetPassword,
 }: UsersTableProps) {
   const t = useT(usersMessages)
-  const roleT = useT(rolesMessages)
   const currentUserId = currentUser?.id
 
   if (errorMessage) {
@@ -128,7 +127,7 @@ export default function UsersTable({
             <UserRow
               key={user.id}
               user={user}
-              roleNames={formatRoleNames(user, roles, t, roleT)}
+              roleNames={t(accountIdentity(user.permissions))}
               isSelf={isSelf}
               t={t}
               onEdit={() => onEdit(user)}
