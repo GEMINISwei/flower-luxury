@@ -30,8 +30,11 @@ make start lan  # 同 make start，但對區網開放，結束時印出手機要
 下次一般的 `make start` 就關回去，所以**用完跑一次 `make start`**；`.env` 裡沒有對應的設定，刻意不讓它常駐。
 開著的時候同一個網路上的人都連得到，在公共 Wi-Fi 上不要用。`MODE=production` 時會被拒絕。
 
-只能用 `http`：瀏覽器只對 `localhost` 放寬安全來源的限制，相機、定位、Service Worker 這類需要 HTTPS 的功能
-在 `http://<區網 IP>` 上不能用，要測的話改用會給 https 網址的 tunnel（cloudflared、Tailscale Funnel）。
+區網網址是 `http`。定位、Service Worker、`getUserMedia()` 即時相機串流等需要安全來源的功能，
+要改用 HTTPS 測試網址。商品「直接拍照」使用 file input 的 `capture` 提示啟動系統拍攝或選檔，
+與即時串流 API 不同，見 [HTML Media Capture](https://www.w3.org/TR/html-media-capture/)。
+實際相機入口、檔案格式與下載行為依 iPhone Safari 決定，照 [iPhone Safari 實機驗收](acceptance/iphone-safari.md)
+記錄，不能只以桌面瀏覽器或視窗尺寸模擬判定通過。
 
 ### 環境變數的同步點
 
@@ -138,7 +141,9 @@ cd apps/web && npm run test:watch           # 前端 watch 模式
 **只放跨層的 smoke 測試**：proxy 導向、cookie 屬性、Server Action、權限導向、撤銷這類只有整套跑起來才看得到的行為。
 畫面分支仍然抽進 `capabilities.ts` 用 vitest 測，不要寫成 E2E（慢，而且畫面一改就要跟著改）。
 
-- 測試名稱與前端一樣用讀得通的中文句子，斷言也用中文文案（`locale: "zh-TW"`）。
+- 測試名稱與前端一樣用讀得通的中文句子，預設用中文文案斷言（`locale: "zh-TW"`）。
+  專門驗證英文的案例在自己的 spec 用 `test.use({ locale: "en-US" })`，以英文文案操作與斷言，
+  不改全域語系或既有中文案例，見 [`english-acceptance.spec.ts`](../e2e/tests/english-acceptance.spec.ts)。
 - 選元素用 `getByRole`／`getByLabel`，不要用 class 或 DOM 結構。
 - 等待用 `expect(...).toBeVisible()`／`toHaveURL()` 這類會自動重試的斷言，**不要寫固定的 sleep**；
   也刻意不開 retries，偶發失敗要修等待條件。

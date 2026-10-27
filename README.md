@@ -77,7 +77,9 @@ flowchart LR
 店長／員工、共用註冊碼、品牌與廠商、匯率、商品、照片及交易功能已移植。
 員工從建商品、上傳照片、詢價到成交、退回與再成交，已有[單一完整 E2E](e2e/tests/product-lifecycle.spec.ts)
 驗證同一商品的照片、原圖下載、操作限制、成交快照與流向記錄。
-英文完整操作、手機原生相機與真實 HEIC 選檔／下載仍待驗收。
+另有[英文完整操作與公開實拍 HEIC E2E](e2e/tests/english-acceptance.spec.ts)，
+驗證語系切換、前後端英文錯誤、照片補傳、顯示圖及原圖下載。
+[iPhone Safari 原生相機、系統選檔與下載](docs/acceptance/iphone-safari.md)仍待實機驗收。
 
 舊資料與照片搬移、正式發版與部署另案處理。主機設定確認及備份還原演練也尚未完成；
 現有操作文件見[部署與維運](docs/operations.md)，功能變更見[變更紀錄](CHANGELOG.md)。

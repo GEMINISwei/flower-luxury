@@ -44,3 +44,6 @@ OpenAPI 推導，只允許宣告 multipart 的 POST；共用原有的認證、�
 - 新增與補傳：[`creation.test.ts`](../../apps/web/tests/modules/products/creation.test.ts)
 - 瀏覽器流程：[`product-photos.spec.ts`](../../e2e/tests/product-photos.spec.ts)
 - 員工建檔、照片與成交退回完整流程：[`product-lifecycle.spec.ts`](../../e2e/tests/product-lifecycle.spec.ts)
+- 固定公開 HEIC 的補傳、顯示及原圖下載：[`english-acceptance.spec.ts`](../../e2e/tests/english-acceptance.spec.ts)、
+  [素材來源與雜湊](../../e2e/tests/fixtures/README.md)
+- 原生相機、系統選檔及手機下載：[iPhone Safari 實機驗收](../acceptance/iphone-safari.md)
