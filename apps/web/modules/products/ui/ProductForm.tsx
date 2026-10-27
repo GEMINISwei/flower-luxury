@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
 import { unstable_rethrow, useRouter } from "next/navigation"
 import { Button, SelectInput, TextInput, useActionSubmit } from "@/shared/ui"
@@ -41,6 +41,11 @@ export default function ProductForm({ product, brands, onSaved }: {
   const [files, setFiles] = useState<File[]>([])
   const [photoError, setPhotoError] = useState("")
   const [createdId, setCreatedId] = useState<string | null>(null)
+  const openedAt = useRef(product?.updated_at)
+  useEffect(() => {
+    // 等新資料到達才關閉編輯視窗, 讓下一個成交操作拿到已儲存的成本.
+    if (message && product && product.updated_at !== openedAt.current) onSaved?.()
+  }, [message, product, onSaved])
   const { isPending, submit, fieldError } = useActionSubmit()
   const state = productFormCapabilities(Boolean(product), createdId, isPending)
   function selectPhotos(incoming: File[]) {
@@ -62,7 +67,7 @@ export default function ProductForm({ product, brands, onSaved }: {
         const result = product ? await updateProduct(product.id, data)
           : await saveProductWithPhotos({ files, productId: createdId,
             save: () => createProduct(data), upload: uploadPhotos, onCreated: setCreatedId })
-        if (result.status === "success") {
+        if (result.status === "success" && !product) {
           router.push(`/products/${result.data.id}`)
         }
         return result
@@ -70,7 +75,7 @@ export default function ProductForm({ product, brands, onSaved }: {
         unstable_rethrow(error)
         return { status: "error", code: 999, data: { detail: t("actionFailed") }, message: "Save failed" }
       }
-    }, { onSuccess: () => { setMessage(t("saved")); onSaved?.(); router.refresh() }, onError: setFailure })
+    }, { onSuccess: () => { setMessage(t("saved")); router.refresh() }, onError: setFailure })
   }
   const availableBrands = availableProductBrands(brands, product?.brand_id)
   return <form className={styles.stack} noValidate
