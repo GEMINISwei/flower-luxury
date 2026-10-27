@@ -5,7 +5,7 @@ import { getT } from "@/shared/i18n/locale.server"
 import { vendorMessages } from "./i18n"
 import VendorsView from "./ui/VendorsView"
 
-function getVendorOptions() {
+export function getVendorOptions() {
   return apiGet({ url: "/vendors/", query: { include_inactive: true } })
 }
 

@@ -38,3 +38,7 @@ export function validatePhotoBatch(
     return t("formatInvalid")
   }
 }
+
+export function validateReturnReason(reason: string, locale: Language): string | undefined {
+  if (!reason.trim()) return translate(productMessages, locale)("required")
+}

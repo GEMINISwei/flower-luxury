@@ -724,6 +724,194 @@
         "title": "ProfileUpdate",
         "type": "object"
       },
+      "QuoteAmount-Input": {
+        "anyOf": [
+          {
+            "exclusiveMinimum": 0.0,
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+            "type": "string"
+          }
+        ]
+      },
+      "QuoteAmount-Output": {
+        "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+        "type": "string"
+      },
+      "QuoteCreate": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "original_amount": {
+            "$ref": "#/components/schemas/QuoteAmount-Input"
+          },
+          "vendor_id": {
+            "title": "Vendor Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "original_amount",
+          "vendor_id"
+        ],
+        "title": "QuoteCreate",
+        "type": "object"
+      },
+      "QuoteInfo": {
+        "properties": {
+          "amount_twd": {
+            "title": "Amount Twd",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "TWD",
+              "CNY"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "exchange_rate": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Exchange Rate",
+            "type": "string"
+          },
+          "has_sales": {
+            "title": "Has Sales",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "original_amount": {
+            "$ref": "#/components/schemas/QuoteAmount-Output"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "vendor_country": {
+            "enum": [
+              "TW",
+              "CN"
+            ],
+            "title": "Vendor Country",
+            "type": "string"
+          },
+          "vendor_id": {
+            "title": "Vendor Id",
+            "type": "string"
+          },
+          "vendor_name": {
+            "title": "Vendor Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency",
+          "exchange_rate",
+          "amount_twd",
+          "original_amount",
+          "vendor_id",
+          "id",
+          "product_id",
+          "vendor_name",
+          "vendor_country",
+          "revision",
+          "has_sales",
+          "created_at"
+        ],
+        "title": "QuoteInfo",
+        "type": "object"
+      },
+      "QuoteList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "list_data": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteInfo"
+            },
+            "title": "List Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "list_data",
+          "count"
+        ],
+        "title": "QuoteList",
+        "type": "object"
+      },
+      "QuoteUpdate": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "original_amount": {
+            "$ref": "#/components/schemas/QuoteAmount-Input"
+          }
+        },
+        "required": [
+          "original_amount"
+        ],
+        "title": "QuoteUpdate",
+        "type": "object"
+      },
       "RegistrationSettings": {
         "properties": {
           "configured": {
@@ -931,6 +1119,186 @@
         "title": "RoleUpdate",
         "type": "object"
       },
+      "SaleCreate": {
+        "properties": {
+          "cost_price": {
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Cost Price",
+            "type": "integer"
+          },
+          "quote_id": {
+            "title": "Quote Id",
+            "type": "string"
+          },
+          "quote_revision": {
+            "minimum": 1.0,
+            "title": "Quote Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quote_id",
+          "quote_revision",
+          "cost_price"
+        ],
+        "title": "SaleCreate",
+        "type": "object"
+      },
+      "SaleInfo": {
+        "properties": {
+          "amount_twd": {
+            "title": "Amount Twd",
+            "type": "integer"
+          },
+          "changed_by": {
+            "title": "Changed By",
+            "type": "string"
+          },
+          "cost_price": {
+            "title": "Cost Price",
+            "type": "integer"
+          },
+          "currency": {
+            "enum": [
+              "TWD",
+              "CNY"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "exchange_rate": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Exchange Rate",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_current": {
+            "title": "Is Current",
+            "type": "boolean"
+          },
+          "operator_name": {
+            "title": "Operator Name",
+            "type": "string"
+          },
+          "original_amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Original Amount",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "profit_amount": {
+            "title": "Profit Amount",
+            "type": "integer"
+          },
+          "quote_id": {
+            "title": "Quote Id",
+            "type": "string"
+          },
+          "return_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Reason"
+          },
+          "returned_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Returned At"
+          },
+          "returned_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Returned By"
+          },
+          "sold_at": {
+            "format": "date-time",
+            "title": "Sold At",
+            "type": "string"
+          },
+          "vendor_country": {
+            "enum": [
+              "TW",
+              "CN"
+            ],
+            "title": "Vendor Country",
+            "type": "string"
+          },
+          "vendor_id": {
+            "title": "Vendor Id",
+            "type": "string"
+          },
+          "vendor_name": {
+            "title": "Vendor Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency",
+          "exchange_rate",
+          "amount_twd",
+          "id",
+          "product_id",
+          "quote_id",
+          "vendor_id",
+          "vendor_name",
+          "vendor_country",
+          "original_amount",
+          "cost_price",
+          "profit_amount",
+          "is_current",
+          "changed_by",
+          "operator_name",
+          "sold_at"
+        ],
+        "title": "SaleInfo",
+        "type": "object"
+      },
+      "SaleList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "list_data": {
+            "items": {
+              "$ref": "#/components/schemas/SaleInfo"
+            },
+            "title": "List Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "list_data",
+          "count"
+        ],
+        "title": "SaleList",
+        "type": "object"
+      },
       "SignupRequest": {
         "properties": {
           "nickname": {
@@ -962,6 +1330,29 @@
           "registration_key"
         ],
         "title": "SignupRequest",
+        "type": "object"
+      },
+      "StatusChange": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "to_status": {
+            "$ref": "#/components/schemas/ProductStatus"
+          }
+        },
+        "required": [
+          "to_status"
+        ],
+        "title": "StatusChange",
         "type": "object"
       },
       "StatusHistoryInfo": {
@@ -1044,6 +1435,24 @@
           "count"
         ],
         "title": "StatusHistoryList",
+        "type": "object"
+      },
+      "StatusReturn": {
+        "properties": {
+          "reason": {
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "to_status": {
+            "$ref": "#/components/schemas/ProductStatus"
+          }
+        },
+        "required": [
+          "to_status",
+          "reason"
+        ],
+        "title": "StatusReturn",
         "type": "object"
       },
       "UserCreate": {
@@ -2419,6 +2828,455 @@
           }
         },
         "summary": "Delete Photo Route",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/products/{id}/quotes": {
+      "get": {
+        "operationId": "get_quotes_route_api_products__id__quotes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Quotes Route",
+        "tags": [
+          "product quotes"
+        ]
+      },
+      "post": {
+        "operationId": "create_quote_route_api_products__id__quotes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Quote Route",
+        "tags": [
+          "product quotes"
+        ]
+      }
+    },
+    "/api/products/{id}/quotes/{quote_id}": {
+      "delete": {
+        "operationId": "delete_quote_route_api_products__id__quotes__quote_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "title": "Quote Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Quote Route",
+        "tags": [
+          "product quotes"
+        ]
+      },
+      "patch": {
+        "operationId": "update_quote_route_api_products__id__quotes__quote_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "title": "Quote Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Quote Route",
+        "tags": [
+          "product quotes"
+        ]
+      }
+    },
+    "/api/products/{id}/quotes/{quote_id}/refresh-rate": {
+      "post": {
+        "operationId": "refresh_quote_route_api_products__id__quotes__quote_id__refresh_rate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "title": "Quote Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refresh Quote Route",
+        "tags": [
+          "product quotes"
+        ]
+      }
+    },
+    "/api/products/{id}/return": {
+      "post": {
+        "operationId": "return_status_route_api_products__id__return_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusReturn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Return Status Route",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/products/{id}/sales": {
+      "get": {
+        "operationId": "get_sales_route_api_products__id__sales_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Sales Route",
+        "tags": [
+          "product sales"
+        ]
+      },
+      "post": {
+        "operationId": "confirm_sale_route_api_products__id__sales_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Sale Route",
+        "tags": [
+          "product sales"
+        ]
+      }
+    },
+    "/api/products/{id}/status": {
+      "post": {
+        "operationId": "change_status_route_api_products__id__status_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Status Route",
         "tags": [
           "products"
         ]

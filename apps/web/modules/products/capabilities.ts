@@ -3,7 +3,8 @@ import { validatePhotoBatch } from "./validation"
 import type { PhotoInfo, ProductStatus, StatusHistoryInfo } from "./types"
 
 export function productCapabilities(status: ProductStatus) {
-  return { canEdit: status === "not_acquired", canDelete: status === "not_acquired" }
+  return { canEdit: status === "not_acquired", canDelete: status === "not_acquired",
+    canReturn: status === "sold" }
 }
 
 export function availableProductBrands<T extends { id: string; is_active: boolean }>(
