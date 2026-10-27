@@ -1,4 +1,4 @@
-/* Protected layout — sidebar app shell */
+/* 導覽保持在視窗內, 避免長頁面把主要入口推離視窗.  */
 
 /* ---- App shell ---- */
 .shell {
@@ -37,8 +37,25 @@
   left: var(--space-6);
   right: var(--space-6);
   bottom: 0;
-  height: 1px;
-  background: var(--color-border-subtle);
+  height: var(--border-width-hairline);
+  background: linear-gradient(90deg, transparent, var(--color-border-brand), transparent);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.emblem {
+  width: var(--size-brand-mark);
+  height: var(--size-brand-mark);
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .areaBadge {
@@ -53,11 +70,13 @@
 }
 
 .sidebarWordmark {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   font-weight: var(--fw-bold);
   font-size: var(--fs-h3);
-  letter-spacing: var(--ls-label);
+  letter-spacing: var(--ls-wordmark);
   color: var(--color-text-display);
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .bottomNavigation {
@@ -87,15 +106,15 @@
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 56px;
+  min-height: calc(var(--control-height-lg) + var(--space-1));
   gap: var(--space-4);
   padding: var(--space-3) var(--space-5) var(--space-3) var(--space-6);
   border-radius: var(--radius-xl);
   color: var(--color-text-body);
   font-family: var(--font-sans);
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
-  letter-spacing: 0;
+  letter-spacing: var(--ls-body);
   text-decoration: none;
   transition: background var(--dur-fast) var(--ease-standard),
               color var(--dur-fast) var(--ease-standard);
@@ -109,7 +128,6 @@
   width: var(--size-icon-lg);
   height: var(--size-icon-lg);
   flex-shrink: 0;
-  stroke-width: 2;
   color: var(--color-text-muted);
   transition: color var(--dur-fast) var(--ease-standard);
 }
@@ -131,9 +149,9 @@
   left: 0;
   top: var(--space-2);
   bottom: var(--space-2);
-  width: 6px;
+  width: calc(var(--border-width-accent) * 2);
   border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
-  background: var(--color-primary);
+  background: linear-gradient(180deg, transparent, var(--color-border-brand), var(--color-primary), var(--color-border-brand), transparent);
 }
 
 .navLinkActive svg {
@@ -147,7 +165,7 @@
   border-top: var(--border-width-hairline) solid var(--color-border-subtle);
 }
 
-/* 頭像選單的觸發按鈕: 整塊 (頭像、暱稱、角色) 都是點擊區。 */
+/* 頭像選單的觸發按鈕: 整塊 (頭像、暱稱、角色) 都是點擊區.  */
 .sidebarUser {
   display: flex;
   align-items: center;
@@ -194,7 +212,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--border-width-hairline);
 }
 
 .userName {
@@ -233,6 +251,11 @@
     padding: var(--space-5) var(--space-3);
   }
 
+  .emblem {
+    width: var(--size-avatar-md);
+    height: var(--size-avatar-md);
+  }
+
   .sidebarLogo::after {
     left: var(--space-3);
     right: var(--space-3);
@@ -246,7 +269,7 @@
     display: none;
   }
 
-  /* 收成窄欄時標籤只留一個字寬, 用一個點代替, 仍看得出是後台。 */
+  /* 收成窄欄時標籤只留一個字寬, 用一個點代替, 仍看得出是後台.  */
   .areaBadge {
     width: var(--space-2);
     height: var(--space-2);
@@ -282,6 +305,7 @@
     height: auto;
     min-height: 100dvh;
     overflow: visible;
+    flex-direction: column;
   }
 
   .sidebar {
@@ -307,19 +331,19 @@
     padding: var(--space-1) max(var(--space-2), env(safe-area-inset-right)) env(safe-area-inset-bottom) max(var(--space-2), env(safe-area-inset-left));
     border-top: var(--border-width-hairline) solid var(--color-border-subtle);
     background: color-mix(in srgb, var(--color-surface-card) 96%, transparent);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--blur-surface));
     box-shadow: var(--shadow-nav);
   }
 
   .bottomNavItem {
     min-width: 0;
-    min-height: 54px;
+    min-height: var(--control-height-lg);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    padding: var(--space-1) var(--space-2) 3px;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
     border: 0;
     border-radius: var(--radius-md);
     background: transparent;
@@ -327,7 +351,7 @@
     font-family: var(--font-sans);
     font-size: var(--fs-xs);
     font-weight: var(--fw-semibold);
-    line-height: 1;
+    line-height: var(--lh-tight);
     text-decoration: none;
     cursor: pointer;
   }
@@ -344,12 +368,62 @@
     color: var(--color-text-body);
   }
 
+  .bottomNavItem:hover,
+  .bottomNavItem[aria-expanded="true"],
   .bottomNavItemActive {
     background: var(--color-primary-container);
     color: var(--color-on-primary-container);
   }
+}
 
-  .bottomNavItemActive svg {
-    stroke-width: 2.4;
-  }
+.moreUser {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.moreUserDetails {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-1);
+}
+
+.moreLabel {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--fs-xs);
+}
+
+.moreItems { display: flex; flex-direction: column; gap: var(--space-1); }
+
+.moreItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height-lg);
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-body);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.moreItem span { flex: 1; }
+.moreItem svg { flex-shrink: 0; }
+.moreItem:hover { background: var(--color-surface-hover); }
+.moreItem[aria-current="page"] {
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.moreLogout {
+  margin-top: var(--space-3);
+  border-top: var(--border-width-hairline) solid var(--color-border-subtle);
+  color: var(--color-danger-fg);
 }

@@ -31,7 +31,7 @@ export function useLoginForm({ reason }: UseLoginFormParams) {
   const [isSubmit, setIsSubmit] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isPending, startTransition] = useTransition()
-  // 登入與註冊共用通知狀態管理。
+  // 登入與註冊共用通知狀態管理.
   const { notify, notifyError, closeNotify } = useNotify()
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function useLoginForm({ reason }: UseLoginFormParams) {
     notifyError(t(LOGIN_REDIRECT_MESSAGE_KEYS[reason]))
     router.replace(LOGIN_PATH)
     // t 每次 render 都是新的函式 (translate 回傳新 closure), 放進依賴會讓這個
-    // effect 每次都重跑並不斷 replace 網址。原因只跟 reason 有關, 依賴就只列它。
+    // effect 每次都重跑並不斷 replace 網址. 原因只跟 reason 有關, 依賴就只列它.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reason, router, notifyError])
 

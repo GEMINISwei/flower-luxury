@@ -15,6 +15,173 @@
         "title": "AppVersion",
         "type": "object"
       },
+      "BrandCreate": {
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "BrandCreate",
+        "type": "object"
+      },
+      "BrandInfo": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "in_use": {
+            "title": "In Use",
+            "type": "boolean"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "is_active",
+          "id",
+          "in_use"
+        ],
+        "title": "BrandInfo",
+        "type": "object"
+      },
+      "BrandList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "list_data": {
+            "items": {
+              "$ref": "#/components/schemas/BrandInfo"
+            },
+            "title": "List Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "list_data",
+          "count"
+        ],
+        "title": "BrandList",
+        "type": "object"
+      },
+      "BrandUpdate": {
+        "properties": {
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "is_active"
+        ],
+        "title": "BrandUpdate",
+        "type": "object"
+      },
+      "ExchangeRateSettings": {
+        "properties": {
+          "base_currency": {
+            "default": "TWD",
+            "title": "Base Currency",
+            "type": "string"
+          },
+          "currency": {
+            "default": "CNY",
+            "title": "Currency",
+            "type": "string"
+          },
+          "operator_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator Name"
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          }
+        },
+        "title": "ExchangeRateSettings",
+        "type": "object"
+      },
+      "ExchangeRateUpdate": {
+        "properties": {
+          "rate": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,17}0*$)\\d{0,10}\\.\\d{0,6}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Rate"
+          }
+        },
+        "required": [
+          "rate"
+        ],
+        "title": "ExchangeRateUpdate",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -705,6 +872,151 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "VendorCountry": {
+        "enum": [
+          "TW",
+          "CN"
+        ],
+        "type": "string"
+      },
+      "VendorCreate": {
+        "properties": {
+          "country": {
+            "$ref": "#/components/schemas/VendorCountry"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "name",
+          "country"
+        ],
+        "title": "VendorCreate",
+        "type": "object"
+      },
+      "VendorInfo": {
+        "properties": {
+          "country": {
+            "$ref": "#/components/schemas/VendorCountry"
+          },
+          "country_locked": {
+            "title": "Country Locked",
+            "type": "boolean"
+          },
+          "currency": {
+            "enum": [
+              "TWD",
+              "CNY"
+            ],
+            "readOnly": true,
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "name",
+          "country",
+          "is_active",
+          "id",
+          "country_locked",
+          "currency"
+        ],
+        "title": "VendorInfo",
+        "type": "object"
+      },
+      "VendorList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "list_data": {
+            "items": {
+              "$ref": "#/components/schemas/VendorInfo"
+            },
+            "title": "List Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "list_data",
+          "count"
+        ],
+        "title": "VendorList",
+        "type": "object"
+      },
+      "VendorUpdate": {
+        "properties": {
+          "country": {
+            "$ref": "#/components/schemas/VendorCountry"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "name",
+          "country",
+          "is_active"
+        ],
+        "title": "VendorUpdate",
+        "type": "object"
       }
     }
   },
@@ -714,6 +1026,240 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/brands/": {
+      "get": {
+        "operationId": "get_brands_route_api_brands__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_inactive",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Inactive",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Brands Route",
+        "tags": [
+          "brands"
+        ]
+      },
+      "post": {
+        "operationId": "create_brand_route_api_brands__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Brand Route",
+        "tags": [
+          "brands"
+        ]
+      }
+    },
+    "/api/brands/{id}": {
+      "delete": {
+        "operationId": "delete_brand_route_api_brands__id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Brand Route",
+        "tags": [
+          "brands"
+        ]
+      },
+      "patch": {
+        "operationId": "update_brand_route_api_brands__id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Brand Route",
+        "tags": [
+          "brands"
+        ]
+      }
+    },
+    "/api/exchange-rates/settings": {
+      "get": {
+        "operationId": "get_exchange_settings_route_api_exchange_rates_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeRateSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Exchange Settings Route",
+        "tags": [
+          "exchange-rates"
+        ]
+      },
+      "patch": {
+        "operationId": "update_exchange_settings_route_api_exchange_rates_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExchangeRateUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeRateSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Exchange Settings Route",
+        "tags": [
+          "exchange-rates"
+        ]
+      }
+    },
     "/api/languages/": {
       "get": {
         "description": "列出這個 API 支援的訊息語系。",
@@ -1720,6 +2266,180 @@
         "summary": "Reset User Password Route",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/api/vendors/": {
+      "get": {
+        "operationId": "get_vendors_route_api_vendors__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_inactive",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Inactive",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Vendors Route",
+        "tags": [
+          "vendors"
+        ]
+      },
+      "post": {
+        "operationId": "create_vendor_route_api_vendors__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendorCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Vendor Route",
+        "tags": [
+          "vendors"
+        ]
+      }
+    },
+    "/api/vendors/{id}": {
+      "delete": {
+        "operationId": "delete_vendor_route_api_vendors__id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Vendor Route",
+        "tags": [
+          "vendors"
+        ]
+      },
+      "patch": {
+        "operationId": "update_vendor_route_api_vendors__id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendorUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Vendor Route",
+        "tags": [
+          "vendors"
         ]
       }
     }
