@@ -78,6 +78,178 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/product-drafts/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Drafts Route */
+        get: operations["get_drafts_route_api_product_drafts__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Unassigned Route */
+        get: operations["get_unassigned_route_api_product_drafts_messages_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/messages/{id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move Message Route */
+        post: operations["move_message_route_api_product_drafts_messages__id__move_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/photos/{id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Draft Photo Route */
+        get: operations["download_draft_photo_route_api_product_drafts_photos__id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/photos/{id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Draft Photo Route */
+        get: operations["get_draft_photo_route_api_product_drafts_photos__id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Draft Route */
+        get: operations["get_draft_route_api_product_drafts__id__get"];
+        put?: never;
+        post?: never;
+        /** Discard Draft Route */
+        delete: operations["discard_draft_route_api_product_drafts__id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Draft Route */
+        patch: operations["update_draft_route_api_product_drafts__id__patch"];
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Draft Route */
+        post: operations["approve_draft_route_api_product_drafts__id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/photos/main": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set Main Photo Route */
+        patch: operations["set_main_photo_route_api_product_drafts__id__photos_main_patch"];
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/photos/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Reorder Photos Route */
+        patch: operations["reorder_photos_route_api_product_drafts__id__photos_order_patch"];
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/photos/{photo_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Photo Route */
+        delete: operations["delete_photo_route_api_product_drafts__id__photos__photo_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/products/": {
         parameters: {
             query?: never;
@@ -650,6 +822,24 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** ApprovalInfo */
+        ApprovalInfo: {
+            /** Draft Id */
+            draft_id: string;
+            /** Product Id */
+            product_id: string;
+            /**
+             * Reviewed At
+             * Format: date-time
+             */
+            reviewed_at: string;
+            /** Reviewed By */
+            reviewed_by: string;
+            /** Reviewer Name */
+            reviewer_name: string;
+            /** Sku */
+            sku: string;
+        };
         /** Body_upload_photos_route_api_products__id__photos_post */
         Body_upload_photos_route_api_products__id__photos_post: {
             /** Files */
@@ -684,6 +874,120 @@ export interface components {
             is_active: boolean;
             /** Name */
             name: string;
+        };
+        /** DiscardInfo */
+        DiscardInfo: {
+            /** Id */
+            id: string;
+        };
+        /** DraftFields */
+        DraftFields: {
+            /** Brand Id */
+            brand_id?: string | null;
+            category?: components["schemas"]["ProductCategory"] | null;
+            /** Color */
+            color?: string | null;
+            /** Cost Price */
+            cost_price?: number | null;
+            /** Internal Note */
+            internal_note?: string | null;
+            /** Model Name */
+            model_name?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Serial Number */
+            serial_number?: string | null;
+            /** Year */
+            year?: number | null;
+        };
+        /** DraftInfo */
+        DraftInfo: {
+            /** Collecting */
+            collecting: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            fields: components["schemas"]["DraftFields"];
+            /** Id */
+            id: string;
+            /** Main Photo Id */
+            main_photo_id?: string | null;
+            /** Messages */
+            messages: components["schemas"]["MessageInfo"][];
+            /** Photos */
+            photos: components["schemas"]["DraftPhotoInfo"][];
+            /** Source Key */
+            source_key: string;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Version */
+            version: number;
+        };
+        /** DraftList */
+        DraftList: {
+            /** Has Next */
+            has_next: boolean;
+            /** Has Previous */
+            has_previous: boolean;
+            /** List Data */
+            list_data: components["schemas"]["DraftSummary"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Prev Cursor */
+            prev_cursor?: string | null;
+            /** Total Count */
+            total_count: number;
+        };
+        /** DraftPhotoInfo */
+        DraftPhotoInfo: {
+            /** Download Url */
+            download_url?: string | null;
+            /** Draft Id */
+            draft_id: string | null;
+            /** Id */
+            id: string;
+            /** Is Main */
+            is_main: boolean;
+            /** Message Id */
+            message_id: string;
+            /** Sort Order */
+            sort_order: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "ready" | "failed";
+            /** Url */
+            url?: string | null;
+        };
+        /** DraftSummary */
+        DraftSummary: {
+            /** Collecting */
+            collecting: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            fields: components["schemas"]["DraftFields"];
+            /** Id */
+            id: string;
+            /** Main Photo Id */
+            main_photo_id?: string | null;
+            /** Source Key */
+            source_key: string;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Version */
+            version: number;
+        };
+        /** DraftUpdate */
+        DraftUpdate: {
+            fields: components["schemas"]["DraftFields"];
+            /** Version */
+            version: number;
         };
         /** ExchangeRateSettings */
         ExchangeRateSettings: {
@@ -733,10 +1037,70 @@ export interface components {
             /** List Data */
             list_data: components["schemas"]["LanguageInfo"][];
         };
+        /** MainPhoto */
+        MainPhoto: {
+            /** Photo Id */
+            photo_id: string;
+            /** Version */
+            version: number;
+        };
         /** MainPhotoUpdate */
         MainPhotoUpdate: {
             /** Photo Id */
             photo_id: string;
+        };
+        /** MessageInfo */
+        MessageInfo: {
+            /** Draft Id */
+            draft_id: string | null;
+            /** External Id */
+            external_id: string;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "text" | "image";
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Sender Id */
+            sender_id: string | null;
+            /** Sender Name */
+            sender_name: string | null;
+            /** Sequence */
+            sequence: number;
+            /** Source Key */
+            source_key: string;
+            /** Text */
+            text: string | null;
+        };
+        /** MessageList */
+        MessageList: {
+            /** Has Next */
+            has_next: boolean;
+            /** Has Previous */
+            has_previous: boolean;
+            /** List Data */
+            list_data: components["schemas"]["MessageInfo"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Prev Cursor */
+            prev_cursor?: string | null;
+            /** Total Count */
+            total_count: number;
+        };
+        /** MessageMove */
+        MessageMove: {
+            /** Source Version */
+            source_version?: number | null;
+            /** Target Draft Id */
+            target_draft_id: string;
+            /** Target Version */
+            target_version: number;
         };
         /**
          * PasswordChange
@@ -797,6 +1161,13 @@ export interface components {
             count: number;
             /** List Data */
             list_data: components["schemas"]["PhotoInfo"][];
+        };
+        /** PhotoOrder */
+        PhotoOrder: {
+            /** Photo Ids */
+            photo_ids: string[];
+            /** Version */
+            version: number;
         };
         /** @enum {string} */
         ProductCategory: "鞋子" | "配飾" | "皮件" | "包包" | "帽子" | "衣服" | "其他";
@@ -1276,6 +1647,11 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /** VersionRequest */
+        VersionRequest: {
+            /** Version */
+            version: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -1484,6 +1860,413 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LanguageList"];
+                };
+            };
+        };
+    };
+    get_drafts_route_api_product_drafts__get: {
+        parameters: {
+            query: {
+                source_key?: string | null;
+                cursor?: string | null;
+                direction?: "next" | "prev";
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_unassigned_route_api_product_drafts_messages_get: {
+        parameters: {
+            query: {
+                source_key?: string | null;
+                cursor?: string | null;
+                direction?: "next" | "prev";
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    move_message_route_api_product_drafts_messages__id__move_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageMove"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_draft_photo_route_api_product_drafts_photos__id__download_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_draft_photo_route_api_product_drafts_photos__id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_draft_route_api_product_drafts__id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    discard_draft_route_api_product_drafts__id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscardInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_draft_route_api_product_drafts__id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_draft_route_api_product_drafts__id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_main_photo_route_api_product_drafts__id__photos_main_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MainPhoto"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reorder_photos_route_api_product_drafts__id__photos_order_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhotoOrder"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_photo_route_api_product_drafts__id__photos__photo_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                photo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

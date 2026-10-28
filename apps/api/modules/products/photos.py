@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import AsyncIterable, AsyncIterator
 from pathlib import Path
 
 from fastapi import UploadFile
@@ -79,24 +80,43 @@ async def _store_photo(
 
 async def upload_photos(id: str, files: list[UploadFile], actor: CurrentUser) -> PhotoList:
     converted = await read_batch(files)
-    paths: list[Path] = []
+    return await store_prepared_photos(id, converted.photos, actor)
+
+
+async def store_prepared_photos(
+    id: str, prepared: list[PreparedPhoto] | AsyncIterable[PreparedPhoto], actor: CurrentUser,
+    *, created_paths: list[Path] | None = None,
+) -> PhotoList:
+    paths: list[Path] = created_paths if created_paths is not None else []
     try:
         async with transaction():
             product = await lock_product(id)
             existing = await rows_for(id)
             order = max((row.sort_order for row in existing), default=0)
-            for offset, content in enumerate(converted.photos, 1):
-                row = await _store_photo(content, product, order + offset, actor, paths)
+            async for content in _prepared_items(prepared):
+                order += 1
+                row = await _store_photo(content, product, order, actor, paths)
                 if product.main_photo_id is None:
                     product.main_photo_id = str(row.id)
             product.updated_by, product.updated_at = actor["id"], utc_now()
             await active_session().flush()
             track_files(created=paths, deleted=[])
             return await list_photos(id)
-    except Exception:
+    except BaseException:
         for path in paths:
             await run_in_threadpool(path.unlink, missing_ok=True)
         raise
+
+
+async def _prepared_items(
+    prepared: list[PreparedPhoto] | AsyncIterable[PreparedPhoto],
+) -> AsyncIterator[PreparedPhoto]:
+    if isinstance(prepared, list):
+        for photo in prepared:
+            yield photo
+    else:
+        async for photo in prepared:
+            yield photo
 
 
 async def list_photos(id: str) -> PhotoList:

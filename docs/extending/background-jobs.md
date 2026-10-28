@@ -2,7 +2,7 @@
 
 背景工作使用獨立的 `line-collector` 容器，與 API 共用 image、PostgreSQL 及 uploads volume，
 不另外引入 Redis（[ADR 0006](../decisions/0006-postgres-job-queue.md)）。
-目前提供佇列基礎，尚無 LINE 收件或商品暫存任務；沒有任務時程序待命，不需要設定 LINE。
+目前已註冊商品暫存的檔案清理及防重送摘要到期任務；LINE 收件由後續階段接上，不需要設定 LINE。
 
 ## 宣告與排入任務
 

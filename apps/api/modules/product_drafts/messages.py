@@ -1,0 +1,57 @@
+from typing import Literal
+
+from shared.auth.contracts import CurrentUser
+from shared.db.session import active_session
+from shared.db.transaction import transaction
+from shared.http.errors import LangException, ensure_found
+
+from . import model
+from .errors import DraftError
+from .rules import check_version
+from .schema import DraftInfo, MessageList, MessageMove
+from .service import _bump, get_draft
+
+
+async def get_unassigned_messages(
+    limit: int, cursor: str | None = None, direction: Literal["next", "prev"] = "next",
+    source_key: str | None = None,
+) -> MessageList:
+    return MessageList.model_validate(
+        await model.unassigned_page(limit, cursor, direction, source_key),
+    )
+
+
+async def move_message(id: str | None, form: MessageMove, actor: CurrentUser) -> DraftInfo:
+    async with transaction():
+        message = ensure_found(await model.get_message_row(id, lock=True), DraftError.NOT_FOUND)
+        target = ensure_found(await model.get_draft_row(form.target_draft_id), DraftError.NOT_FOUND)
+        if message.source_key != target.source_key:
+            raise LangException(409, DraftError.DIFFERENT_SOURCE)
+        check_version(target.version, form.target_version)
+        source = await model.get_draft_row(str(message.draft_id)) if message.draft_id else None
+        if source:
+            check_version(source.version, form.source_version)
+        if source and source.id == target.id:
+            return await get_draft(str(target.id))
+        photo = await model.photo_for_message(id)
+        if photo:
+            photo.draft_id = target.id
+            target_photos = await model.photos_for(str(target.id))
+            photo.sort_order = max((row.sort_order for row in target_photos), default=0) + 1
+            if target.main_photo_id is None:
+                target.main_photo_id = photo.id
+            if source and source.main_photo_id == photo.id:
+                remaining = await model.photos_for(str(source.id))
+                source.main_photo_id = next(
+                    (row.id for row in remaining if row.id != photo.id), None,
+                )
+        stream = await model.stream_for(message.source_key)
+        stream.next_sequence += 1
+        message.sequence = stream.next_sequence
+        message.draft_id = target.id
+        target.has_text = target.has_text or message.kind == "text"
+        for draft in (source, target):
+            if draft:
+                _bump(draft, actor)
+        await active_session().flush()
+        return await get_draft(str(target.id))
