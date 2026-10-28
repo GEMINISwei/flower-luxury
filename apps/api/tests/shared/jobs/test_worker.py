@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 
 import pytest
 
@@ -55,3 +56,48 @@ async def test_idle_worker_responds_to_shutdown(monkeypatch, tmp_path):
     monkeypatch.setattr(worker, "run_once", work)
     monkeypatch.setattr(worker, "heartbeat", heartbeat)
     await asyncio.wait_for(worker.serve({}, stop, tmp_path / "heartbeat"), timeout=1)
+
+
+async def test_heartbeat_updates_only_after_successful_database_probe(monkeypatch, tmp_path):
+    path = tmp_path / "heartbeat"
+    statements = []
+
+    class StopHeartbeatError(Exception):
+        pass
+
+    class Session:
+        async def execute(self, statement):
+            statements.append(str(statement))
+            assert not path.exists()
+
+    @asynccontextmanager
+    async def session_scope():
+        yield Session()
+
+    async def pause(seconds):
+        assert seconds == 5
+        assert path.is_file()
+        raise StopHeartbeatError
+
+    monkeypatch.setattr(worker, "session_scope", session_scope)
+    monkeypatch.setattr(worker.asyncio, "sleep", pause)
+    with pytest.raises(StopHeartbeatError):
+        await worker.heartbeat(path)
+    assert statements == ["SELECT 1"]
+
+
+async def test_failed_database_probe_does_not_publish_heartbeat(monkeypatch, tmp_path):
+    path = tmp_path / "heartbeat"
+
+    class Session:
+        async def execute(self, statement):
+            raise ConnectionError("database unavailable")
+
+    @asynccontextmanager
+    async def session_scope():
+        yield Session()
+
+    monkeypatch.setattr(worker, "session_scope", session_scope)
+    with pytest.raises(ConnectionError):
+        await worker.heartbeat(path)
+    assert not path.exists()

@@ -165,6 +165,7 @@ async def test_expired_final_attempt_is_marked_failed():
         assert job is not None
         await expire(job)
     assert await claim() is None
+    assert job is not None
     assert (await stored(job)).status == "failed"
 
 
