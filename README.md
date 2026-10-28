@@ -1,85 +1,48 @@
 # Flower Luxury
 
-精品商品與交易管理系統，供店長與員工共用品牌、廠商、商品照片、詢價與成交記錄。
-以 FastAPI + Next.js 建置，支援中英雙語與手機操作；功能以模組劃分，模組邊界由測試強制執行。
+Flower Luxury 是供精品團隊使用的商品與交易管理系統，讓店長與員工在同一個地方整理商品、照片、廠商報價與成交記錄。
+從商品建檔、詢價比較到成交與退回，每件商品都有可追溯的操作歷程，方便團隊掌握目前狀態與過去交易。
 
-## Quickstart
+## 適合誰使用
 
-需要 Docker Desktop、`make`、`openssl`、`uv` 與 Node（版本見 [`apps/web/.nvmrc`](apps/web/.nvmrc)）。
+- **店長**：管理團隊帳號、店長註冊碼與人民幣匯率，並參與日常商品及交易作業。
+- **員工**：建立與維護商品、管理照片、記錄廠商報價，以及處理成交與退回。
 
-```bash
-make init dev   # 產生 .env（MODE=development，金鑰自動產生）並安裝相依
-make start      # 啟動開發環境（首次建置約 2–5 分鐘）
-```
+團隊共用品牌、廠商、商品與交易資料，方便接手與協作。目前不提供不同店家之間的資料隔離。
 
-環境啟動後執行 `make db superuser` 建立第一位店長，再開啟 `http://localhost:{SYSTEM_PORT}`
-（預設 3000）登入。店長可在管理區設定共用註冊碼，讓持有有效碼者從 `/signup` 註冊店長；
-員工由店長在使用者管理建立。詳細規則見[帳號、角色與密碼](docs/features/accounts-roles.md)及
-[店長註冊](docs/features/registration.md)。
+## 主要功能
 
-## 包含什麼
-
-| | |
+| 功能 | 可以做什麼 |
 |---|---|
-| 後端 | FastAPI、SQLAlchemy 2.1 async、Alembic、Python 3.14；pytest、ruff、mypy |
-| 前端 | Next.js 16、React 19、TypeScript、CSS Modules；Vitest、ESLint、knip |
-| 基礎設施 | Node.js 24、PostgreSQL 17、Docker Compose（dev／prod）、nginx、GitHub Actions |
-| 功能 | JWT 認證、店長／員工、共用註冊碼、Session 撤銷、登入及註冊限流、游標分頁 |
-| 業務功能 | 共用品牌與廠商、店長匯率設定、商品建檔與照片、詢價、成交快照、帶原因退回與再次成交 |
-| 前後端契約 | 後端產生 OpenAPI → 前端型別，端點、權限、語系寫錯都是編譯錯誤 |
-| i18n | 前後端一致的中英雙語，漏翻譯會編譯失敗 |
+| 商品管理 | 記錄名稱、品牌、分類、成本、序號、顏色與年份，並以固定商品編號（SKU）辨識每件商品。 |
+| 搜尋與篩選 | 依名稱、商品編號或序號搜尋，搭配品牌、分類、狀態、顏色與年份篩選。 |
+| 商品照片 | 上傳與預覽照片、設定主圖，並下載保留的原始照片；支援 JPEG、PNG、WebP 與 HEIC。 |
+| 品牌與廠商 | 維護團隊共用名單，依臺灣或中國廠商記錄新臺幣或人民幣報價。 |
+| 詢價與匯率 | 保存不同廠商的報價，將人民幣換算為新臺幣；需要時可確認套用最新匯率。 |
+| 成交與利潤 | 由詢價確認成交，保存當時的廠商、報價、匯率、成本與利潤。 |
+| 退回與再成交 | 填寫原因後退回商品，重新編輯與成交，同時保留過去的成交內容及退回原因。 |
+| 操作歷程 | 查看商品建立、成交與退回等記錄，追溯操作人與時間。 |
 
-相依版本以後端 [`pyproject.toml`](apps/api/pyproject.toml) 與 [`uv.lock`](apps/api/uv.lock)、
-前端 [`package.json`](apps/web/package.json) 與 [`package-lock.json`](apps/web/package-lock.json)
-為準；Node.js 版本線見 [`.nvmrc`](apps/web/.nvmrc)，容器版本見
-[`docker-compose.yml`](infra/docker/docker-compose.yml)。
+## 日常操作流程
 
-店長可管理員工、註冊碼與匯率；員工可操作商品、照片與交易。所有登入者共用業務資料，沒有多店資料隔離。
-照片支援 JPEG、PNG、WebP、HEIC，保留原檔並提供需登入的下載；已出售商品唯讀，退回後可再次成交，
-過去成交快照與退回原因持續保留。
+1. **建立商品**：填寫商品名稱、品牌、分類與成本，加入照片，取得固定商品編號。
+2. **整理詢價**：選擇廠商並記錄報價，查看換算後的新臺幣金額。
+3. **確認成交**：核對報價與成本後完成成交，保存當時的交易內容與利潤。
+4. **查看記錄**：隨時搜尋商品，檢視照片、目前狀態與歷史交易。
+5. **需要退回時**：填寫退回原因，恢復商品編輯與詢價操作；之後可再次成交。
 
-## 架構
+## 保留每次交易的依據
 
-```text
-app（組裝層） → modules（垂直功能） → shared（平台能力）
-```
+成交後，商品、照片與詢價會停止接受修改，仍可檢視資料及下載原圖。
+若需重新處理商品，先填寫原因完成退回，再進行修改或新的成交。
 
-- **每個功能是一個模組**，前後端同名，各自擁有路由、資料表、權限、畫面與測試。
-- **跨模組只走 public entry**，由 import-linter（後端）與 dependency-cruiser（前端）強制執行。
-- **測試與原始碼同構**：`tests/modules/users/` 對 `modules/users/`。
+每次成交都保留當時的金額、匯率、成本與利潤。後續調整商品成本、廠商名稱或系統匯率，
+不會改寫既有成交記錄；再次成交也不會覆蓋過去的交易。
 
-```mermaid
-flowchart LR
-    B["瀏覽器"] --> N["nginx"]
-    N --> W["web · Next.js"]
-    W -->|"伺服器端呼叫（compose 內網）"| A["api · FastAPI"]
-    A --> M[("PostgreSQL")]
-    G["migrate"] -.->|"跑完才啟動 api"| A
-```
+## 帳號與個人設定
 
-瀏覽器經 nginx 存取系統；業務 API 由 Next.js 在 compose 內網呼叫。
-照片顯示與原圖下載另外經 nginx 轉送至 API，仍由後端驗證 Session。
+員工帳號由店長建立。店長可修改員工暱稱、啟用或停用帳號，並協助重設員工密碼。
+持有有效店長註冊碼的人可自行註冊店長帳號，註冊碼由店長管理。
 
-## 文件
-
-| | |
-|---|---|
-| [`AGENTS.md`](AGENTS.md) | 給 AI agent 的規則與陷阱 |
-| [`docs/architecture.md`](docs/architecture.md) | 依賴規則、模組介面、目錄結構、前後端契約 |
-| [`docs/development.md`](docs/development.md) | 指令、測試策略、程式碼風格、CI |
-| [`docs/features/`](docs/features/README.md) | 帳號與註冊、Session、品牌與廠商、商品照片、詢價與成交等功能規則 |
-| [`docs/extending/`](docs/extending/README.md) | 擴充系統：新增模組、權限、migration、語系 |
-| [`docs/operations.md`](docs/operations.md) | 部署、主機設定、備份與救援 |
-| [`docs/decisions/`](docs/decisions/README.md) | 設計決策（ADR）：刻意不採用主流做法的地方與理由 |
-
-## 移植狀態
-
-店長／員工、共用註冊碼、品牌與廠商、匯率、商品、照片及交易功能已移植。
-員工從建商品、上傳照片、詢價到成交、退回與再成交，已有[單一完整 E2E](e2e/tests/product-lifecycle.spec.ts)
-驗證同一商品的照片、原圖下載、操作限制、成交快照與流向記錄。
-另有[英文完整操作與公開實拍 HEIC E2E](e2e/tests/english-acceptance.spec.ts)，
-驗證語系切換、前後端英文錯誤、照片補傳、顯示圖及原圖下載。
-[iPhone Safari 原生相機、系統選檔與下載](docs/acceptance/iphone-safari.md)仍待實機驗收。
-
-舊資料與照片搬移、正式發版與部署另案處理。主機設定確認及備份還原演練也尚未完成；
-現有操作文件見[部署與維運](docs/operations.md)，功能變更見[變更紀錄](CHANGELOG.md)。
+每位使用者都可在個人設定修改自己的暱稱、密碼與顯示語言。
+系統提供繁體中文與英文介面，並依電腦或手機畫面調整操作版面。
