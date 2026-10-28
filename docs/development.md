@@ -33,8 +33,8 @@ make start lan  # 同 make start，但對區網開放，結束時印出手機要
 區網網址是 `http`。定位、Service Worker、`getUserMedia()` 即時相機串流等需要安全來源的功能，
 要改用 HTTPS 測試網址。商品「直接拍照」使用 file input 的 `capture` 提示啟動系統拍攝或選檔，
 與即時串流 API 不同，見 [HTML Media Capture](https://www.w3.org/TR/html-media-capture/)。
-實際相機入口、檔案格式與下載行為依 iPhone Safari 決定，照 [iPhone Safari 實機驗收](acceptance/iphone-safari.md)
-記錄，不能只以桌面瀏覽器或視窗尺寸模擬判定通過。
+實際相機入口、檔案格式與下載行為依 iPhone Safari 決定，驗收步驟與結果記在對應 PR 的「驗證」段，
+不能只以桌面瀏覽器或視窗尺寸模擬判定通過。
 
 ### 環境變數的同步點
 
@@ -217,6 +217,9 @@ PR 描述「驗證」段的每條驗收條件後面接一個測試名稱與結�
 
 - 前端與 E2E：讀得通的中文句子（`未登入導向 /login`、`登出後其他已登入的裝置也會被登出`）
 - 後端：`test_<動作>_<條件>_<結果>`（`test_get_users_without_permission_returns_403`）
+
+驗收條件只寫在 PR，不另寫一份文件或 spec：PR 是動手前討論方向的地方，合併後留下來的是測試名稱，
+它會跟著程式一起被執行，文件則會在下一次改動時悄悄過時。
 
 覆蓋率門檻（`pyproject.toml` 的 `fail_under`、`vitest.config.ts` 的 `thresholds`）是**防退步的地板，
 不是目標**。
