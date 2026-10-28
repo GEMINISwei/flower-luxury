@@ -29,6 +29,7 @@
 | [品牌、廠商與匯率](catalog-foundations.md) | 共用資料、刪除／停用、國家鎖定、匯率精度與舊版欄位 |
 | [共用介面與導覽](interface.md) | 主題、手機更多、確認視窗與固定日期格式 |
 | [商品核心](products.md) | 建檔、SKU、篩選分頁、狀態歷程、售出唯讀與軟刪除 |
+| [LINE 商品收集](line-collection.md) | LINE 金鑰與 Webhook 設定、群組啟用、背景下載與撤回 |
 | [商品暫存](product-drafts.md) | 訊息分組、暫存整理、審核建檔、硬刪除與背景清理 |
 | [商品照片](product-photos.md) | 選檔拍照、預覽與補傳、主圖、原圖下載、交易清理與登入保護 |
 | [詢價、成交與退回](product-trading.md) | 匯率保存、版本檢查、成交快照、售出鎖定、退回與再成交 |

@@ -2,7 +2,9 @@ import sys
 from typing import Literal
 
 from pydantic import Field, ValidationError
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
+
+from modules.line_collection.public import LineSettings
 
 # `make init` 以 `openssl rand -hex 32` 產生, 長度為 64。設下限避免有人手動填入弱金鑰。
 MIN_JWT_SECRET_LENGTH = 32
@@ -12,7 +14,7 @@ MIN_JWT_SECRET_LENGTH = 32
 APP_VERSION = "0.0.0"
 
 
-class AppEnv(BaseSettings):
+class AppEnv(LineSettings):
     model_config = SettingsConfigDict(
         alias_generator=lambda x: x.upper(),
         populate_by_name=True,

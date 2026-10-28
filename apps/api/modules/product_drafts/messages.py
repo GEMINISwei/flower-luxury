@@ -5,10 +5,10 @@ from shared.db.session import active_session
 from shared.db.transaction import transaction
 from shared.http.errors import LangException, ensure_found
 
-from . import model
+from . import model, storage
 from .errors import DraftError
 from .rules import check_version
-from .schema import DraftInfo, MessageList, MessageMove
+from .schema import DraftInfo, MessageList, MessageMove, WithdrawalResult
 from .service import _bump, get_draft
 
 
@@ -55,3 +55,28 @@ async def move_message(id: str | None, form: MessageMove, actor: CurrentUser) ->
                 _bump(draft, actor)
         await active_session().flush()
         return await get_draft(str(target.id))
+
+
+async def withdraw_message(source_key: str, external_id: str,
+                           draft_id: str | None = None) -> WithdrawalResult:
+    async with transaction():
+        await model.stream_for(source_key)
+        message = await model.message_by_external_id(source_key, external_id)
+        if message is None:
+            receipt = await model.receipt_for(model.message_fingerprint(source_key, external_id))
+            if receipt and receipt.approved_product_id:
+                return WithdrawalResult(product_id=receipt.approved_product_id)
+            approval = await model.approval_for(draft_id) if draft_id else None
+            return WithdrawalResult(product_id=str(approval.product_id) if approval else None)
+        draft = await model.get_draft_row(str(message.draft_id)) if message.draft_id else None
+        photo = await model.photo_for_message(str(message.id))
+        if photo:
+            await storage.schedule_cleanup([photo])
+            if draft and draft.main_photo_id == photo.id:
+                others = await model.photos_for(str(draft.id))
+                draft.main_photo_id = next((row.id for row in others if row.id != photo.id), None)
+        await active_session().delete(message)
+        if draft:
+            _bump(draft)
+        await active_session().flush()
+        return WithdrawalResult(removed=True)

@@ -159,3 +159,8 @@ class StoredFile(BaseModel):
 class CollectionDecision(BaseModel):
     assign: bool
     start_new: bool
+
+
+class WithdrawalResult(BaseModel):
+    removed: bool = False
+    product_id: str | None = None
