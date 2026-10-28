@@ -68,7 +68,7 @@ flowchart LR
 | [`docs/architecture.md`](docs/architecture.md) | 依賴規則、模組介面、目錄結構、前後端契約 |
 | [`docs/development.md`](docs/development.md) | 指令、測試策略、程式碼風格、CI |
 | [`docs/features/`](docs/features/README.md) | 帳號與註冊、Session、品牌與廠商、商品照片、詢價與成交等功能規則 |
-| [`docs/extending.md`](docs/extending.md) | 擴充系統：新增模組、權限、migration、語系 |
+| [`docs/extending/`](docs/extending/README.md) | 擴充系統：新增模組、權限、migration、語系 |
 | [`docs/operations.md`](docs/operations.md) | 部署、主機設定、備份與救援 |
 | [`docs/decisions/`](docs/decisions/README.md) | 設計決策（ADR）：刻意不採用主流做法的地方與理由 |
 
