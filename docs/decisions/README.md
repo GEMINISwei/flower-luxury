@@ -28,7 +28,7 @@
 | [0003](0003-centralized-permission-and-language.md) | `Permission` 與 `Language` 集中定義，不由模組動態組裝 | 採用 |
 | [0004](0004-downtime-deploys.md) | 部署會短暫停機，api 維持單一行程 | 採用 |
 | [0005](0005-in-process-rate-limit.md) | 限流計數放在行程記憶體 | 採用 |
-| [0006](0006-postgres-job-queue.md) | 背景工作用 worker 容器與 PostgreSQL 佇列，不導入 Redis | 採用，尚未實作 |
+| [0006](0006-postgres-job-queue.md) | 背景工作用 worker 容器與 PostgreSQL 佇列，不導入 Redis | 採用，已實作 |
 | [0007](0007-seed-in-migrate-service.md) | 初始資料由 migrate 服務寫入，不用 Alembic 資料 migration | 採用 |
 | [0008](0008-no-built-in-error-tracking.md) | 不內建錯誤追蹤與告警 | 採用 |
 | [0009](0009-manager-registration-code.md) | 以共用註冊碼開放店長註冊，第一位店長由 CLI 建立 | 採用 |

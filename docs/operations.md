@@ -55,14 +55,34 @@ nginx 模板改了也用 `make start`：它會先跑 `nginx -t` 再重建 nginx�
 維持原狀。migrate 做兩件事：`alembic upgrade head`，接著補齊初始資料（seed，見
 [`extending/seed.md`](extending/seed.md)）。migration 失敗時整個撤回（PostgreSQL 的 DDL 在交易裡）；
 seed 失敗時結構已經升上去了，服務一樣不切換，修好之後重跑即可（seed 可以重複執行）。之後的啟動順序是
-`postgres → migrate → api → web → nginx`，這時 `migrate` 再跑一次，沒有待執行的 migration、seed 也已經是最新的。
+`postgres → migrate → api → web → nginx`，並在 migrate 成功後啟動 line-collector。
+這時 `migrate` 再跑一次，沒有待執行的 migration、seed 也已經是最新的。
 
 **每次部署都會短暫中斷服務**：部署前的備份期間 nginx 是停的（資料越多越久，見
 〈[備份與還原](#備份與還原)〉），`make start` 重建容器後也要等 healthcheck 通過，nginx 才會接回流量。
 所以要挑離峰時段部署。零停機（新版起來才切流量）的前提是 api 能同時跑兩份，目前做不到，見
 〈[單一行程，不能直接加副本](#單一行程不能直接加副本)〉與 [ADR 0004](decisions/0004-downtime-deploys.md)。
 
-prod overlay 比 dev 多了 **log 上限**與**記憶體上限**（api、web 各 512M，postgres 1G）。
+prod overlay 比 dev 多了 **log 上限**與**記憶體上限**（api、web、line-collector 各 512M，postgres 1G）。
+
+### 背景收集程序
+
+`line-collector` 與 API 使用同一個 image，容器名稱為 `${COMPOSE_PROJECT_NAME}-line-collector`，
+由 `make start` 一起啟動，不對外開 port。工作佇列放 PostgreSQL，檔案共用 uploads volume。
+目前只有背景工作基礎，沒有 LINE 收件任務，不需要設定 LINE 金鑰或 Webhook。
+
+用 `make services` 查看健康狀態，`make services logs line-collector` 追蹤紀錄。
+每五秒成功連線資料庫後更新 heartbeat，超過 30 秒未更新則 unhealthy；程序錯誤退出後由容器重新啟動。
+handler 在 SIGTERM 時取消並回滾，未能清理完而被強制停止的工作會於持有期限到期後恢復。
+
+`make start` 在 migration 前停止原本執行中的收集程序。migration 失敗且資料庫版本未變時恢復原容器；
+資料庫版本改變（例如 migration 成功但 seed 失敗）、版本無法確認，或後續服務切換失敗時維持停止，
+修復原因後重跑 `make start`，避免舊程序操作新結構。
+開發用的 `make db migrate` 與 `make db reset` 也會先停止背景寫入。
+
+備份與還原會停止 nginx 與 line-collector；即使 nginx 原本已停止，也會檢查並停止收集程序。
+成功或失敗後只恢復本次停掉的容器，巢狀備份不會在外層還原完成前重啟。
+詳細任務契約見[背景工作](extending/background-jobs.md)。
 api 週期性重啟時，先懷疑記憶體上限。
 
 上線前確認：
@@ -476,8 +496,8 @@ make uploads restore backups/x.tar   # 直接指定檔案
 
 沒有只備份一邊的指令：單邊的備份配不成一組，還原時容易選錯。
 
-**備份期間對外服務會暫停**：先停 nginx（唯一的對外入口，用 `stop` 不是 `down`），備份完、或備份
-失敗時都會重新啟動。沒有新的寫入，資料庫與上傳檔案才是同一個時間點；api 與 web 不停，因為上傳
+**備份期間對外服務會暫停**：先停 nginx（唯一的對外入口）與 line-collector，用 `stop` 不是 `down`，
+備份完或備份失敗時都恢復原先執行中的容器。沒有新的寫入，資料庫與上傳檔案才是同一個時間點；api 與 web 不停，因為上傳
 檔案是從 api 容器裡打包的。
 
 **還原前會先完整備份一次**（等於自動跑一次 `make backup`），選錯檔案時還退得回來；這次備份失敗

@@ -19,6 +19,7 @@ from shared.auth.contracts import CurrentUserResolver
 from shared.auth.permissions import BasePermission
 from shared.db.table import BaseTable
 from shared.http.errors import LangText
+from shared.jobs.contracts import TaskSpec
 
 
 @dataclass(frozen=True)
@@ -43,6 +44,7 @@ class ModuleManifest:
     routers: tuple[APIRouter, ...] = ()
     tables: tuple[type[BaseTable], ...] = ()
     permissions: tuple[PermissionSpec, ...] = ()
+    tasks: tuple[TaskSpec, ...] = ()
     #: 以 username 取得使用者 (含展開後的 permissions) 的函式。
     #:
     #: `shared/auth` 的權限依賴需要一個「身分來源」, 但 shared 不認識任何 domain,
@@ -67,7 +69,17 @@ def validate_modules(modules: Iterable[ModuleManifest]) -> tuple[ModuleManifest,
                 raise RuntimeError(f"duplicate router prefix: {router.prefix}")
             router_prefixes.add(router.prefix)
     _validate_tables(resolved)
+    _validate_tasks(resolved)
     return resolved
+
+
+def _validate_tasks(modules: tuple[ModuleManifest, ...]) -> None:
+    names: set[str] = set()
+    for module in modules:
+        for task in module.tasks:
+            if task.name in names:
+                raise RuntimeError(f"duplicate task name: {task.name!r}")
+            names.add(task.name)
 
 
 def _validate_tables(modules: tuple[ModuleManifest, ...]) -> None:

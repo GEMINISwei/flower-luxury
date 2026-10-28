@@ -10,7 +10,7 @@
 
 ```bash
 make init dev   # 產生 .env（MODE=development，金鑰自動產生）、安裝相依、git init
-make start      # 啟動 postgres → migrate → api → web → nginx（首次建置約 2–5 分鐘）
+make start      # 啟動 postgres → migrate → api → web → nginx，另啟動 line-collector（首次建置約 2–5 分鐘）
 ```
 
 環境起來之後用 `make db superuser` 建立第一位店長，再打開 `http://localhost:{SYSTEM_PORT}`

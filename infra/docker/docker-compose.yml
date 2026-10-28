@@ -1,4 +1,4 @@
-# api 與 migrate 是**同一個 image** 的兩種跑法, 共用的部分只寫一次 (錨點),
+# api、migrate 與 line-collector 使用同一個 image, 共用的部分只寫一次 (錨點),
 # 兩者的 image 字串就不可能飄掉。
 x-api-image: &api-image
   # 預設是本機建置 (MODE=production 的 `make start`)。之後接 registry 時, 在 shell 匯出
@@ -54,6 +54,29 @@ services:
         condition: service_healthy
     # 不能是 always: 失敗的 migration 會無限重跑, compose 永遠等不到成功結束。
     restart: "no"
+
+  line-collector:
+    <<: *api-image
+    container_name: ${COMPOSE_PROJECT_NAME:?}-line-collector
+    environment:
+      <<: *api-db-env
+    working_dir: /app
+    command: ["python", "-m", "app.collector"]
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.collector", "--healthcheck"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    stop_grace_period: 45s
+    restart: always
 
   postgres:
     container_name: ${COMPOSE_PROJECT_NAME:?}-postgres

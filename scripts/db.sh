@@ -104,20 +104,24 @@ cmd_restore() {
     echo "還原完成：$(backup_label "${file}")"
 }
 
+reset_database() {
+    db_cli reset
+    # migrate 會接著補齊初始資料 (scripts/db.py), 不必另外 seed。
+    db_cli migrate
+}
+
 cmd_reset() {
     deny_on_production "make db reset"
     require_running
     confirm "資料庫的資料將被清空並重建初始資料，確定？"
-    db_cli reset
-    # migrate 會接著補齊初始資料 (scripts/db.py), 不必另外 seed。
-    db_cli migrate
+    without_traffic reset_database
 }
 
 # 正式環境由 make start 的 migrate 服務套用; 這條路徑不會先備份。
 cmd_migrate() {
     deny_on_production "make db migrate"
     require_running
-    db_cli migrate
+    without_collector db_cli migrate
 }
 
 # 對一個拋棄式資料庫跑完既有 migration, 再讓 autogenerate 比對 model —— 不碰開發資料,

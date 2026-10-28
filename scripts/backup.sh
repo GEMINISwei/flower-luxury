@@ -9,7 +9,7 @@
 # 這是唯一的備份入口, 沒有只備份一邊的指令: 單邊的備份配不成一組, 還原時容易選錯。
 # 還原一律分開 (make db restore／make uploads restore), 兩者都會先跑一次這支。
 #
-# 備份期間停掉 nginx (without_traffic): 沒有新的寫入, 資料庫與上傳檔案才是同一個時間點。
+# 備份期間停掉 nginx 與 line-collector: 沒有新的寫入, 資料庫與檔案才是同一個時間點。
 set -euo pipefail
 
 # shellcheck source=scripts/lib/compose.sh
@@ -58,7 +58,7 @@ backup_database() {
     echo "已備份：${dest}"
 }
 
-# 從 api 容器裡打包, 不另起容器: 主機上不必多拉一個 image。所以停服務只停 nginx, api 要留著。
+# 從 api 容器裡打包, 不另起容器: 主機上不必多拉一個 image, api 要留著。
 # 不壓縮: 圖片、影片本身已經壓過, 再 gzip 省不到空間只花 CPU。
 # volume 不存在時 (還沒部署過有 uploads 的版本) 沒有東西可備份, 略過。
 backup_uploads() {

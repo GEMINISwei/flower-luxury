@@ -1,6 +1,6 @@
 # 0006. 背景工作用 worker 容器與 PostgreSQL 佇列，不導入 Redis
 
-狀態：採用，尚未實作（2026-10-25）
+狀態：採用，已實作（2026-10-28）
 
 ## 背景
 
@@ -12,6 +12,7 @@
 - 另開一個 worker 容器，跟 migrate 一樣用 api 的 image、換一個 command。
 - 佇列放 PostgreSQL（`SELECT … FOR UPDATE SKIP LOCKED`），排程也放在同一個 worker。
 - 任務由模組在 `manifest.py` 宣告，worker 從 `ENABLED_MODULES` 收集。
+- 背景程序的 service 名稱為 `line-collector`，容器名稱為 `${COMPOSE_PROJECT_NAME}-line-collector`。
 
 ## 後果
 

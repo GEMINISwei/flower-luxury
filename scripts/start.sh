@@ -2,7 +2,7 @@
 #
 # 啟動服務: make start (依 .env 的 MODE)
 #
-#   make start   啟動 postgres → migrate → api → web → nginx (會自動跑 migration); production 會重新建置或拉 image
+#   make start   啟動網站與 line-collector (會自動跑 migration); production 會重新建置或拉 image
 #   make start lan   (僅 development) 同上, 但對區網開放, 讓手機連進來測試; 下次一般的 make start 就關回去
 #
 # development 用 bind mount 的原始碼, 改了直接生效, 不必建置。
@@ -103,27 +103,59 @@ check_nginx_config
 # compose 要等 migrate 跑完才知道它失敗, 那時線上的 api 已經被換成新的容器而起不來, 結果就是停機。
 # 所以先用要上線的 image 單獨跑一次: 失敗就停在這裡, 線上服務維持原狀 (PostgreSQL 的 DDL 在交易裡,
 # 失敗會整個撤回)。成功之後 up 裡的 migrate 沒有待執行的 migration, 直接結束。
+collector_migration_revision() {
+    local exists
+    exists="$(postgres_tool psql -tAq -c "SELECT to_regclass('public.alembic_version') IS NOT NULL")" || return 1
+    if [ "${exists}" = t ]; then
+        postgres_tool psql -tAq -c "SELECT version_num FROM alembic_version"
+    fi
+}
+
+# start_services 與這個函式都在 without_collector 的同一個子 shell 裡執行。
+# shellcheck disable=SC2031
 migrate_first() {
+    local previous="" current=""
+    if [ "${COLLECTOR_WAS_RUNNING}" = true ]; then
+        if ! previous="$(collector_migration_revision)"; then
+            COLLECTOR_RESTORE=false
+            echo "無法確認資料庫版本，背景收集維持停止；修復後重跑 make start" >&2
+            exit 1
+        fi
+    fi
     if ! app_compose run --rm -T "$@" migrate; then
+        if [ "${COLLECTOR_WAS_RUNNING}" = true ]; then
+            if ! current="$(collector_migration_revision)" || [ "${previous}" != "${current}" ]; then
+                COLLECTOR_RESTORE=false
+                echo "資料庫已變更或版本無法確認，背景收集維持停止；修復後重跑 make start" >&2
+            fi
+        fi
         echo "migration 失敗，沒有切換任何服務（原因見上方訊息）" >&2
         exit 1
     fi
 }
 
-if [ "${MODE}" = development ]; then
-    migrate_first
-    app_compose up -d --remove-orphans
-else
-    if [ -n "${API_IMAGE:-}${WEB_IMAGE:-}" ]; then
-        require_env API_IMAGE WEB_IMAGE
-        export IMAGE_PULL_POLICY=always
-        migrate_first --pull always
+start_services() {
+    if [ "${MODE}" = development ]; then
+        migrate_first
+        COLLECTOR_RESTORE=false
         app_compose up -d --remove-orphans
     else
-        migrate_first --build
-        app_compose up -d --build --remove-orphans
+        if [ -n "${API_IMAGE:-}${WEB_IMAGE:-}" ]; then
+            require_env API_IMAGE WEB_IMAGE
+            export IMAGE_PULL_POLICY=always
+            migrate_first --pull always
+            COLLECTOR_RESTORE=false
+            app_compose up -d --remove-orphans
+        else
+            migrate_first --build
+            COLLECTOR_RESTORE=false
+            app_compose up -d --build --remove-orphans
+        fi
     fi
-fi
+}
+
+# migration 失敗恢復原 worker, 成功則 compose 已啟動使用新 image 的 worker。
+without_collector start_services
 echo "已啟動：http://localhost:${SYSTEM_PORT}"
 if [ "${lan}" = true ]; then
     print_lan_urls
