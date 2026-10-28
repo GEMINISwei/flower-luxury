@@ -32,7 +32,7 @@ server {
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 
-    # LINE 只公開簽章驗證入口, 群組管理維持內網呼叫。
+    # LINE 只公開簽章驗證入口, 群組管理維持內網呼叫.
     location = /api/line/webhook {
         limit_except POST { deny all; }
         set $line_upstream http://api:8000;
