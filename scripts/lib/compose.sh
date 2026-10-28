@@ -74,6 +74,23 @@ container_running() {
     grep -qx "$1" <<< "${names}"
 }
 
+# 用法: without_collector <指令...>
+#
+# 子 shell 隔離 EXIT trap: 還原裡呼叫備份時, 內層不能提早恢復外層停掉的 worker。
+without_collector() (
+    local collector="${COMPOSE_PROJECT_NAME}-line-collector"
+    COLLECTOR_RESTORE=true
+    export COLLECTOR_WAS_RUNNING=false
+    if container_running "${collector}"; then
+        export COLLECTOR_WAS_RUNNING=true
+        echo "停止背景收集（${collector}），完成後會重新啟動"
+        docker stop "${collector}" > /dev/null
+        # shellcheck disable=SC2064
+        trap "if [ \"\${COLLECTOR_RESTORE}\" = true ]; then docker start '${collector}' > /dev/null || exit 1; fi" EXIT
+    fi
+    "$@"
+)
+
 # 用法: without_traffic <指令...>
 #
 # 停掉 nginx (唯一的對外入口) 再執行指令, 結束後 (失敗也一樣) 開回來: 備份與還原期間沒有新的
@@ -82,23 +99,17 @@ container_running() {
 # nginx 本來就沒在跑時什麼都不動, 只開回自己停掉的: 還原會在外層先停, 裡面那次備份不能在還原
 # 之前就把它開回來。
 #
-# 用 EXIT trap 而不是 `"$@" || status=$?`: 在 `||` 左邊的函式裡 `set -e` 不生效, 中途失敗會繼續
-# 往下跑。這個 trap 會取代呼叫端的 EXIT trap, 所以呼叫端不能自己再設一個。
-without_traffic() {
+# 子 shell 隔離呼叫端 trap, set -e 讓備份中途失敗時不再進行還原。
+without_traffic() (
     local nginx="${COMPOSE_PROJECT_NAME}-nginx"
-    if ! container_running "${nginx}"; then
-        "$@"
-        return
+    if container_running "${nginx}"; then
+        echo "停止對外服務（${nginx}），完成後會重新啟動"
+        docker stop "${nginx}" > /dev/null
+        # shellcheck disable=SC2064
+        trap "docker start '${nginx}' > /dev/null || exit 1" EXIT
     fi
-    echo "停止對外服務（${nginx}），完成後會重新啟動"
-    docker stop "${nginx}" > /dev/null
-    # shellcheck disable=SC2064 # 現在就展開: trap 觸發時這個區域變數已經不在了
-    trap "docker start '${nginx}' > /dev/null" EXIT
-    "$@"
-    trap - EXIT
-    docker start "${nginx}" > /dev/null
-    echo "已重新啟動對外服務"
-}
+    without_collector "$@"
+)
 
 # api 容器裡的資料庫 CLI (apps/api/scripts/db.py)。
 db_cli() {

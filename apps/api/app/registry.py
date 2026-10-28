@@ -14,6 +14,8 @@ from modules.roles.manifest import MODULE as ROLES_MODULE
 from modules.users.manifest import MODULE as USERS_MODULE
 from modules.vendors.manifest import MODULE as VENDORS_MODULE
 from shared.auth.catalog import validate_permission_coverage
+from shared.db.table import BaseTable
+from shared.jobs.model import JobTable
 from shared.module import ModuleManifest, table_models, validate_modules
 
 ENABLED_MODULES: tuple[ModuleManifest, ...] = validate_modules(
@@ -29,7 +31,7 @@ ENABLED_MODULES: tuple[ModuleManifest, ...] = validate_modules(
     )
 )
 
-TABLE_MODELS = table_models(ENABLED_MODULES)
+TABLE_MODELS: list[type[BaseTable]] = [JobTable, *table_models(ENABLED_MODULES)]
 
 # 載入時只做**驗證**, 不安裝任何狀態: 完整啟用清單必須剛好覆蓋 `Permission` enum。
 # 執行期的權限目錄由 `create_app()` 依它實際啟用的 modules 安裝 (見 shared/auth/catalog.py)。

@@ -1,4 +1,4 @@
-# api 與 migrate 掛同一組來源 (錨點只寫一次): 新增 migration 後不必重建 image,
+# api、migrate 與 line-collector 掛同一組來源 (錨點只寫一次): 新增 migration 後不必重建 image,
 # 再跑一次 `make start` 就會套用。migrate 漏掉 migrations/ 的話會說「沒有待執行的」。
 #
 # 逐一列出而不是掛整個 apps/api: 整包會遮掉 image 裡的 .venv, 換成主機的 macOS 版本,
@@ -18,6 +18,9 @@ services:
     volumes: *api-source
 
   migrate:
+    volumes: *api-source
+
+  line-collector:
     volumes: *api-source
 
   web:
