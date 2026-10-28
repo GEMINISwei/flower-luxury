@@ -2,6 +2,7 @@ import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
@@ -25,6 +26,7 @@ from modules.product_drafts.schema import (
 )
 from modules.products.public import ProductInfo
 from shared.db.session import _current_session
+from shared.db.table import BaseTable
 from shared.http.errors import LangException
 from shared.jobs.contracts import Job
 from tests.modules.product_drafts.helpers import ACTOR, BASE, ID, image_bytes, incoming
@@ -68,7 +70,9 @@ class MemorySession:
 
 @pytest.fixture
 def state(monkeypatch, tmp_path):
-    rows = {cls: {} for cls in (DraftTable, MessageTable, PhotoTable, ReceiptTable, ApprovalTable)}
+    rows: dict[type[BaseTable], dict[str, Any]] = {
+        cls: {} for cls in (DraftTable, MessageTable, PhotoTable, ReceiptTable, ApprovalTable)
+    }
     stream = SimpleNamespace(source_key="group-a", last_occurred_at=None, next_sequence=0)
 
     session = MemorySession(rows)
