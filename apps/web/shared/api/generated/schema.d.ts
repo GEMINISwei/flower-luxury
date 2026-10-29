@@ -78,6 +78,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/line/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Group List Route */
+        get: operations["group_list_route_api_line_groups_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/line/groups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Group Update Route */
+        patch: operations["group_update_route_api_line_groups__id__patch"];
+        trace?: never;
+    };
+    "/api/line/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Webhook Route */
+        post: operations["webhook_route_api_line_webhook_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/product-drafts/": {
         parameters: {
             query?: never;
@@ -1015,6 +1066,46 @@ export interface components {
             /** Rate */
             rate: number | string;
         };
+        /** GroupInfo */
+        GroupInfo: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Group Id */
+            group_id: string;
+            /** Id */
+            id: string;
+            /** Joined */
+            joined: boolean;
+            /** Name */
+            name: string | null;
+            /** Review Product Id */
+            review_product_id: string | null;
+        };
+        /** GroupList */
+        GroupList: {
+            /** Has Next */
+            has_next: boolean;
+            /** Has Previous */
+            has_previous: boolean;
+            /** List Data */
+            list_data: components["schemas"]["GroupInfo"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Prev Cursor */
+            prev_cursor?: string | null;
+            /** Total Count */
+            total_count: number;
+        };
+        /** GroupUpdate */
+        GroupUpdate: {
+            /** Enabled */
+            enabled: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1652,6 +1743,11 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** WebhookResult */
+        WebhookResult: {
+            /** Accepted */
+            accepted: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -1860,6 +1956,94 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LanguageList"];
+                };
+            };
+        };
+    };
+    group_list_route_api_line_groups_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+                direction?: "next" | "prev";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    group_update_route_api_line_groups__id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GroupUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    webhook_route_api_line_webhook_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookResult"];
                 };
             };
         };

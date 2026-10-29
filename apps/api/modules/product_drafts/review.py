@@ -48,6 +48,7 @@ async def approve_draft(id: str, form: VersionRequest, actor: CurrentUser) -> Ap
         product = await create_imported_product(
             fields, _prepared_photos(rows), actor, main_index=main_index,
         )
+        await model.remember_approved_messages(id, product.id)
         receipt = model.ApprovalTable(
             id=draft.id, product_id=parse_uuid(product.id), sku=product.sku,
             reviewed_by=actor["id"], reviewer_name=actor["username"],

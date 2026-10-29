@@ -1,5 +1,3 @@
-import hashlib
-import json
 from datetime import timedelta
 
 from shared.db.session import active_session
@@ -17,7 +15,7 @@ RECEIPT_DAYS = 30
 
 
 async def _remember(form: IncomingMessage) -> bool:
-    digest = hashlib.sha256(json.dumps([form.source_key, form.external_id]).encode()).hexdigest()
+    digest = model.message_fingerprint(form.source_key, form.external_id)
     if await model.receipt_for(digest):
         return False
     row = model.ReceiptTable(

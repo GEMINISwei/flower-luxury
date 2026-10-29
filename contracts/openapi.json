@@ -642,6 +642,131 @@
         "title": "ExchangeRateUpdate",
         "type": "object"
       },
+      "GroupInfo": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "joined": {
+            "title": "Joined",
+            "type": "boolean"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "review_product_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Product Id"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "name",
+          "enabled",
+          "joined",
+          "created_at",
+          "review_product_id"
+        ],
+        "title": "GroupInfo",
+        "type": "object"
+      },
+      "GroupList": {
+        "properties": {
+          "has_next": {
+            "title": "Has Next",
+            "type": "boolean"
+          },
+          "has_previous": {
+            "title": "Has Previous",
+            "type": "boolean"
+          },
+          "list_data": {
+            "items": {
+              "$ref": "#/components/schemas/GroupInfo"
+            },
+            "title": "List Data",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "prev_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Cursor"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "list_data",
+          "has_next",
+          "has_previous",
+          "total_count"
+        ],
+        "title": "GroupList",
+        "type": "object"
+      },
+      "GroupUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "GroupUpdate",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2586,6 +2711,19 @@
         ],
         "title": "VersionRequest",
         "type": "object"
+      },
+      "WebhookResult": {
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "accepted"
+        ],
+        "title": "WebhookResult",
+        "type": "object"
       }
     }
   },
@@ -2848,6 +2986,154 @@
         "summary": "Get Language List Route",
         "tags": [
           "languages"
+        ]
+      }
+    },
+    "/api/line/groups": {
+      "get": {
+        "operationId": "group_list_route_api_line_groups_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "default": "next",
+              "enum": [
+                "next",
+                "prev"
+              ],
+              "title": "Direction",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Group List Route",
+        "tags": [
+          "line"
+        ]
+      }
+    },
+    "/api/line/groups/{id}": {
+      "patch": {
+        "operationId": "group_update_route_api_line_groups__id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Group Update Route",
+        "tags": [
+          "line"
+        ]
+      }
+    },
+    "/api/line/webhook": {
+      "post": {
+        "operationId": "webhook_route_api_line_webhook_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Webhook Route",
+        "tags": [
+          "line"
         ]
       }
     },

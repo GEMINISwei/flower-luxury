@@ -22,6 +22,8 @@ services:
       <<: *api-db-env
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?}
       EXPIRE_HOURS: ${EXPIRE_HOURS:?}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:-}
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-}
     # 上傳的檔案一律放這裡 (各模組一個子目錄): 寫在別的路徑, 重建容器就消失, make backup 也備份不到。
     volumes:
       - uploads:/app/uploads
@@ -60,6 +62,8 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME:?}-line-collector
     environment:
       <<: *api-db-env
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:-}
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-}
     working_dir: /app
     command: ["python", "-m", "app.collector"]
     volumes:

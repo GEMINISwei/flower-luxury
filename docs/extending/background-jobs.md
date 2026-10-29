@@ -2,7 +2,8 @@
 
 背景工作使用獨立的 `line-collector` 容器，與 API 共用 image、PostgreSQL 及 uploads volume，
 不另外引入 Redis（[ADR 0006](../decisions/0006-postgres-job-queue.md)）。
-目前已註冊商品暫存的檔案清理及防重送摘要到期任務；LINE 收件由後續階段接上，不需要設定 LINE。
+目前已註冊商品暫存清理、到期摘要、LINE 圖片下載與群組名稱查詢任務。
+LINE 功能兩項金鑰都留空即可停用，群組預設不收集，見 [LINE 商品收集](../features/line-collection.md)。
 
 ## 宣告與排入任務
 
@@ -61,5 +62,5 @@ make services logs line-collector    # 追蹤背景程序紀錄
 由容器 restart policy 重新啟動。開發環境掛載來源程式，但改過任務程式需重新啟動程序才會載入。
 
 備份、還原及 migration 的停止與恢復規則見[維運文件](../operations.md#背景收集程序)。
-後續加入 LINE 對接時，會再提供 LINE Developers Console、Webhook、邀請 Bot 入群及群組啟用的操作步驟；
-目前不需要 Channel Secret、Access Token 或公開 Webhook URL。
+LINE Developers Console、Webhook、邀請 Bot 入群及群組啟用步驟見
+[LINE 商品收集](../features/line-collection.md#line-後台設定)。

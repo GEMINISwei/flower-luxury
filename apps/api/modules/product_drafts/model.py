@@ -1,8 +1,19 @@
+import hashlib
+import json
 import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, String, Text, delete, select, text
+from sqlalchemy import (
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    delete,
+    select,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB, insert
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -86,6 +97,7 @@ class PhotoTable(BaseTable):
 
 class ReceiptTable(BaseTable):
     __tablename__ = "product_draft_receipts"
+    approved_product_id: Mapped[str | None]
     fingerprint: Mapped[str] = mapped_column(String(64), unique=True)
     expires_at: Mapped[datetime] = mapped_column(index=True)
 
@@ -191,3 +203,21 @@ async def expire_receipt_row(id: str) -> None:
     await active_session().execute(delete(ReceiptTable).where(
         ReceiptTable.id == parse_uuid(id), ReceiptTable.expires_at <= utc_now(),
     ))
+
+
+async def message_by_external_id(source_key: str, external_id: str) -> MessageTable | None:
+    return await active_session().scalar(select(MessageTable).where(
+        MessageTable.source_key == source_key, MessageTable.external_id == external_id,
+    ))
+
+
+def message_fingerprint(source_key: str, external_id: str) -> str:
+    return hashlib.sha256(json.dumps([source_key, external_id]).encode()).hexdigest()
+
+
+async def remember_approved_messages(draft_id: str, product_id: str) -> None:
+    rows = await messages_for(draft_id)
+    for row in rows:
+        receipt = await receipt_for(message_fingerprint(row.source_key, row.external_id))
+        if receipt:
+            receipt.approved_product_id = product_id
