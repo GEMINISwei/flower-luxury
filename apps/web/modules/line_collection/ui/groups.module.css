@@ -1,0 +1,3 @@
+.name { overflow-wrap: anywhere; }
+.notice { margin-top: var(--space-3); color: var(--color-warning-fg); }
+.notice a { color: var(--color-primary); text-decoration: underline; }

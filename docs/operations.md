@@ -69,7 +69,9 @@ prod overlay 比 dev 多了 **log 上限**與**記憶體上限**（api、web、l
 
 `line-collector` 與 API 使用同一個 image，容器名稱為 `${COMPOSE_PROJECT_NAME}-line-collector`，
 由 `make start` 一起啟動，不對外開 port。工作佇列放 PostgreSQL，檔案共用 uploads volume。
-目前執行商品暫存的檔案清理及防重送摘要到期任務，尚未接 LINE 收件，不需要設定 LINE 金鑰或 Webhook。
+目前執行商品暫存檔案清理、防重送摘要到期、LINE 圖片下載與群組名稱查詢。
+LINE 金鑰都留空時停用 LINE 接線；啟用步驟見 [LINE 商品收集](features/line-collection.md)。
+店長在群組設定頁啟用指定群組後才收集商品訊息。
 
 用 `make services` 查看健康狀態，`make services logs line-collector` 追蹤紀錄。
 每五秒成功連線資料庫後更新 heartbeat，超過 30 秒未更新則 unhealthy；程序錯誤退出後由容器重新啟動。

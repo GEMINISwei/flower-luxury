@@ -1,8 +1,7 @@
 # 商品暫存
 
-本階段提供商品暫存後端：標準化圖片與文字收件、分組、整理、版本保護、照片、審核轉正式商品及放棄刪除。
-LINE Webhook 與群組管理後端已接上，設定步驟見 [LINE 商品收集](line-collection.md)；
-群組設定與商品暫存操作畫面由第四階段接上。
+商品暫存提供 LINE 圖片與文字收件、分組、整理、版本保護、補圖、逐筆審核建檔及放棄刪除。
+所有登入者可從 `/product-drafts` 操作；群組設定與 LINE 接線步驟見 [LINE 商品收集](line-collection.md)。
 
 ## 收集與分組
 
@@ -18,6 +17,18 @@ LINE Webhook 與群組管理後端已接上，設定步驟見 [LINE 商品收集
   摘要不含原文、圖片或傳送者；它與原始內容分開，放棄後在保存期內重送也不會重新建立資料。
   審核後另保存對應的正式商品 ID，讓訊息被移動再審核後的來源撤回也能提示人工確認；同樣到期刪除。
 
+## 操作介面
+
+- 列表可依來源群組篩選，以游標分頁瀏覽；「待歸類訊息」保留沒有前導圖片的文字與延遲事件。
+  只可將訊息歸入同群組既有暫存，不提供從文字建立空白暫存。
+- 詳情列出該筆暫存所有原始訊息，保留換行、傳送時間與可用的傳送者資訊。點擊單則文字即複製，
+  也可複製全部文字（各則間以空行分隔）；失敗時提示手動複製，不會改動商品欄位。
+- 使用者自行填寫欄位，沒有 OCR、自動解析填欄位或批次審核。可隨時儲存不完整欄位；
+  審核先儲存目前內容，再以回傳版本建立正式商品，成功後前往商品詳情。
+- 版本衝突時停止寫入，重新載入會保留尚未儲存的欄位，並列出最新儲存欄位供比對。
+  照片完成／失敗與 LINE 新訊息不會自動覆蓋表單，按「重新載入資料」取得更新。
+- 放棄與刪除照片都要確認；放棄成功回到暫存列表。手機將原文與欄位改為上下排列。
+
 ## 整理與照片
 
 - 所有登入使用者共用暫存、未歸屬訊息與審核能力，不另外限制店長。
@@ -28,7 +39,11 @@ LINE Webhook 與群組管理後端已接上，設定步驟見 [LINE 商品收集
   已放棄或刪除的圖片不再寫檔。
 - 每張圖片以內容驗證，單張最多 15 MiB，沿用既有 JPEG、PNG、WebP、HEIC 與顯示圖處理規則。
   原圖完整保存於 `/app/uploads/product_drafts/`，顯示圖另存，資料庫只保存相對路徑。
-- 照片與原圖讀取需登入且禁止快取。本階段 API 仍在內部網路，前端照片專用 nginx 接線留在介面階段。
+- 照片與原圖讀取需登入且禁止快取。dev／prod nginx 只公開照片的 `file`／`download` 讀取路徑，
+  其餘讀取與寫入由 Server Component／Server Action 經內網呼叫。
+- 可手動補上傳照片，每次合計最多 15 MiB；前端先檢查容量與副檔名，後端以內容驗證。
+  補圖會記錄操作者並增加暫存版本，原檔與顯示圖沿用相同保存、回滾與清理流程。
+  人工補圖不改變 LINE 收件時間游標或分組狀態；下載失敗的照片可刪除後補圖。
 
 ## 審核與放棄
 
@@ -50,3 +65,7 @@ LINE Webhook 與群組管理後端已接上，設定步驟見 [LINE 商品收集
 - 後端交易、併發與檔案清理：[`test_integration.py`](../../apps/api/tests/modules/product_drafts/test_integration.py)
 - 無資料庫的服務行為：[`test_services.py`](../../apps/api/tests/modules/product_drafts/test_services.py)
 - 登入、一般使用者與語系：[`test_routes.py`](../../apps/api/tests/modules/product_drafts/test_routes.py)
+
+- 補上傳與待歸類圖片：[`test_uploads.py`](../../apps/api/tests/modules/product_drafts/test_uploads.py)
+- 前端欄位與複製規則：[`capabilities.test.ts`](../../apps/web/tests/modules/product_drafts/capabilities.test.ts)
+- 群組與暫存瀏覽器流程：[`product-drafts.spec.ts`](../../e2e/tests/product-drafts.spec.ts)
