@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto"
 import { expect, test, type Page } from "@playwright/test"
 import { admin, login } from "./support"
 
-const staff = { username: "draft-staff", password: "draft-staff-password" }
+// Playwright replaces a failed worker, so each process needs its own disposable account.
+const staff = { username: `draft-staff-${randomUUID().slice(0, 8)}`, password: "draft-staff-password" }
 const image = { name: "supplement.png", mimeType: "image/png",
   buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGP8zwACTGCSAQANHQEDgslx/wAAAABJRU5ErkJggg==", "base64") }
 const seedScript = String.raw`
@@ -160,7 +161,7 @@ test("message_copy_failure_shows_feedback", async ({ page }) => {
   await login(page, staff)
   await open(page, data.id)
   await page.getByRole("button", { name: "第一行 第二行", exact: true }).click()
-  await expect(page.getByRole("alert")).toContainText("複製失敗")
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("複製失敗")
 })
 
 test("stale_draft_preserves_unsaved_input", async ({ page }) => {
@@ -170,7 +171,7 @@ test("stale_draft_preserves_unsaved_input", async ({ page }) => {
   await page.getByLabel("名稱", { exact: true }).fill("尚未儲存的名稱")
   fixture({ conflict: data.id })
   await page.getByRole("button", { name: "儲存暫存", exact: true }).click()
-  await expect(page.getByRole("alert")).toContainText("資料已變更")
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("資料已變更")
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("尚未儲存的名稱")
   await page.getByRole("button", { name: "重新載入資料", exact: true }).click()
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("尚未儲存的名稱")
@@ -207,7 +208,7 @@ test("draft_can_be_reviewed_individually", async ({ page }) => {
   await login(page, staff)
   await open(page, data.id)
   await page.getByRole("button", { name: "審核建檔", exact: true }).click()
-  await expect(page.getByRole("alert")).toContainText("名稱")
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("名稱")
   await fillRequired(page, data.name, data.brand)
   await page.getByRole("button", { name: "審核建檔", exact: true }).click()
   await page.getByRole("dialog").getByRole("button", { name: "審核建檔", exact: true }).click()
