@@ -63,6 +63,15 @@ class GroupList(PaginatedResponse[GroupInfo]):
     pass
 
 
+class SourceInfo(BaseModel):
+    source_key: str
+    name: str | None
+
+
+class SourceList(BaseModel):
+    list_data: list[SourceInfo]
+
+
 class DownloadTarget(BaseModel):
     message_id: str
     external_id: str

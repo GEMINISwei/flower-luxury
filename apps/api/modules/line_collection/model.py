@@ -10,7 +10,7 @@ from shared.db.session import active_session
 from shared.db.table import BaseTable, PagedResult, parse_uuid
 from shared.time import utc_now
 
-from .schema import DownloadTarget
+from .schema import DownloadTarget, SourceInfo, SourceList
 
 
 class GroupTable(BaseTable):
@@ -70,6 +70,13 @@ async def get_group(id: str, *, lock: bool = False) -> GroupTable | None:
 async def group_page(limit: int, cursor: str | None,
                      direction: Literal["next", "prev"]) -> PagedResult:
     return await GroupTable.get_page(limit=limit, cursor=cursor, direction=direction)
+
+
+async def source_list() -> SourceList:
+    rows = await active_session().execute(select(GroupTable.group_id, GroupTable.name)
+                                          .order_by(GroupTable.created_at, GroupTable.id))
+    return SourceList(list_data=[SourceInfo(source_key=f"line:{id}", name=name)
+                                 for id, name in rows])
 
 
 async def receipt_exists(digest: str) -> bool:

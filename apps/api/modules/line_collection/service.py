@@ -13,7 +13,11 @@ from . import model
 from .config import LineSettings
 from .errors import LineError
 from .rules import fingerprint, parse_events, verify_signature
-from .schema import GroupInfo, GroupList, GroupUpdate, LineEvent, WebhookResult
+from .schema import GroupInfo, GroupList, GroupUpdate, LineEvent, SourceList, WebhookResult
+
+
+async def list_sources() -> SourceList:
+    return await model.source_list()
 
 
 async def list_groups(limit: int = 20, cursor: str | None = None,

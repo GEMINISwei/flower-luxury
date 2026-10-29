@@ -39,15 +39,16 @@ class PreparedPhotoBatch(BaseModel):
     photos: list[PreparedPhoto]
 
 
-async def read_batch(files: list[UploadFile]) -> PreparedPhotoBatch:
+async def read_batch(files: list[UploadFile], *, too_large_status: int = 422) -> PreparedPhotoBatch:
     data: list[bytes] = []
     total = 0
     for file in files:
         content = await file.read(MAX_BATCH_BYTES - total + 1)
         total += len(content)
-        validate_batch_size([len(item) for item in data] + [len(content)])
+        validate_batch_size([len(item) for item in data] + [len(content)],
+                            status_code=too_large_status)
         data.append(content)
-    validate_batch_size([len(item) for item in data])
+    validate_batch_size([len(item) for item in data], status_code=too_large_status)
     return PreparedPhotoBatch(photos=[
         await run_in_threadpool(prepare_photo, content, file.filename)
         for content, file in zip(data, files, strict=True)

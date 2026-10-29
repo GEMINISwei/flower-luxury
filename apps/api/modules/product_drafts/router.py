@@ -1,13 +1,15 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form, Query, UploadFile
 from fastapi.responses import FileResponse
 
 from shared.auth.contracts import CurrentUser
 from shared.auth.dependency import check_user_permission
+from shared.http.errors import LangException
 from shared.http.schema import PaginationParams, UuidText
 
 from . import messages, photos, review, service
+from .errors import DraftError
 from .schema import (
     ApprovalInfo,
     DiscardInfo,
@@ -22,6 +24,17 @@ from .schema import (
 )
 
 router = APIRouter(prefix="/product-drafts", tags=["product-drafts"])
+
+
+def _delete_version(form: VersionRequest | None, version: int | None) -> VersionRequest:
+    # 瀏覽器接線使用 query, 保留既有內網呼叫的 body 相容性.
+    if version is None:
+        if form is None:
+            raise LangException(422, DraftError.STALE)
+        return form
+    if form and form.version != version:
+        raise LangException(422, DraftError.STALE)
+    return VersionRequest(version=version)
 
 
 @router.get("/")
@@ -72,6 +85,14 @@ async def get_draft_route(
     return await service.get_draft(id)
 
 
+@router.post("/{id}/photos")
+async def upload_draft_photos_route(
+    id: UuidText, version: Annotated[int, Form(ge=1)], files: list[UploadFile],
+    actor: CurrentUser = Depends(check_user_permission()),
+) -> DraftInfo:
+    return await photos.upload_photos(id, version, files, actor)
+
+
 @router.patch("/{id}")
 async def update_draft_route(
     id: UuidText, form: DraftUpdate, actor: CurrentUser = Depends(check_user_permission()),
@@ -81,9 +102,11 @@ async def update_draft_route(
 
 @router.delete("/{id}")
 async def discard_draft_route(
-    id: UuidText, form: VersionRequest, actor: CurrentUser = Depends(check_user_permission()),
+    id: UuidText, form: VersionRequest | None = None,
+    version: int | None = Query(default=None, ge=1),
+    actor: CurrentUser = Depends(check_user_permission()),
 ) -> DiscardInfo:
-    return await review.discard_draft(id, form, actor)
+    return await review.discard_draft(id, _delete_version(form, version), actor)
 
 
 @router.post("/{id}/approve")
@@ -109,7 +132,8 @@ async def set_main_photo_route(
 
 @router.delete("/{id}/photos/{photo_id}")
 async def delete_photo_route(
-    id: UuidText, photo_id: UuidText, form: VersionRequest,
+    id: UuidText, photo_id: UuidText, form: VersionRequest | None = None,
+    version: int | None = Query(default=None, ge=1),
     _: CurrentUser = Depends(check_user_permission()),
 ) -> DraftInfo:
-    return await photos.delete_photo(id, photo_id, form)
+    return await photos.delete_photo(id, photo_id, _delete_version(form, version))

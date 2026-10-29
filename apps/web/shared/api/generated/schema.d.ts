@@ -112,6 +112,23 @@ export interface paths {
         patch: operations["group_update_route_api_line_groups__id__patch"];
         trace?: never;
     };
+    "/api/line/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Source List Route */
+        get: operations["source_list_route_api_line_sources_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/line/webhook": {
         parameters: {
             query?: never;
@@ -244,6 +261,23 @@ export interface paths {
         put?: never;
         /** Approve Draft Route */
         post: operations["approve_draft_route_api_product_drafts__id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Draft Photos Route */
+        post: operations["upload_draft_photos_route_api_product_drafts__id__photos_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -891,6 +925,13 @@ export interface components {
             /** Sku */
             sku: string;
         };
+        /** Body_upload_draft_photos_route_api_product_drafts__id__photos_post */
+        Body_upload_draft_photos_route_api_product_drafts__id__photos_post: {
+            /** Files */
+            files: string[];
+            /** Version */
+            version: number;
+        };
         /** Body_upload_photos_route_api_products__id__photos_post */
         Body_upload_photos_route_api_products__id__photos_post: {
             /** Files */
@@ -1158,6 +1199,7 @@ export interface components {
              * Format: date-time
              */
             occurred_at: string;
+            photo?: components["schemas"]["DraftPhotoInfo"] | null;
             /** Sender Id */
             sender_id: string | null;
             /** Sender Name */
@@ -1554,6 +1596,18 @@ export interface components {
             registration_key: string;
             /** Username */
             username: string;
+        };
+        /** SourceInfo */
+        SourceInfo: {
+            /** Name */
+            name: string | null;
+            /** Source Key */
+            source_key: string;
+        };
+        /** SourceList */
+        SourceList: {
+            /** List Data */
+            list_data: components["schemas"]["SourceInfo"][];
         };
         /** StatusChange */
         StatusChange: {
@@ -2028,6 +2082,26 @@ export interface operations {
             };
         };
     };
+    source_list_route_api_line_sources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceList"];
+                };
+            };
+        };
+    };
     webhook_route_api_line_webhook_post: {
         parameters: {
             query?: never;
@@ -2246,16 +2320,18 @@ export interface operations {
     };
     discard_draft_route_api_product_drafts__id__delete: {
         parameters: {
-            query?: never;
+            query?: {
+                version?: number | null;
+            };
             header?: never;
             path: {
                 id: string;
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["VersionRequest"];
+                "application/json": components["schemas"]["VersionRequest"] | null;
             };
         };
         responses: {
@@ -2349,6 +2425,41 @@ export interface operations {
             };
         };
     };
+    upload_draft_photos_route_api_product_drafts__id__photos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_draft_photos_route_api_product_drafts__id__photos_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     set_main_photo_route_api_product_drafts__id__photos_main_patch: {
         parameters: {
             query?: never;
@@ -2421,7 +2532,9 @@ export interface operations {
     };
     delete_photo_route_api_product_drafts__id__photos__photo_id__delete: {
         parameters: {
-            query?: never;
+            query?: {
+                version?: number | null;
+            };
             header?: never;
             path: {
                 id: string;
@@ -2429,9 +2542,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["VersionRequest"];
+                "application/json": components["schemas"]["VersionRequest"] | null;
             };
         };
         responses: {
