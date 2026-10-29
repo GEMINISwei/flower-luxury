@@ -95,6 +95,7 @@ class MessageInfo(BaseModel):
     sender_name: str | None
     occurred_at: UtcDateTime
     sequence: int
+    photo: DraftPhotoInfo | None = None
 
 
 class MessageList(PaginatedResponse[MessageInfo]):

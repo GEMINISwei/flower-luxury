@@ -24,9 +24,9 @@ class PreparedPhoto(BaseModel):
     media_type: str
 
 
-def validate_batch_size(sizes: list[int]) -> None:
+def validate_batch_size(sizes: list[int], *, status_code: int = 422) -> None:
     if not sizes or any(size <= 0 for size in sizes) or sum(sizes) > MAX_BATCH_BYTES:
-        raise LangException(422, PhotoError.TOO_LARGE)
+        raise LangException(status_code, PhotoError.TOO_LARGE)
 
 
 def _decode_photo(data: bytes, *, canvas_size: tuple[int, int] | None = None) -> bytes:

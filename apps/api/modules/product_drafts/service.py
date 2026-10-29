@@ -37,12 +37,15 @@ def _bump(row: model.DraftTable, actor: CurrentUser | None = None) -> None:
 
 async def get_draft(id: str | None) -> DraftInfo:
     row = ensure_found(await model.get_draft_row(id), DraftError.NOT_FOUND)
+    photos = [_photo_info(item, row.main_photo_id)
+              for item in await model.photos_for(str(row.id))]
+    photo_messages = {photo.message_id: photo for photo in photos}
+    messages = [_message_info(item) for item in await model.messages_for(str(row.id))]
+    for message in messages:
+        message.photo = photo_messages.get(message.id)
     return DraftInfo(**{**row.to_dict(), "id": str(row.id),
                         "main_photo_id": str(row.main_photo_id) if row.main_photo_id else None},
-                     messages=[_message_info(item)
-                               for item in await model.messages_for(str(row.id))],
-                     photos=[_photo_info(item, row.main_photo_id)
-                             for item in await model.photos_for(str(row.id))])
+                     messages=messages, photos=photos)
 
 
 async def get_draft_list(

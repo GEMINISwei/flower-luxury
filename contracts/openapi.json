@@ -54,6 +54,29 @@
         "title": "ApprovalInfo",
         "type": "object"
       },
+      "Body_upload_draft_photos_route_api_product_drafts__id__photos_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "files"
+        ],
+        "title": "Body_upload_draft_photos_route_api_product_drafts__id__photos_post",
+        "type": "object"
+      },
       "Body_upload_photos_route_api_products__id__photos_post": {
         "properties": {
           "files": {
@@ -888,6 +911,16 @@
             "format": "date-time",
             "title": "Occurred At",
             "type": "string"
+          },
+          "photo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DraftPhotoInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "sender_id": {
             "anyOf": [
@@ -2120,6 +2153,47 @@
         "title": "SignupRequest",
         "type": "object"
       },
+      "SourceInfo": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_key",
+          "name"
+        ],
+        "title": "SourceInfo",
+        "type": "object"
+      },
+      "SourceList": {
+        "properties": {
+          "list_data": {
+            "items": {
+              "$ref": "#/components/schemas/SourceInfo"
+            },
+            "title": "List Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "list_data"
+        ],
+        "title": "SourceList",
+        "type": "object"
+      },
       "StatusChange": {
         "properties": {
           "reason": {
@@ -3116,6 +3190,27 @@
         ]
       }
     },
+    "/api/line/sources": {
+      "get": {
+        "operationId": "source_list_route_api_line_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Source List Route",
+        "tags": [
+          "line"
+        ]
+      }
+    },
     "/api/line/webhook": {
       "post": {
         "operationId": "webhook_route_api_line_webhook_post",
@@ -3461,17 +3556,41 @@
               "title": "Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionRequest"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/VersionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Form"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -3643,6 +3762,58 @@
         ]
       }
     },
+    "/api/product-drafts/{id}/photos": {
+      "post": {
+        "operationId": "upload_draft_photos_route_api_product_drafts__id__photos_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_draft_photos_route_api_product_drafts__id__photos_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Draft Photos Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
     "/api/product-drafts/{id}/photos/main": {
       "patch": {
         "operationId": "set_main_photo_route_api_product_drafts__id__photos_main_patch",
@@ -3768,17 +3939,41 @@
               "title": "Photo Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionRequest"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/VersionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Form"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {

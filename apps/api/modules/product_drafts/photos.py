@@ -1,15 +1,63 @@
+import uuid
+
+from fastapi import UploadFile
 from starlette.concurrency import run_in_threadpool
 
-from modules.products.public import prepare_photo, validate_batch_size
+from modules.products.public import PreparedPhoto, prepare_photo, read_batch, validate_batch_size
+from shared.auth.contracts import CurrentUser
 from shared.db.session import active_session
 from shared.db.transaction import transaction
 from shared.http.errors import LangException, ensure_found
+from shared.time import utc_now
 
 from . import model, storage
 from .errors import DraftError
 from .rules import check_version
 from .schema import DraftInfo, MainPhoto, PhotoCompletion, PhotoOrder, StoredFile, VersionRequest
 from .service import _bump, _photo_info, get_draft
+
+
+async def upload_photos(
+    id: str, version: int, files: list[UploadFile], actor: CurrentUser,
+) -> DraftInfo:
+    prepared = await read_batch(files, too_large_status=413)
+    keys: list[str] = []
+    try:
+        async with transaction():
+            draft, rows = await _owned(id, version)
+            stream = await model.stream_for(draft.source_key)
+            order = max((row.sort_order for row in rows), default=0)
+            for item in prepared.photos:
+                stream.next_sequence += 1
+                order += 1
+                photo = await _store_manual(draft, item, stream.next_sequence, order, actor)
+                keys.extend(key for key in (photo.original_key, photo.display_key) if key)
+                if draft.main_photo_id is None:
+                    draft.main_photo_id = photo.id
+            _bump(draft, actor)
+            await active_session().flush()
+            return await get_draft(id)
+    except BaseException:
+        await storage._unlink_keys(keys)
+        raise
+
+
+async def _store_manual(
+    draft: model.DraftTable, prepared: PreparedPhoto, sequence: int, order: int, actor: CurrentUser,
+) -> model.PhotoTable:
+    # 人工補圖不推進 LINE 的時間游標或文字分組狀態.
+    message = model.MessageTable(source_key=draft.source_key, draft_id=draft.id,
+                                 external_id=f"manual:{uuid.uuid4().hex}", kind="image",
+                                 occurred_at=utc_now(), sequence=sequence,
+                                 sender_id=actor["id"], sender_name=actor["username"])
+    active_session().add(message)
+    await active_session().flush()
+    row = model.PhotoTable(message_id=message.id, draft_id=draft.id,
+                           status="ready", sort_order=order)
+    active_session().add(row)
+    await storage.write_photo(row, prepared)
+    await active_session().flush()
+    return row
 
 
 async def complete_photo(id: str | None, content: bytes, filename: str | None) -> PhotoCompletion:

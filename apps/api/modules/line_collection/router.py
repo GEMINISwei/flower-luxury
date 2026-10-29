@@ -11,9 +11,16 @@ from . import service
 from .config import LineSettings
 from .errors import LineError
 from .rules import MAX_WEBHOOK_BYTES
-from .schema import GroupInfo, GroupList, GroupUpdate, WebhookResult
+from .schema import GroupInfo, GroupList, GroupUpdate, SourceList, WebhookResult
 
 router = APIRouter(prefix="/line", tags=["line"])
+
+
+@router.get("/sources")
+async def source_list_route(
+    _: CurrentUser = Depends(check_user_permission()),
+) -> SourceList:
+    return await service.list_sources()
 
 
 @router.post("/webhook")

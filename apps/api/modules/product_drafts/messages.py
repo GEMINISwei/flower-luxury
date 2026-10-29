@@ -9,16 +9,21 @@ from . import model, storage
 from .errors import DraftError
 from .rules import check_version
 from .schema import DraftInfo, MessageList, MessageMove, WithdrawalResult
-from .service import _bump, get_draft
+from .service import _bump, _photo_info, get_draft
 
 
 async def get_unassigned_messages(
     limit: int, cursor: str | None = None, direction: Literal["next", "prev"] = "next",
     source_key: str | None = None,
 ) -> MessageList:
-    return MessageList.model_validate(
+    page = MessageList.model_validate(
         await model.unassigned_page(limit, cursor, direction, source_key),
     )
+    for item in page.list_data:
+        if item.kind == "image":
+            photo = await model.photo_for_message(item.id)
+            item.photo = _photo_info(photo) if photo else None
+    return page
 
 
 async def move_message(id: str | None, form: MessageMove, actor: CurrentUser) -> DraftInfo:
