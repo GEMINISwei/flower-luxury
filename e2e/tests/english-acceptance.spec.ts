@@ -285,7 +285,8 @@ test("真實 HEIC 上傳可顯示且下載保留原始檔案", async ({ page }, 
   await page.getByLabel("Upload", { exact: true }).setInputFiles(fixture)
   await expect(page.getByText("IMG_2682.heic", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Continue saving photos", exact: true }).click()
-  await expect(page).toHaveURL(detail!)
+  // CI 的 HEIC 轉換可能超過預設 5 秒, 此處等待包含轉檔完成後的頁面導向.
+  await expect(page).toHaveURL(detail!, { timeout: 15_000 })
   await page.reload()
   await page.getByRole("button", { name: "View product photos", exact: true }).click()
   const gallery = page.getByRole("dialog", { name: "Product photos", exact: true })
