@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { copyText, messageText, draftValues, draftPayload, draftValidation,
-  photoOrder, moveTargets } from "@/modules/product_drafts/capabilities"
+  photoOrder, moveTargets, photoSelection } from "@/modules/product_drafts/capabilities"
 
 const fields = { name: "", brand_id: null, category: null, cost_price: null }
 
@@ -43,4 +43,15 @@ it("reorders photos without dropping pending or failed images", () => {
   expect(photoOrder([{ id: "a" }, { id: "b" }, { id: "c" }], "b", -1))
     .toEqual(["b", "a", "c"])
   expect(photoOrder([{ id: "a" }, { id: "b" }], "a", -1)).toEqual(["a", "b"])
+})
+
+
+it("照片選取在排序與刪除後保持有效", () => {
+  const photos = [{ id: "a" }, { id: "b" }, { id: "c" }]
+  expect(photoSelection(photos, null)).toEqual({ id: "a", index: 0 })
+  expect(photoSelection(photos, "b")).toEqual({ id: "b", index: 1 })
+  expect(photoSelection([photos[1], photos[0], photos[2]], "b"))
+    .toEqual({ id: "b", index: 0 })
+  expect(photoSelection([photos[0], photos[2]], "b")).toEqual({ id: "a", index: 0 })
+  expect(photoSelection([], "b")).toEqual({ id: null, index: -1 })
 })
