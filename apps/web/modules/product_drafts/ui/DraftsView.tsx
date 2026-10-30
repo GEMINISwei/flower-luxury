@@ -1,5 +1,4 @@
 "use client"
-import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { ApiListMeta } from "@/shared/api/response"
@@ -10,7 +9,6 @@ import { formatDateTime } from "@/shared/i18n/date-time"
 import type { DraftSummary, MessageInfo, SourceInfo } from "../types"
 import { draftMessages } from "../i18n"
 import MessageList from "./MessageList"
-import MoveMessageDialog from "./MoveMessageDialog"
 import styles from "./drafts.module.css"
 
 type ListResult<T> = { items: T[]; meta: ApiListMeta; errorMessage: string }
@@ -22,7 +20,6 @@ export default function DraftsView({ drafts, messages, unassigned, sources, sour
 }) {
   const t = useT(draftMessages)
   const router = useRouter()
-  const [moving, setMoving] = useState<MessageInfo | null>(null)
   const query = source ? `source_key=${encodeURIComponent(source)}` : ""
   function filter(value: string) {
     const params = new URLSearchParams()
@@ -64,12 +61,10 @@ export default function DraftsView({ drafts, messages, unassigned, sources, sour
           <td><Link href={`/product-drafts/${draft.id}`}>{t("open")}</Link></td>
         </TableRow>)}
       </ListTableCard>}
-      {messages && <><p className={styles.hint}>{t("moveHint")}</p>
+      {messages && <><p className={styles.hint}>{t("unassignedHint")}</p>
         {!messages.items.length && <p>{t("noMessages")}</p>}
-        <MessageList messages={messages.items} disabled={false} onMove={setMoving} /></>}
+        <MessageList messages={messages.items} /></>}
       {result && <Pagination meta={result.meta} seq={seq} limit={limit} />}
     </div>
-    {moving && <MoveMessageDialog message={moving} version={null} onClose={() => setMoving(null)}
-      onMoved={() => { setMoving(null); router.refresh() }} />}
   </Container>
 }

@@ -19,7 +19,7 @@ export default function DraftGallery({ draft, disabled, mutate, onRemove }: {
   const { id, index } = photoSelection(draft.photos, selected)
   const track = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    // 以照片 ID 保留選取, 排序、刪除或補圖後再對齊目前的位置.
+    // 以照片 ID 保留選取, 刪除或補圖後再對齊目前的位置.
     track.current?.scrollTo({ left: Math.max(0, index) * track.current.clientWidth })
   }, [id, index, draft.photos.length])
   function select(position: number) {
@@ -37,8 +37,8 @@ export default function DraftGallery({ draft, disabled, mutate, onRemove }: {
         const element = track.current
         if (element?.clientWidth) select(Math.round(element.scrollLeft / element.clientWidth))
       }}>
-      {draft.photos.map((photo, position) => <DraftPhoto key={photo.id} photo={photo}
-        draft={draft} index={position} disabled={disabled} mutate={mutate} onRemove={onRemove} />)}
+      {draft.photos.map((photo) => <DraftPhoto key={photo.id} photo={photo}
+        draft={draft} disabled={disabled} mutate={mutate} onRemove={onRemove} />)}
     </div>
     <div className={styles.galleryNav}>
       <Button variant="outlined" disabled={index <= 0} onClick={() => select(index - 1)}

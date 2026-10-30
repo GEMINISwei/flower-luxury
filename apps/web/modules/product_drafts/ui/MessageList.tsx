@@ -1,16 +1,16 @@
 "use client"
 import { useState } from "react"
 import Image from "next/image"
-import { Button, Flex } from "@/shared/ui"
+import { Flex } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
-import { copyText, messageText } from "../capabilities"
+import { copyText } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { MessageInfo } from "../types"
 import styles from "./drafts.module.css"
 
-export default function MessageList({ messages, disabled, onMove, onCopy }: {
-  messages: MessageInfo[]; disabled: boolean; onMove: (message: MessageInfo) => void;
+export default function MessageList({ messages, onCopy }: {
+  messages: MessageInfo[];
   onCopy?: (success: boolean) => void
 }) {
   const t = useT(draftMessages)
@@ -26,8 +26,7 @@ export default function MessageList({ messages, disabled, onMove, onCopy }: {
   return <section className={styles.stack} aria-label={t("messages")}>
     <div className={styles.sectionHeader}>
       <h2>{t("messages")} <span className={styles.count} aria-hidden="true">{messages.length}</span></h2>
-      <Button variant="outlined" disabled={!messageText(messages)}
-      onClick={() => void copy(messageText(messages))}>{t("copyAll")}</Button></div>
+    </div>
     <p className={styles.hint}>{t("copyHint")}</p>
     {copied && <p role="status">{copied}</p>}{error && <p role="alert">{error}</p>}
     <div className={styles.messageScroll} role="region" aria-label={t("messageContent")}
@@ -46,8 +45,6 @@ export default function MessageList({ messages, disabled, onMove, onCopy }: {
             {message.photo && <p>{t(message.photo.status === "failed" ? "failedPhoto"
               : message.photo.status)}</p>}
           </div>}
-        <Button variant="outlined" disabled={disabled} onClick={() => onMove(message)}>
-          {t("moveMessage")}</Button>
       </article>)}
     </div>
     <p className={styles.hint}>{t("scrollHint")}</p>

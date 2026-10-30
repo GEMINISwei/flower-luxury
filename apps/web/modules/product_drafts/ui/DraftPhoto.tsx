@@ -4,14 +4,13 @@ import { ImageIcon } from "lucide-react"
 import { Button, Flex, StatusBadge } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import type { ApiResponse } from "@/shared/api/contract"
-import { reorderDraftPhotos, setDraftMainPhoto } from "../actions"
-import { photoOrder } from "../capabilities"
+import { setDraftMainPhoto } from "../actions"
 import { draftMessages } from "../i18n"
 import type { DraftInfo } from "../types"
 import styles from "./drafts.module.css"
 
-export default function DraftPhoto({ draft, photo, index, disabled, mutate, onRemove }: {
-  draft: DraftInfo; photo: DraftInfo["photos"][number]; index: number; disabled: boolean;
+export default function DraftPhoto({ draft, photo, disabled, mutate, onRemove }: {
+  draft: DraftInfo; photo: DraftInfo["photos"][number]; disabled: boolean;
   mutate: (run: () => Promise<ApiResponse<DraftInfo>>) => void; onRemove: (id: string) => void
 }) {
   const t = useT(draftMessages)
@@ -35,12 +34,6 @@ export default function DraftPhoto({ draft, photo, index, disabled, mutate, onRe
         <Button variant="outlined" disabled={disabled || photo.is_main || photo.status !== "ready"}
           onClick={() => mutate(() => setDraftMainPhoto(draft.id, draft.version, photo.id))}>
           {t("setMain")}</Button>
-        <Button variant="outlined" disabled={disabled || index === 0}
-          onClick={() => mutate(() => reorderDraftPhotos(draft.id, draft.version,
-            photoOrder(draft.photos, photo.id, -1)))}>{t("previous")}</Button>
-        <Button variant="outlined" disabled={disabled || index === draft.photos.length - 1}
-          onClick={() => mutate(() => reorderDraftPhotos(draft.id, draft.version,
-            photoOrder(draft.photos, photo.id, 1)))}>{t("next")}</Button>
         <Button variant="outlined" disabled={disabled} className={styles.dangerAction}
           onClick={() => onRemove(photo.id)}>{t("deletePhoto")}</Button>
       </Flex>

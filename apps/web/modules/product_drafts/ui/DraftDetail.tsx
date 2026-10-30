@@ -4,13 +4,12 @@ import Link from "next/link"
 import { Button, ConfirmDialog, Container, Flex, PageHeader } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
-import { discardDraft, reloadDraft } from "../actions"
+import { discardDraft } from "../actions"
 import { draftMessages } from "../i18n"
-import type { DraftInfo, MessageInfo, SourceInfo } from "../types"
+import type { DraftInfo, SourceInfo } from "../types"
 import DraftFields from "./DraftFields"
 import DraftPhotos from "./DraftPhotos"
 import MessageList from "./MessageList"
-import MoveMessageDialog from "./MoveMessageDialog"
 import useDraftEditor from "./useDraftEditor"
 import styles from "./drafts.module.css"
 
@@ -21,7 +20,6 @@ export default function DraftDetail({ initial, brands, sources }: {
   const editor = useDraftEditor(initial)
   const { draft, values, pending } = editor
   const [dialog, setDialog] = useState<"approve" | "discard" | null>(null)
-  const [moving, setMoving] = useState<MessageInfo | null>(null)
   const source = sources.find((item) => item.source_key === draft.source_key)
   function confirm() {
     setDialog(null)
@@ -51,8 +49,7 @@ export default function DraftDetail({ initial, brands, sources }: {
         <div className={styles.sourceColumn}>
           <DraftPhotos draft={draft} disabled={disabled}
             mutate={editor.run} onError={editor.setError} />
-          <div className={styles.panel}><MessageList messages={draft.messages} disabled={disabled}
-            onMove={setMoving}
+          <div className={styles.panel}><MessageList messages={draft.messages}
             onCopy={(success) => {
               editor.setStatus(success ? t("copied") : "")
               editor.setError(success ? "" : t("copyFailed"))
@@ -76,9 +73,5 @@ export default function DraftDetail({ initial, brands, sources }: {
       onClose={() => setDialog(null)} onConfirm={confirm}>
       <p>{t(dialog === "approve" ? "approveHint" : "discardHint")}</p>
     </ConfirmDialog>
-    {moving && <MoveMessageDialog message={moving} version={draft.version}
-      onClose={() => setMoving(null)} onMoved={() => {
-        setMoving(null); editor.run(() => reloadDraft(draft.id))
-      }} />}
   </Container>
 }

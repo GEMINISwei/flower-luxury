@@ -28,28 +28,10 @@ export function draftValidation(values: DraftValues, approving: boolean): (keyof
   }
   return errors
 }
-export function messageText(messages: { kind: string; text: string | null }[]) {
-  return messages.filter((message) => message.kind === "text")
-    .map((message) => message.text ?? "").join("\n\n")
-}
 export async function copyText(
   text: string, write = (text: string) => navigator.clipboard.writeText(text),
 ) {
   try { await write(text); return true } catch { return false }
-}
-export function moveTargets<T extends { id: string; source_key: string }>(
-  drafts: T[], source: string, current: string | null,
-): T[] {
-  return drafts.filter((draft) => draft.source_key === source && draft.id !== current)
-}
-export function photoOrder(photos: { id: string }[], id: string, direction: number): string[] {
-  const ids = photos.map((photo) => photo.id)
-  const index = ids.indexOf(id)
-  const target = index + direction
-  if (index >= 0 && target >= 0 && target < ids.length) {
-    ;[ids[index], ids[target]] = [ids[target], ids[index]]
-  }
-  return ids
 }
 export function photoSelection(photos: { id: string }[], selected: string | null) {
   const found = photos.findIndex((photo) => photo.id === selected)

@@ -30,7 +30,6 @@
 .message { display: grid; gap: var(--space-3); padding: var(--space-4);
   border: var(--border-width-hairline) solid var(--color-border-subtle);
   border-radius: var(--radius-md); min-width: 0; background: var(--color-surface-input); }
-.message > button:last-child { justify-self: start; }
 .copyBlock { display: block; width: 100%; white-space: pre-wrap; overflow-wrap: anywhere;
   text-align: start; color: var(--color-text-body); font: inherit; line-height: var(--lh-normal);
   background: var(--color-surface-sunken); padding: var(--space-3); cursor: pointer;
