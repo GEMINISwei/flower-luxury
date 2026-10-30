@@ -22,6 +22,7 @@ class GroupTable(BaseTable):
     last_membership_at: Mapped[datetime | None]
     collect_from: Mapped[datetime | None]
     review_product_id: Mapped[str | None]
+    reply_failed: Mapped[bool] = mapped_column(default=False)
     __table_args__ = (Index("ix_line_groups_created_at_id", "created_at", "id"),)
 
 
@@ -121,3 +122,11 @@ async def clear_download_id(id: str) -> None:
     if link:
         link.external_id = None
         await active_session().flush()
+
+
+class ReplyTable(BaseTable):
+    __tablename__ = "line_command_replies"
+    group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("line_groups.id", ondelete="CASCADE"))
+    reply_token: Mapped[str] = mapped_column(String(200))
+    text: Mapped[str]
+    expires_at: Mapped[datetime]

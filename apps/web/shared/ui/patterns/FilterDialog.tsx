@@ -30,6 +30,7 @@ type FilterDialogProps = {
   onClose: () => void
   fields: FilterField[]
   initialValues: Record<string, string>
+  resetText?: string
 }
 
 export default function FilterDialog({
@@ -38,6 +39,7 @@ export default function FilterDialog({
   onClose,
   fields,
   initialValues,
+  resetText,
 }: FilterDialogProps) {
   const t = useT(uiMessages)
   const router = useRouter()
@@ -90,7 +92,7 @@ export default function FilterDialog({
           />
         ))}
         <div className={styles.dialogFormActions}>
-          <Button variant="outlined" type="button" onClick={resetFields}>{t("reset")}</Button>
+          <Button variant="outlined" type="button" onClick={resetFields}>{resetText ?? t("reset")}</Button>
           <Button type="submit">{t("filter")}</Button>
         </div>
       </form>

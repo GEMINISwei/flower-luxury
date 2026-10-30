@@ -120,6 +120,7 @@ class DraftSummary(BaseModel):
     fields: DraftFields
     main_photo_id: str | None = None
     collecting: bool
+    received_at: UtcDateTime
     created_at: UtcDateTime
     updated_at: UtcDateTime | None = None
 
@@ -165,3 +166,20 @@ class CollectionDecision(BaseModel):
 class WithdrawalResult(BaseModel):
     removed: bool = False
     product_id: str | None = None
+
+
+class BatchIssueInfo(BaseModel):
+    occurred_at: UtcDateTime
+    reason: str
+
+
+class BatchState(BaseModel):
+    collecting: bool = False
+    batch_started_at: UtcDateTime | None = None
+    batch_ended_at: UtcDateTime | None = None
+    issue_count: int = 0
+    issues: list[BatchIssueInfo] = Field(default_factory=list)
+
+
+class BatchControl(BaseModel):
+    result: Literal["started", "already_collecting", "stopped", "already_stopped", "unsafe"]

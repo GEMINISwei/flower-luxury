@@ -8,9 +8,10 @@ import { Button, ConfirmDialog, Container, ErrorState, ListTableCard, PageHeader
   Pagination, StatusBadge, TableRow, useActionSubmit } from "@/shared/ui"
 import { groupMessages } from "../i18n"
 import { groupCapabilities } from "../capabilities"
-import { updateGroup } from "../actions"
+import { stopGroup, updateGroup } from "../actions"
 import type { GroupInfo } from "../types"
 import styles from "./groups.module.css"
+import GroupBatchState from "./GroupBatchState"
 
 export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
   items: GroupInfo[]; meta: ApiListMeta; errorMessage: string; seq: number; limit: number
@@ -18,11 +19,14 @@ export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
   const t = useT(groupMessages)
   const router = useRouter()
   const [selected, setSelected] = useState<GroupInfo | null>(null)
+  const [stopping, setStopping] = useState(false)
   const [error, setError] = useState("")
   const { isPending, submit } = useActionSubmit()
   function toggle() {
     if (!selected) return
-    submit(() => updateGroup(selected.id, !selected.enabled), {
+    const action = stopping ? () => stopGroup(selected.id)
+      : () => updateGroup(selected.id, !selected.enabled)
+    submit(action, {
       onSuccess: () => { setSelected(null); setError(""); router.refresh() }, onError: setError,
     })
   }
@@ -36,11 +40,14 @@ export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
         <td data-label={t("name")} className={styles.name}>{group.name ?? group.group_id}</td>
         <td data-label={t("bot")}>{t(group.joined ? "joined" : "left")}</td>
         <td data-label={t("status")}><StatusBadge label={t(group.enabled ? "enabled" : "disabled")}
-          variant={group.enabled ? "success" : "muted"} /></td>
+          variant={group.enabled ? "success" : "muted"} />
+          <GroupBatchState group={group} /></td>
         <td data-label={t("actions")}>
           <Button variant="outlined" disabled={isPending || !groupCapabilities(group).canToggle}
-            onClick={() => { setSelected(group); setError("") }}>
+            onClick={() => { setSelected(group); setStopping(false); setError("") }}>
             {t(group.enabled ? "disable" : "enable")}</Button>
+          {group.collecting && <Button variant="outlined" disabled={isPending}
+            onClick={() => { setSelected(group); setStopping(true); setError("") }}>{t("stop")}</Button>}
           {group.review_product_id && <div className={styles.notice}>
             <p>{t("reviewHint")}</p><Link href={`/products/${group.review_product_id}`}>
               {t("review")}</Link></div>}
@@ -48,11 +55,11 @@ export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
       </TableRow>)}
     </ListTableCard>
     <Pagination meta={meta} seq={seq} limit={limit} />
-    <ConfirmDialog title={t(selected?.enabled ? "disable" : "enable")} open={Boolean(selected)}
-      isPending={isPending} confirmText={t(selected?.enabled ? "disable" : "enable")}
+    <ConfirmDialog title={t(stopping ? "stop" : selected?.enabled ? "disable" : "enable")} open={Boolean(selected)}
+      isPending={isPending} confirmText={t(stopping ? "stop" : selected?.enabled ? "disable" : "enable")}
       onClose={() => setSelected(null)} onConfirm={toggle}>
       <p>{selected?.name ?? selected?.group_id}</p>
-      <p>{t(selected?.enabled ? "disableHint" : "enableHint")}</p>
+      <p>{t(stopping ? "stopHint" : selected?.enabled ? "disableHint" : "enableHint")}</p>
       {error && <p role="alert">{error}</p>}
     </ConfirmDialog>
   </Container>

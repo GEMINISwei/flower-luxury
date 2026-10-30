@@ -112,6 +112,23 @@ export interface paths {
         patch: operations["group_update_route_api_line_groups__id__patch"];
         trace?: never;
     };
+    "/api/line/groups/{id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Group Stop Route */
+        post: operations["group_stop_route_api_line_groups__id__stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/line/sources": {
         parameters: {
             query?: never;
@@ -175,6 +192,23 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/messages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Discard Legacy Message Route */
+        delete: operations["discard_legacy_message_route_api_product_drafts_messages__id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1010,6 +1044,11 @@ export interface components {
             messages: components["schemas"]["MessageInfo"][];
             /** Photos */
             photos: components["schemas"]["DraftPhotoInfo"][];
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
             /** Source Key */
             source_key: string;
             /** Updated At */
@@ -1068,6 +1107,11 @@ export interface components {
             id: string;
             /** Main Photo Id */
             main_photo_id?: string | null;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
             /** Source Key */
             source_key: string;
             /** Updated At */
@@ -1109,6 +1153,15 @@ export interface components {
         };
         /** GroupInfo */
         GroupInfo: {
+            /** Batch Ended At */
+            batch_ended_at?: string | null;
+            /** Batch Started At */
+            batch_started_at?: string | null;
+            /**
+             * Collecting
+             * @default false
+             */
+            collecting: boolean;
             /**
              * Created At
              * Format: date-time
@@ -1120,12 +1173,34 @@ export interface components {
             group_id: string;
             /** Id */
             id: string;
+            /**
+             * Issue Count
+             * @default 0
+             */
+            issue_count: number;
+            /** Issues */
+            issues?: components["schemas"]["GroupIssue"][];
             /** Joined */
             joined: boolean;
             /** Name */
             name: string | null;
+            /**
+             * Reply Failed
+             * @default false
+             */
+            reply_failed: boolean;
             /** Review Product Id */
             review_product_id: string | null;
+        };
+        /** GroupIssue */
+        GroupIssue: {
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Reason */
+            reason: string;
         };
         /** GroupList */
         GroupList: {
@@ -2082,6 +2157,37 @@ export interface operations {
             };
         };
     };
+    group_stop_route_api_line_groups__id__stop_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     source_list_route_api_line_sources_get: {
         parameters: {
             query?: never;
@@ -2177,6 +2283,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MessageList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    discard_legacy_message_route_api_product_drafts_messages__id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscardInfo"];
                 };
             };
             /** @description Validation Error */

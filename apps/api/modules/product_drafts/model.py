@@ -27,12 +27,14 @@ class StreamTable(BaseTable):
     source_key: Mapped[str] = mapped_column(String(200), unique=True)
     last_occurred_at: Mapped[datetime | None]
     next_sequence: Mapped[int] = mapped_column(default=0)
+    last_control_at: Mapped[datetime | None]
 
 
 class DraftTable(BaseTable):
     __tablename__ = "product_drafts"
     source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
     version: Mapped[int] = mapped_column(default=1)
+    received_at: Mapped[datetime] = mapped_column(default=utc_now)
     fields: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     collecting: Mapped[bool] = mapped_column(default=True)
     has_text: Mapped[bool] = mapped_column(default=False)
@@ -43,6 +45,7 @@ class DraftTable(BaseTable):
         Index("uq_product_drafts_collecting_source", "source_key", unique=True,
               postgresql_where=text("collecting IS TRUE")),
         Index("ix_product_drafts_created_at_id", "created_at", "id"),
+        Index("ix_product_drafts_received_at_id", "received_at", "id"),
     )
 
 
@@ -170,9 +173,13 @@ async def photos_for(id: str) -> list[PhotoTable]:
 
 
 async def messages_for(id: str) -> list[MessageTable]:
+    batched = await active_session().scalar(select(WindowTable.id).where(
+        WindowTable.draft_key == id))
+    order = ((MessageTable.occurred_at, MessageTable.sequence) if batched
+             else (MessageTable.sequence,))
     return list(await active_session().scalars(select(MessageTable).where(
         MessageTable.draft_id == parse_uuid(id or ""),
-    ).order_by(MessageTable.sequence, MessageTable.id)))
+    ).order_by(*order, MessageTable.id)))
 
 
 async def receipt_for(fingerprint: str) -> ReceiptTable | None:
@@ -188,7 +195,13 @@ async def approval_for(id: str | None) -> ApprovalTable | None:
 async def draft_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],
                      source_key: str | None) -> PagedResult:
     where = [DraftTable.source_key == source_key] if source_key else []
-    return await DraftTable.get_page(limit=limit, cursor=cursor, direction=direction, where=where)
+    # 共用分頁預設升冪, 反轉方向與游標後保持暫存列表的最新收件優先.
+    page = await DraftTable.get_page(limit=limit, cursor=cursor,
+        direction="prev" if direction == "next" else "next", sort_field="received_at", where=where)
+    return {"list_data": list(reversed(page["list_data"])),
+            "next_cursor": page.get("prev_cursor"), "prev_cursor": page.get("next_cursor"),
+            "has_next": page["has_previous"], "has_previous": page["has_next"],
+            "total_count": page["total_count"]}
 
 
 async def unassigned_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],
@@ -221,3 +234,58 @@ async def remember_approved_messages(draft_id: str, product_id: str) -> None:
         receipt = await receipt_for(message_fingerprint(row.source_key, row.external_id))
         if receipt:
             receipt.approved_product_id = product_id
+
+
+class BatchTable(BaseTable):
+    __tablename__ = "product_draft_batches"
+    source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
+    started_at: Mapped[datetime]
+    ended_at: Mapped[datetime | None]
+    latest_at: Mapped[datetime]
+    __table_args__ = (
+        Index("uq_product_draft_batches_active_source", "source_key", unique=True,
+              postgresql_where=text("ended_at IS NULL")),
+        Index("ix_product_draft_batches_source_start", "source_key", "started_at"),
+    )
+
+
+class WindowTable(BaseTable):
+    __tablename__ = "product_draft_windows"
+    batch_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("product_draft_batches.id", ondelete="CASCADE"))
+    # 保留不含內容的歸屬鍵, 才能辨認已審核或放棄商品的延遲事件.
+    draft_key: Mapped[str] = mapped_column(String(200), unique=True)
+    started_at: Mapped[datetime]
+    last_image_at: Mapped[datetime]
+    first_text_at: Mapped[datetime | None]
+    ended_at: Mapped[datetime | None]
+    __table_args__ = (Index("ix_product_draft_windows_batch_start", "batch_id", "started_at"),)
+
+
+class BatchIssueTable(BaseTable):
+    __tablename__ = "product_draft_batch_issues"
+    source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
+    occurred_at: Mapped[datetime]
+    reason: Mapped[str] = mapped_column(String(30))
+    __table_args__ = (Index("ix_product_draft_batch_issues_source", "source_key"),)
+
+
+async def latest_batch(source_key: str) -> BatchTable | None:
+    return await active_session().scalar(select(BatchTable).where(
+        BatchTable.source_key == source_key,
+    ).order_by(BatchTable.started_at.desc()).limit(1)
+        .execution_options(populate_existing=True))
+
+
+async def batch_at(source_key: str, occurred_at: datetime) -> BatchTable | None:
+    return await active_session().scalar(select(BatchTable).where(
+        BatchTable.source_key == source_key, BatchTable.started_at <= occurred_at,
+        (BatchTable.ended_at.is_(None) | (BatchTable.ended_at >= occurred_at)),
+    ).order_by(BatchTable.started_at.desc()).limit(1)
+        .execution_options(populate_existing=True))
+
+
+async def batch_windows(batch_id: uuid.UUID) -> list[WindowTable]:
+    return list(await active_session().scalars(select(WindowTable).where(
+        WindowTable.batch_id == batch_id,
+    ).order_by(WindowTable.started_at).execution_options(populate_existing=True)))

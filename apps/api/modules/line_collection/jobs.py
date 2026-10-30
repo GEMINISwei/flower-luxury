@@ -1,7 +1,8 @@
 from modules.product_drafts.public import complete_photo, mark_photo_failed
-from shared.db.session import release_connection
+from shared.db.session import active_session, release_connection
 from shared.http.errors import LangException
 from shared.jobs.contracts import Job
+from shared.time import utc_now
 
 from . import model, transport
 from .config import get_settings
@@ -47,3 +48,31 @@ async def refresh_group_name(job: Job) -> None:
 
 async def expire_receipt(job: Job) -> None:
     await model.expire_row(str(job.payload["id"]), str(job.payload["kind"]))
+
+
+async def send_reply(job: Job) -> None:
+    row = await active_session().get(model.ReplyTable, str(job.payload["reply_id"]))
+    if row is None:
+        return
+    group = await model.get_group(str(row.group_id))
+    failed = row.expires_at <= utc_now()
+    if not failed:
+        try:
+            settings = get_settings()
+            await transport.reply_message(row.reply_token, row.text,
+                                          settings.line_channel_access_token.get_secret_value())
+        except transport.LineTransportError:
+            failed = True
+    if group:
+        group.reply_failed = failed
+    # reply token 只能使用一次, 失敗後不重試; 完成與過期皆立即清除.
+    await active_session().delete(row)
+
+
+async def expire_reply(job: Job) -> None:
+    row = await active_session().get(model.ReplyTable, str(job.payload["reply_id"]))
+    if row:
+        group = await model.get_group(str(row.group_id))
+        if group:
+            group.reply_failed = True
+        await active_session().delete(row)

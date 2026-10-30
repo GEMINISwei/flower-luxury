@@ -53,3 +53,10 @@ async def group_update_route(
     _: CurrentUser = Depends(check_user_permission(Permission.ALL)),
 ) -> GroupInfo:
     return await service.update_group(id, form)
+
+
+@router.post("/groups/{id}/stop")
+async def group_stop_route(
+    id: str, _: CurrentUser = Depends(check_user_permission(Permission.ALL)),
+) -> GroupInfo:
+    return await service.stop_group(id)

@@ -342,6 +342,11 @@
             "title": "Photos",
             "type": "array"
           },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
           "source_key": {
             "title": "Source Key",
             "type": "string"
@@ -369,6 +374,7 @@
           "version",
           "fields",
           "collecting",
+          "received_at",
           "created_at",
           "messages",
           "photos"
@@ -530,6 +536,11 @@
             ],
             "title": "Main Photo Id"
           },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
           "source_key": {
             "title": "Source Key",
             "type": "string"
@@ -557,6 +568,7 @@
           "version",
           "fields",
           "collecting",
+          "received_at",
           "created_at"
         ],
         "title": "DraftSummary",
@@ -667,6 +679,35 @@
       },
       "GroupInfo": {
         "properties": {
+          "batch_ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Ended At"
+          },
+          "batch_started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Started At"
+          },
+          "collecting": {
+            "default": false,
+            "title": "Collecting",
+            "type": "boolean"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -684,6 +725,18 @@
             "title": "Id",
             "type": "string"
           },
+          "issue_count": {
+            "default": 0,
+            "title": "Issue Count",
+            "type": "integer"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/GroupIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
           "joined": {
             "title": "Joined",
             "type": "boolean"
@@ -698,6 +751,11 @@
               }
             ],
             "title": "Name"
+          },
+          "reply_failed": {
+            "default": false,
+            "title": "Reply Failed",
+            "type": "boolean"
           },
           "review_product_id": {
             "anyOf": [
@@ -721,6 +779,25 @@
           "review_product_id"
         ],
         "title": "GroupInfo",
+        "type": "object"
+      },
+      "GroupIssue": {
+        "properties": {
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "occurred_at",
+          "reason"
+        ],
+        "title": "GroupIssue",
         "type": "object"
       },
       "GroupList": {
@@ -3190,6 +3267,48 @@
         ]
       }
     },
+    "/api/line/groups/{id}/stop": {
+      "post": {
+        "operationId": "group_stop_route_api_line_groups__id__stop_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Group Stop Route",
+        "tags": [
+          "line"
+        ]
+      }
+    },
     "/api/line/sources": {
       "get": {
         "operationId": "source_list_route_api_line_sources_get",
@@ -3407,6 +3526,48 @@
           }
         },
         "summary": "Get Unassigned Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/messages/{id}": {
+      "delete": {
+        "operationId": "discard_legacy_message_route_api_product_drafts_messages__id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscardInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Discard Legacy Message Route",
         "tags": [
           "product-drafts"
         ]
