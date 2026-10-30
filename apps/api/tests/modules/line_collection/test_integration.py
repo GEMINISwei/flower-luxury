@@ -37,6 +37,8 @@ async def enable_group():
     group = await model.group_for("group-a")
     assert group is not None
     await service.update_group(str(group.id), GroupUpdate(enabled=True))
+    await receive(event("text", text="/start", event_id="start", message_id="start")
+                  .model_copy(update={"timestamp": int(BASE.timestamp() * 1000) + 750}))
     return group
 
 
@@ -102,22 +104,23 @@ async def test_concurrent_redelivery_creates_one_message(db):
     assert len(list(await active_session().scalars(select(MessageTable)))) == 1
 
 
-async def test_late_message_is_unassigned(db):
+async def test_late_text_before_first_image_is_ignored(db):
     await enable_group()
     await receive(event(second=3))
     await receive(event("text", event_id="late", message_id="late", second=1))
     row = await active_session().scalar(select(MessageTable).where(MessageTable.kind == "text"))
-    assert row is not None and row.draft_id is None
+    assert row is None
 
 
 async def test_ingest_failure_rolls_back_receipts_and_jobs(db, monkeypatch):
     await enable_group()
+    receipts = len(list(await active_session().scalars(select(model.EventReceiptTable))))
     await active_session().commit()
     monkeypatch.setattr(service, "ingest_message", AsyncMock(side_effect=RuntimeError("failed")))
     with pytest.raises(RuntimeError):
         await receive(event(second=1))
     assert await active_session().scalar(select(model.MessageLinkTable.id)) is None
-    assert await active_session().scalar(select(model.EventReceiptTable.id)) is None
+    assert len(list(await active_session().scalars(select(model.EventReceiptTable)))) == receipts
     assert await active_session().scalar(select(JobTable.id).where(
         JobTable.task_name == "line_collection.download",
     )) is None

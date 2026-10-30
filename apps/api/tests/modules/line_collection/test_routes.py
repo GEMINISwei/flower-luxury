@@ -53,6 +53,7 @@ async def test_group_management_requires_manager(client, set_current_users, monk
     assert (await client.get("/api/line/groups")).status_code == 403
     result = await client.patch("/api/line/groups/group-a", json={"enabled": True})
     assert result.status_code == 403
+    assert (await client.post("/api/line/groups/group-a/stop")).status_code == 403
     authenticate(client, "manager")
     assert (await client.get("/api/line/groups")).status_code == 200
     listing.assert_awaited_once()

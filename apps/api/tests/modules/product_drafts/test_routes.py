@@ -20,6 +20,7 @@ pytestmark = pytest.mark.asyncio
     ("PATCH", f"/api/product-drafts/{ID}/photos/main"),
     ("DELETE", f"/api/product-drafts/{ID}/photos/{ID}"),
     ("POST", f"/api/product-drafts/messages/{ID}/move"),
+    ("DELETE", f"/api/product-drafts/messages/{ID}"),
     ("GET", f"/api/product-drafts/photos/{ID}/file"),
     ("GET", f"/api/product-drafts/photos/{ID}/download"),
 ])
