@@ -3516,6 +3516,22 @@
               "title": "Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": "full",
+              "enum": [
+                "128",
+                "320",
+                "640",
+                "full"
+              ],
+              "title": "Size",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4264,6 +4280,22 @@
             "required": true,
             "schema": {
               "title": "Photo Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": "full",
+              "enum": [
+                "128",
+                "320",
+                "640",
+                "full"
+              ],
+              "title": "Size",
               "type": "string"
             }
           }

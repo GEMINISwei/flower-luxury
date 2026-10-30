@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Form, Query, UploadFile
 from fastapi.responses import FileResponse
 
+from modules.products.public import PhotoSize
 from shared.auth.contracts import CurrentUser
 from shared.auth.dependency import check_user_permission
 from shared.http.errors import LangException
@@ -62,9 +63,9 @@ async def move_message_route(
 
 @router.get("/photos/{id}/file")
 async def get_draft_photo_route(
-    id: UuidText, _: CurrentUser = Depends(check_user_permission()),
+    id: UuidText, _: CurrentUser = Depends(check_user_permission()), size: PhotoSize = "full",
 ) -> FileResponse:
-    stored = await photos.read_photo(id)
+    stored = await photos.read_photo(id, size=size)
     return FileResponse(stored.path, media_type=stored.media_type,
                         headers={"Cache-Control": "private, no-store", "Vary": "Cookie"})
 

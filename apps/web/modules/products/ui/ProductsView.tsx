@@ -56,7 +56,7 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
               <span className={styles.thumbnail}>
                 {product.main_photo_id
                   ? <Image unoptimized width={64} height={64}
-                    src={`/api/products/photos/${product.main_photo_id}/file`} alt="" />
+                    src={`/api/products/photos/${product.main_photo_id}/file?size=128`} alt="" />
                   : <ImageOff size={ICON_SIZE.md} aria-hidden />}
               </span>
               <span className={styles.identity}><strong>{product.name}</strong>

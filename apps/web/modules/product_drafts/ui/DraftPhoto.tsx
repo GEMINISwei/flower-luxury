@@ -17,7 +17,7 @@ export default function DraftPhoto({ draft, photo, disabled, mutate, onRemove }:
   return <article data-testid="draft-photo" className={styles.photo} data-main={photo.is_main}>
     {photo.url ? <a href={photo.url} target="_blank" rel="noreferrer"
       aria-label={t("preview")} className={styles.photoFrame}>
-      <Image unoptimized src={photo.url} width={480} height={480}
+      <Image unoptimized src={`${photo.url}?size=640`} width={640} height={640}
         alt={t("preview")} className={styles.thumbnail} /></a>
       : <div className={styles.emptyPhoto}><ImageIcon className={styles.emptyIcon} aria-hidden="true" />
         <p>{t(photo.status === "failed" ? "failedPhoto" : photo.status)}</p></div>}

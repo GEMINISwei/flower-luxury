@@ -21,7 +21,7 @@ export default function ProductOverview({ product, photos, onPhotos }: {
     <button type="button" className={styles.mainPhotoTrigger} onClick={onPhotos}
       aria-label={gallery.selected ? t("openPhotos") : emptyLabel}>
       {gallery.selected ? <>
-        <Image unoptimized width={160} height={160} src={gallery.selected.url} alt={product.name}
+        <Image unoptimized width={160} height={160} src={`${gallery.selected.url}?size=320`} alt={product.name}
           className={styles.mainImage} />
         <span className={styles.photoCount}><Images size={ICON_SIZE.sm} aria-hidden />
           {t("photoCount", { count: photos.length })}</span>

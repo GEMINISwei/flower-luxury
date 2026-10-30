@@ -24,7 +24,7 @@ export default function ProductGallery({ photos, name, status, isPending, onSetM
       const caps = photoCapabilities(status, isMain)
       return <figure key={photo.id} className={styles.imageCard} data-main={isMain}>
         <a className={styles.imageFrame} href={photo.url} target="_blank" rel="noreferrer">
-          <Image unoptimized width={800} height={800} src={photo.url}
+          <Image unoptimized width={640} height={640} src={`${photo.url}?size=640`}
             alt={`${name} · ${t("photoPreview")} ${index + 1}`} className={styles.mainImage} />
           {isMain && <span className={styles.mainBadge}>
             <StatusBadge label={t("main")} variant="warning" /></span>}

@@ -6,7 +6,12 @@ from sqlalchemy import event
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from modules.products.public import PreparedPhoto
+from modules.products.public import (
+    PreparedPhoto,
+    photo_variant_files,
+    prepare_photo,
+    write_photo_variants,
+)
 from shared.db.session import active_session
 from shared.jobs.contracts import Job
 from shared.jobs.queue import enqueue_job
@@ -38,14 +43,14 @@ def _committed(session: Session) -> None:
 async def write_photo(row: PhotoTable, prepared: PreparedPhoto) -> None:
     key = uuid.uuid4().hex
     original = f"product_drafts/originals/{key}.{prepared.extension}"
-    display = f"product_drafts/display/{key}.webp"
+    display = f"product_drafts/display/{key}.full.webp"
     paths: list[Path] = []
     try:
-        for storage_key, content in [(original, prepared.original), (display, prepared.display)]:
-            path = _path(storage_key)
-            paths.append(path)
-            await run_in_threadpool(path.parent.mkdir, parents=True, exist_ok=True)
-            await run_in_threadpool(path.write_bytes, content)
+        path = _path(original)
+        paths.append(path)
+        await run_in_threadpool(path.parent.mkdir, parents=True, exist_ok=True)
+        await run_in_threadpool(path.write_bytes, prepared.original)
+        await run_in_threadpool(write_photo_variants, _path(display), prepared, paths)
         session = active_session().sync_session
         session.info.setdefault("draft_created_files", []).extend(paths)
         if not session.info.get("draft_file_hooks"):
@@ -77,13 +82,15 @@ async def cleanup_files(job: Job) -> None:
 
 
 async def _unlink_keys(keys: list[str]) -> None:
-    paths = [_path(key) for key in keys]
+    paths: list[Path] = []
+    for key in keys:
+        path = _path(key)
+        paths.extend([path] if path.parent.name == "originals" else photo_variant_files(path).paths)
     for path in paths:
         await run_in_threadpool(path.unlink, missing_ok=True)
 
 
 async def load_prepared(row: PhotoTable) -> PreparedPhoto:
-    return PreparedPhoto(original=await run_in_threadpool(_path(row.original_key or "").read_bytes),
-                         display=await run_in_threadpool(_path(row.display_key or "").read_bytes),
-                         filename=row.filename or "photo", extension=row.extension or "png",
-                         media_type=row.media_type or "image/png")
+    original = await run_in_threadpool(_path(row.original_key or "").read_bytes)
+    # 舊草稿的顯示圖已縮小, 審核轉商品時必須從原圖保留完整解析度.
+    return await run_in_threadpool(prepare_photo, original, row.filename)

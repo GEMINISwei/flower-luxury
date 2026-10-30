@@ -13,7 +13,7 @@ from shared.http.errors import ensure_found
 from shared.time import utc_now
 
 from .errors import ProductError
-from .images import MAX_BATCH_BYTES, PreparedPhoto, prepare_photo, validate_batch_size
+from .images import MAX_BATCH_BYTES, PhotoSize, PreparedPhoto, prepare_photo, validate_batch_size
 from .model import (
     ProductPhotoTable,
     ProductTable,
@@ -24,6 +24,7 @@ from .model import (
 )
 from .schema import OriginalPhotoFile, PhotoFile, PhotoInfo, PhotoList
 from .storage import track_files
+from .variants import photo_variant_files, resolve_photo_variant, write_photo_variants
 
 UPLOADS_DIR = Path("/app/uploads/products")
 
@@ -64,12 +65,12 @@ async def _store_photo(
 ) -> ProductPhotoTable:
     key = uuid.uuid4().hex
     original_key = f"products/originals/{key}.{photo.extension}"
-    display_key = f"products/display/{key}.webp"
-    for storage_key, data in [(original_key, photo.original), (display_key, photo.display)]:
-        path = _storage_path(storage_key)
-        paths.append(path)
-        await run_in_threadpool(path.parent.mkdir, parents=True, exist_ok=True)
-        await run_in_threadpool(path.write_bytes, data)
+    display_key = f"products/display/{key}.full.webp"
+    original_path = _storage_path(original_key)
+    paths.append(original_path)
+    await run_in_threadpool(original_path.parent.mkdir, parents=True, exist_ok=True)
+    await run_in_threadpool(original_path.write_bytes, photo.original)
+    await run_in_threadpool(write_photo_variants, _storage_path(display_key), photo, paths)
     row = ProductPhotoTable(product_id=product.id, storage_key=display_key,
                             original_storage_key=original_key, original_filename=photo.filename,
                             original_media_type=photo.media_type, sort_order=order,
@@ -140,7 +141,7 @@ async def delete_photo(id: str, photo_id: str, actor: CurrentUser) -> PhotoList:
     async with transaction():
         product = await lock_product(id)
         row = await owned_photo(id, photo_id)
-        paths = [_storage_path(row.storage_key)]
+        paths = photo_variant_files(_storage_path(row.storage_key)).paths
         if row.original_storage_key:
             paths.append(_storage_path(row.original_storage_key))
         await active_session().delete(row)
@@ -154,12 +155,13 @@ async def delete_photo(id: str, photo_id: str, actor: CurrentUser) -> PhotoList:
         return await list_photos(id)
 
 
-async def photo_path(photo_id: str) -> PhotoFile:
+async def photo_path(photo_id: str, *, size: PhotoSize = "full") -> PhotoFile:
     row = await readable_photo(photo_id)
     path = _storage_path(row.storage_key)
     exists = await run_in_threadpool(path.is_file)
     ensure_found(exists or None, ProductError.PHOTO_NOT_FOUND)
-    return PhotoFile(path=path)
+    original = _storage_path(row.original_storage_key) if row.original_storage_key else None
+    return await run_in_threadpool(resolve_photo_variant, path, original, size)
 
 
 async def original_file(photo_id: str) -> OriginalPhotoFile:
