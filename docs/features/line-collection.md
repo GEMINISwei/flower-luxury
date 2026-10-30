@@ -98,3 +98,5 @@ Log 僅提供工作識別與錯誤類別，不輸出 LINE 錯誤內容或金鑰�
 - nginx 實際入口：[`line-webhook.spec.ts`](../../e2e/tests/line-webhook.spec.ts)
 
 - 批次指令與延遲事件：[`test_batches.py`](../../apps/api/tests/modules/line_collection/test_batches.py)
+
+- 指令回覆生命週期：[`test_reply_jobs.py`](../../apps/api/tests/modules/line_collection/test_reply_jobs.py)

@@ -38,7 +38,7 @@ async def enable_group():
     assert group is not None
     await service.update_group(str(group.id), GroupUpdate(enabled=True))
     await receive(event("text", text="/start", event_id="start", message_id="start")
-                  .model_copy(update={"timestamp": int(BASE.timestamp() * 1000) + 750}))
+                  .model_copy(update={"timestamp": event().timestamp + 750}))
     return group
 
 
@@ -49,6 +49,7 @@ def settings(monkeypatch, tmp_path):
 
     monkeypatch.setattr(jobs, "get_settings", lambda: SETTINGS)
     monkeypatch.setattr(service, "utc_now", lambda: BASE + timedelta(milliseconds=500))
+    monkeypatch.setattr(jobs, "utc_now", lambda: BASE + timedelta(milliseconds=500))
     monkeypatch.setattr(storage, "UPLOADS_DIR", tmp_path / "drafts")
     monkeypatch.setattr(product_photos, "UPLOADS_DIR", tmp_path / "products")
 

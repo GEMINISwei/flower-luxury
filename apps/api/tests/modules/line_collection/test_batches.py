@@ -41,6 +41,7 @@ async def group_info():
 async def test_batch_requires_start_and_first_image(db):
     await receive(event(event_type="join"))
     group = await model.group_for("group-a")
+    assert group is not None
     await service.update_group(str(group.id), GroupUpdate(enabled=True))
     await receive(message(second=1), message("text", second=2))
     assert (await get_draft_list(limit=20)).total_count == 0
@@ -198,6 +199,7 @@ async def test_groups_have_independent_batches(db):
     await enable_group()
     await receive(message(second=1, group="group-b"))
     group = await model.group_for("group-b")
+    assert group is not None
     await service.update_group(str(group.id), GroupUpdate(enabled=True))
     await receive(message(second=2, group="group-b"), message(second=2))
     assert (await get_draft_list(limit=20)).total_count == 1

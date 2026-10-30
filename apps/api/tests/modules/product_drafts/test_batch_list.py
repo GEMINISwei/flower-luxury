@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 from sqlalchemy import select
 
@@ -29,13 +31,14 @@ async def test_clear_legacy_messages_preserves_drafts(db, monkeypatch, tmp_path)
     monkeypatch.setattr(storage, "UPLOADS_DIR", tmp_path)
     first = await collection.ingest_message(incoming(second=10))
     legacy = await collection.ingest_message(incoming(second=5))
+    assert first.message_id is not None and legacy.message_id is not None
     ready = await photos.complete_photo(legacy.message_id, image_bytes(), "legacy.png")
     assert ready.photo is not None
     path = (await photos.read_photo(ready.photo.id, original=True)).path
     await messages.discard_legacy_message(legacy.message_id)
     assert path.exists()
     assert await active_session().scalar(select(model.MessageTable.id).where(
-        model.MessageTable.id == model.parse_uuid(legacy.message_id))) is None
+        model.MessageTable.id == UUID(legacy.message_id))) is None
     assert await active_session().scalar(select(JobTable.id).where(
         JobTable.task_name == "product_drafts.cleanup")) is not None
     assert (await get_draft(first.draft_id)).id == first.draft_id

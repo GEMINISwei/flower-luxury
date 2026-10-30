@@ -81,3 +81,5 @@
 - 補上傳與待歸類圖片：[`test_uploads.py`](../../apps/api/tests/modules/product_drafts/test_uploads.py)
 - 前端欄位與複製規則：[`capabilities.test.ts`](../../apps/web/tests/modules/product_drafts/capabilities.test.ts)
 - 群組與暫存瀏覽器流程：[`product-drafts.spec.ts`](../../e2e/tests/product-drafts.spec.ts)
+
+- 無資料庫批次與時間分界：[`test_batch_rules.py`](../../apps/api/tests/modules/product_drafts/test_batch_rules.py)
