@@ -32,9 +32,9 @@ def validate_batch_size(sizes: list[int], *, status_code: int = 422) -> None:
         raise LangException(status_code, PhotoError.TOO_LARGE)
 
 
-def _webp(image: Image.Image) -> bytes:
+def _webp(image: Image.Image, *, method: int = 4) -> bytes:
     output = BytesIO()
-    image.save(output, "WEBP", lossless=True, exact=True)
+    image.save(output, "WEBP", lossless=True, exact=True, method=method)
     return output.getvalue()
 
 
@@ -59,7 +59,8 @@ def prepare_photo(data: bytes, filename: str | None) -> PreparedPhoto:
                     raise ValueError("unsupported format")
                 extension, media_type = FORMATS[str(source.format)]
                 image = ImageOps.exif_transpose(source).convert("RGBA")
-                display = _webp(image)
+                # 全圖只在點擊時下載, 優先縮短高解析度照片的無損編碼時間.
+                display = _webp(image, method=0)
                 previews = {size: _preview(image, size) for size in PREVIEW_SIZES}
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError,
             Image.DecompressionBombWarning) as error:
