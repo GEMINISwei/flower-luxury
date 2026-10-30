@@ -40,7 +40,7 @@ export default function MessageList({ messages, onCopy }: {
           ? <button type="button" className={styles.copyBlock}
             onClick={() => void copy(message.text ?? "")}>{message.text}</button>
           : <div className={styles.imageMessage}><p>{t("image")}</p>
-            {message.photo?.url && <Image src={message.photo.url} width={240} height={240}
+            {message.photo?.url && <Image src={`${message.photo.url}?size=320`} width={320} height={320}
               unoptimized alt={t("preview")} className={styles.messageThumbnail} />}
             {message.photo && <p>{t(message.photo.status === "failed" ? "failedPhoto"
               : message.photo.status)}</p>}

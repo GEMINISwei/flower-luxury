@@ -1,4 +1,7 @@
+from collections.abc import Awaitable, Callable
+
 import pytest
+from pydantic import BaseModel
 
 from modules.products import photos, service
 from modules.products.model import ProductTable
@@ -60,7 +63,10 @@ async def test_deleted_product_hides_display_and_photo_list(db):
     item = await product()
     photo = (await photos.upload_photos(item.id, [source_file()[0]], ACTOR)).list_data[0]
     await service.delete_product(item.id, ACTOR)
-    for operation, id in [(photos.photo_path, photo.id), (photos.list_photos, item.id)]:
+    operations: list[tuple[Callable[[str], Awaitable[BaseModel]], str]] = [
+        (photos.photo_path, photo.id), (photos.list_photos, item.id),
+    ]
+    for operation, id in operations:
         with pytest.raises(LangException) as error:
             await operation(id)
         assert error.value.status_code == 404

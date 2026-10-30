@@ -81,7 +81,7 @@ async function createProduct(page: Page) {
 
 async function checkPhotos(page: Page, sources: string[], sold: boolean) {
   await expect(page.getByRole("img", { name: productName, exact: true }))
-    .toHaveAttribute("src", sources[0])
+    .toHaveAttribute("src", sources[0].replace("?size=640", "?size=320"))
   await page.getByRole("button", { name: "View product photos", exact: true }).click()
   const gallery = page.getByRole("dialog", { name: "Product photos", exact: true })
   const images = gallery.getByRole("img", { name: /Preview product photo/ })
@@ -89,7 +89,7 @@ async function checkPhotos(page: Page, sources: string[], sold: boolean) {
   await expect(gallery.getByText("Main photo", { exact: true })).toBeVisible()
   for (const [index, source] of sources.entries()) {
     await expect(images.nth(index)).toHaveAttribute("src", source)
-    await expect(images.nth(index)).toHaveJSProperty("naturalWidth", 2560)
+    await expect(images.nth(index)).toHaveJSProperty("naturalWidth", 640)
     const downloaded = page.waitForEvent("download")
     await gallery.getByRole("link", { name: "Download original", exact: true }).nth(index).click()
     const download = await downloaded
@@ -143,7 +143,7 @@ test("英文介面可完成員工商品照片與交易完整流程", async ({ pa
     await expect(images).toHaveCount(2)
     for (const image of await images.all()) {
       const source = await image.getAttribute("src")
-      expect(source).toMatch(/^\/api\/products\/photos\/[0-9a-f-]+\/file$/)
+      expect(source).toMatch(/^\/api\/products\/photos\/[0-9a-f-]+\/file\?size=640$/)
       sources.push(source!)
     }
     await gallery.getByRole("button", { name: "Close", exact: true }).click()
@@ -292,15 +292,15 @@ test("真實 HEIC 上傳可顯示且下載保留原始檔案", async ({ page }, 
   const gallery = page.getByRole("dialog", { name: "Product photos", exact: true })
   const preview = gallery.getByRole("img", { name: /Preview product photo/ })
   await expect(preview).toHaveCount(1)
-  await expect(preview).toHaveJSProperty("naturalWidth", 2560)
-  await expect(preview).toHaveJSProperty("naturalHeight", 2560)
+  await expect(preview).toHaveJSProperty("naturalWidth", 640)
+  await expect(preview).toHaveJSProperty("naturalHeight", 640)
   // 公開樣本是 4:3 橫幅, 方形顯示圖的上下透明補邊可守住方向與比例.
   const alpha = await preview.evaluate((image) => {
     const canvas = document.createElement("canvas")
-    canvas.width = 2560; canvas.height = 2560
+    canvas.width = 640; canvas.height = 640
     const drawing = canvas.getContext("2d")!
     drawing.drawImage(image as HTMLImageElement, 0, 0)
-    return [[1280, 0], [0, 1280], [1280, 1280], [1280, 2559]]
+    return [[320, 0], [0, 320], [320, 320], [320, 639]]
       .map(([x, y]) => drawing.getImageData(x, y, 1, 1).data[3])
   })
   expect(alpha).toEqual([0, 255, 255, 0])

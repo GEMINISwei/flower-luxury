@@ -1,3 +1,4 @@
+from .images import PhotoSize as PhotoSize
 from .images import PreparedPhoto as PreparedPhoto
 from .images import prepare_photo as prepare_photo
 from .images import validate_batch_size as validate_batch_size
@@ -8,3 +9,6 @@ from .schema import ProductCreate as ProductCreate
 from .schema import ProductInfo as ProductInfo
 from .service import get_history as get_history
 from .service import get_product as get_product
+from .variants import photo_variant_files as photo_variant_files
+from .variants import resolve_photo_variant as resolve_photo_variant
+from .variants import write_photo_variants as write_photo_variants

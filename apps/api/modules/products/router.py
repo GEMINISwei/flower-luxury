@@ -9,6 +9,7 @@ from shared.db.session import release_connection
 from shared.http.schema import PaginationParams, UuidText
 
 from . import photos, service
+from .images import PhotoSize
 from .schema import (
     MainPhotoUpdate,
     PhotoList,
@@ -48,8 +49,10 @@ async def create_product_route(
 @router.get("/photos/{photo_id}/file")
 async def get_photo_file_route(
     photo_id: UuidText, _: CurrentUser = Depends(check_user_permission()),
+    size: PhotoSize = "full",
 ) -> FileResponse:
-    return FileResponse((await photos.photo_path(photo_id)).path, media_type="image/webp",
+    photo = await photos.photo_path(photo_id, size=size)
+    return FileResponse(photo.path, media_type="image/webp",
                         headers={"Cache-Control": "private, no-store", "Vary": "Cookie"})
 
 

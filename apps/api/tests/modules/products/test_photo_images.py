@@ -15,7 +15,7 @@ def test_image_formats_preserve_original_and_decode_to_webp(format):
     prepared = prepare_photo(data, None)
     assert prepared.original == data
     with Image.open(BytesIO(prepared.display)) as image:
-        assert image.format == "WEBP" and image.size == (2560, 2560)
+        assert image.format == "WEBP" and image.size == (16, 12)
         assert not image.getexif()
 
 

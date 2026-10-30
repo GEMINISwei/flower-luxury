@@ -22,7 +22,7 @@ def test_original_format_uses_content_instead_of_filename():
     assert photo.extension == "jpg" and photo.media_type == "image/jpeg"
     assert photo.filename == "misleading.png"
     with Image.open(BytesIO(photo.display)) as image:
-        assert image.format == "WEBP" and image.size == (2560, 2560)
+        assert image.format == "WEBP" and image.size == (16, 8)
 
 
 @pytest.mark.parametrize("name,expected", [

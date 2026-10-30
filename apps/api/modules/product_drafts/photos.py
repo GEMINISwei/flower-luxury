@@ -3,7 +3,14 @@ import uuid
 from fastapi import UploadFile
 from starlette.concurrency import run_in_threadpool
 
-from modules.products.public import PreparedPhoto, prepare_photo, read_batch, validate_batch_size
+from modules.products.public import (
+    PhotoSize,
+    PreparedPhoto,
+    prepare_photo,
+    read_batch,
+    resolve_photo_variant,
+    validate_batch_size,
+)
 from shared.auth.contracts import CurrentUser
 from shared.db.session import active_session
 from shared.db.transaction import transaction
@@ -104,13 +111,16 @@ async def mark_photo_failed(id: str | None) -> PhotoCompletion:
         return PhotoCompletion(accepted=True, photo=_photo_info(row))
 
 
-async def read_photo(id: str, *, original: bool = False) -> StoredFile:
+async def read_photo(id: str, *, original: bool = False, size: PhotoSize = "full") -> StoredFile:
     row = ensure_found(await model.get_photo_row(id), DraftError.NOT_FOUND)
     if row.status != "ready":
         raise LangException(409, DraftError.PHOTO_NOT_READY)
     key = ensure_found(row.original_key if original else row.display_key, DraftError.NOT_FOUND)
     path = storage._path(key)
     ensure_found(await run_in_threadpool(path.is_file), DraftError.NOT_FOUND)
+    if not original:
+        source = storage._path(row.original_key) if row.original_key else None
+        path = (await run_in_threadpool(resolve_photo_variant, path, source, size)).path
     media_type = (row.media_type or "image/png") if original else "image/webp"
     return StoredFile(path=path, media_type=media_type, filename=row.filename or "photo.webp")
 

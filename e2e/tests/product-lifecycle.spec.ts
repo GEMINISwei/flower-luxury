@@ -62,7 +62,7 @@ async function createProduct(page: Page) {
 
 async function checkPhotos(page: Page, sources: string[], sold: boolean) {
   await expect(page.getByRole("img", { name: productName, exact: true }))
-    .toHaveAttribute("src", sources[0])
+    .toHaveAttribute("src", sources[0].replace("?size=640", "?size=320"))
   await page.getByRole("button", { name: "查看商品照片", exact: true }).click()
   const gallery = page.getByRole("dialog", { name: "商品照片", exact: true })
   const images = gallery.getByRole("img", { name: /預覽商品照片/ })
@@ -70,7 +70,7 @@ async function checkPhotos(page: Page, sources: string[], sold: boolean) {
   await expect(gallery.getByText("主圖", { exact: true })).toBeVisible()
   for (const [index, source] of sources.entries()) {
     await expect(images.nth(index)).toHaveAttribute("src", source)
-    await expect(images.nth(index)).toHaveJSProperty("naturalWidth", 2560)
+    await expect(images.nth(index)).toHaveJSProperty("naturalWidth", 640)
     const downloaded = page.waitForEvent("download")
     await gallery.getByRole("link", { name: "下載原圖", exact: true }).nth(index).click()
     const download = await downloaded
@@ -124,7 +124,7 @@ test("員工建立商品上傳照片後可詢價成交退回再成交並保留�
     await expect(images).toHaveCount(2)
     for (const image of await images.all()) {
       const source = await image.getAttribute("src")
-      expect(source).toMatch(/^\/api\/products\/photos\/[0-9a-f-]+\/file$/)
+      expect(source).toMatch(/^\/api\/products\/photos\/[0-9a-f-]+\/file\?size=640$/)
       sources.push(source!)
     }
     await gallery.getByRole("button", { name: "關閉", exact: true }).click()

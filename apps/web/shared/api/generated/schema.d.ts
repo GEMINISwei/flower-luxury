@@ -2258,7 +2258,9 @@ export interface operations {
     };
     get_draft_photo_route_api_product_drafts_photos__id__file_get: {
         parameters: {
-            query?: never;
+            query?: {
+                size?: "128" | "320" | "640" | "full";
+            };
             header?: never;
             path: {
                 id: string;
@@ -2673,7 +2675,9 @@ export interface operations {
     };
     get_photo_file_route_api_products_photos__photo_id__file_get: {
         parameters: {
-            query?: never;
+            query?: {
+                size?: "128" | "320" | "640" | "full";
+            };
             header?: never;
             path: {
                 photo_id: string;
