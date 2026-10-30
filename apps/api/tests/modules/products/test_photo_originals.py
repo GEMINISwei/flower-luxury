@@ -45,7 +45,7 @@ async def test_upload_preserves_original_and_pairs_display(db, tmp_path, format,
     display = tmp_path / row.storage_key.removeprefix("products/")
     original_path = tmp_path / row.original_storage_key.removeprefix("products/")
     assert original_path.parent.name == "originals" and display.parent.name == "display"
-    assert display.stem == original_path.stem and display != original_path
+    assert display.stem.removesuffix(".full") == original_path.stem and display != original_path
     assert original_path.read_bytes() == original
     download = await photos.original_file(photo.id)
     assert download.path == original_path and download.filename == filename
@@ -53,8 +53,8 @@ async def test_upload_preserves_original_and_pairs_display(db, tmp_path, format,
     assert photo.download_url == f"/api/products/photos/{photo.id}/download"
     assert (await photos.photo_path(photo.id)).path == display
     with Image.open(display) as image:
-        assert image.format == "WEBP" and image.size == (2560, 2560)
-    assert len(stored_paths(tmp_path)) == 2
+        assert image.format == "WEBP" and image.size == (16, 8)
+    assert len(stored_paths(tmp_path)) == 5
 
 
 async def test_legacy_photo_has_no_original_download(db, tmp_path):
@@ -108,7 +108,7 @@ async def test_photo_rollback_removes_both_files(db, tmp_path):
     item = await product()
     await active_session().commit()
     await photos.upload_photos(item.id, [source_file()[0]], ACTOR)
-    assert len(stored_paths(tmp_path)) == 2
+    assert len(stored_paths(tmp_path)) == 5
     await active_session().rollback()
     assert stored_paths(tmp_path) == []
     assert (await photos.list_photos(item.id)).count == 0
@@ -119,7 +119,7 @@ async def test_delete_photo_removes_both_files(db, tmp_path):
     photo = (await photos.upload_photos(item.id, [source_file()[0]], ACTOR)).list_data[0]
     await active_session().commit()
     await photos.delete_photo(item.id, photo.id, ACTOR)
-    assert len(stored_paths(tmp_path)) == 2
+    assert len(stored_paths(tmp_path)) == 5
     await active_session().commit()
     assert stored_paths(tmp_path) == []
 
@@ -139,5 +139,5 @@ async def test_photo_delete_rollback_preserves_both_files(db, tmp_path):
     await active_session().commit()
     await photos.delete_photo(item.id, photo.id, ACTOR)
     await active_session().rollback()
-    assert len(stored_paths(tmp_path)) == 2
+    assert len(stored_paths(tmp_path)) == 5
     assert await active_session().scalar(select(ProductPhotoTable.id)) is not None

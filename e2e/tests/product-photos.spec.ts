@@ -32,7 +32,7 @@ test("商品照片支援選檔拍照主圖刪除與登入保護的原圖下載",
   const gallery = page.getByRole("dialog", { name: "商品照片", exact: true })
   const images = gallery.getByRole("img", { name: /預覽商品照片/ })
   await expect(images).toHaveCount(2)
-  await expect(images.first()).toHaveJSProperty("naturalWidth", 2560)
+  await expect(images.first()).toHaveJSProperty("naturalWidth", 640)
   const first = await images.first().getAttribute("src")
   const download = await gallery.getByRole("link", { name: "下載原圖", exact: true }).first().getAttribute("href")
   expect(download).toBeTruthy()
@@ -76,4 +76,52 @@ test("照片失敗保留商品並可移除後補傳而不重複建檔", async ({
   await expect(page).toHaveURL(detail!)
   await page.goto("/products?keyword=Phase4%20Retry")
   await expect(page.getByRole("link").filter({ hasText: "Phase4 Retry" })).toHaveCount(1)
+})
+
+test("商品照片依顯示尺寸載入且點擊開啟原始解析度全圖", async ({ page }) => {
+  const name = "Sized Preview Bag"
+  await prepareProduct(page, name)
+  const encoded = await page.evaluate(() => {
+    const canvas = document.createElement("canvas")
+    canvas.width = 3000; canvas.height = 1800
+    const drawing = canvas.getContext("2d")!
+    drawing.fillStyle = "#1764c9"
+    drawing.fillRect(0, 0, canvas.width, canvas.height)
+    return canvas.toDataURL("image/png").split(",")[1]
+  })
+  await page.getByLabel("上傳", { exact: true }).setInputFiles({
+    name: "large.png", mimeType: "image/png", buffer: Buffer.from(encoded, "base64"),
+  })
+  const requests: string[] = []
+  page.on("request", (request) => {
+    if (/\/api\/products\/photos\/[^/]+\/file/.test(request.url())) requests.push(request.url())
+  })
+  await page.getByRole("button", { name: "儲存", exact: true }).click()
+  await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
+  const overview = page.getByRole("img", { name, exact: true })
+  await expect(overview).toHaveJSProperty("naturalWidth", 320)
+  await expect(overview).toHaveAttribute("src", /\/file\?size=320$/)
+  await page.getByRole("button", { name: "查看商品照片", exact: true }).click()
+  const gallery = page.getByRole("dialog", { name: "商品照片", exact: true })
+  const preview = gallery.getByRole("img", { name: /預覽商品照片/ })
+  await expect(preview).toHaveJSProperty("naturalWidth", 640)
+  const previewUrl = await preview.getAttribute("src")
+  expect(previewUrl).toMatch(/\/file\?size=640$/)
+  expect(requests.every((url) => new URL(url).searchParams.has("size"))).toBe(true)
+  const opening = page.waitForEvent("popup")
+  await gallery.getByRole("link", { name: /預覽商品照片/ }).click()
+  const full = await opening
+  await expect(full.getByRole("img")).toHaveJSProperty("naturalWidth", 3000)
+  await expect(full.getByRole("img")).toHaveJSProperty("naturalHeight", 1800)
+  const fullUrl = full.url()
+  expect(new URL(fullUrl).search).toBe("")
+  expect((await page.request.get(fullUrl)).headers()["content-type"]).toBe("image/webp")
+  await full.close()
+  await gallery.getByRole("button", { name: "關閉", exact: true }).click()
+  const thumbnail = page.waitForResponse((response) => response.url().includes("/file?size=128"))
+  await page.goto(`/products?keyword=${encodeURIComponent(name)}`)
+  expect((await thumbnail).status()).toBe(200)
+  await logout(page)
+  expect((await page.request.get(previewUrl!)).status()).toBe(401)
+  expect((await page.request.get(fullUrl)).status()).toBe(401)
 })
