@@ -15,7 +15,7 @@ from PIL import Image
 from app.server import app
 from modules.brands.public import BrandTable
 from modules.line_collection.model import discover_group
-from modules.product_drafts import collection, photos, service
+from modules.product_drafts import batches, collection, photos, service
 from modules.product_drafts.schema import IncomingMessage, DraftUpdate, DraftFields
 from shared.db.session import configure_session_factory, create_engine, session_scope
 from shared.time import utc_now
@@ -54,6 +54,10 @@ async def run():
                     await message("text", index + 4, f"補充訊息 {index + 1}\n" + "商品細節\n" * 8)
             second = await message("image", 40)
             await photos.mark_photo_failed(second.message_id)
+            if arg.get("batch"):
+                group.enabled = True
+                await batches.control_collection(source, "start", base + timedelta(seconds=45))
+                await batches.record_issue(source, base + timedelta(seconds=46), "ambiguous")
             brand = await BrandTable.create({"name": arg["name"], "is_active": True})
             print(json.dumps({"id": first.draft_id, "second": second.draft_id,
                 "source": source, "group": str(group.id), "name": arg["name"],
@@ -119,21 +123,63 @@ test("left_group_cannot_be_enabled and withdrawal_notice_links_to_product", asyn
     .toHaveAttribute("href", `/products/${data.review}`)
 })
 
-test("暫存可依來源篩選且待歸類訊息僅提供逐則複製", async ({ page, context }) => {
+test("暫存列表只顯示收件時間狀態來源與審核", async ({ page }) => {
   const data = seed()
-  await context.grantPermissions(["clipboard-read", "clipboard-write"])
   await login(page, staff)
-  await page.goto("/product-drafts")
-  await page.getByLabel("來源群組").selectOption(data.source)
-  await expect(page.getByRole("link", { name: "開啟暫存", exact: true })).toHaveCount(2)
-  await page.getByRole("link", { name: "待歸類訊息", exact: true }).click()
-  await expect(page.getByText("先到的文字", { exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "移動訊息" })).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "複製全部文字" })).toHaveCount(0)
+  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+  await expect(page.getByRole("columnheader")).toHaveText(["收件時間", "狀態", "來源", "操作"])
+  await expect(page.getByText("未命名商品", { exact: true })).toHaveCount(0)
+  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(2)
+  await expect(page.getByRole("link", { name: "審核", exact: true }).first())
+    .toHaveAttribute("href", `/product-drafts/${data.second}`)
+  await page.getByRole("link", { name: "審核", exact: true }).last().click()
+  await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
+})
+
+test("來源篩選由視窗套用並可清除", async ({ page }) => {
+  const data = seed()
+  await login(page, staff)
+  await page.goto("/product-drafts?seq=3")
+  await expect(page.getByLabel("來源群組")).toHaveCount(0)
+  await page.getByRole("button", { name: "篩選", exact: true }).click()
+  const dialog = page.getByRole("dialog")
+  await dialog.getByLabel("來源群組").selectOption(data.source)
+  await expect(page).not.toHaveURL(/source_key=/)
+  await dialog.getByRole("button", { name: "篩選", exact: true }).click()
+  await expect(dialog).toBeHidden()
+  await expect(page).toHaveURL(new RegExp(`source_key=${encodeURIComponent(data.source)}`))
+  await expect(page).not.toHaveURL(/seq=/)
+  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(2)
+  await page.reload()
+  await page.getByRole("button", { name: "篩選（1）", exact: true }).click()
+  await expect(dialog.getByLabel("來源群組")).toHaveValue(data.source)
+  await dialog.getByRole("button", { name: "清除", exact: true }).click()
+  await dialog.getByRole("button", { name: "篩選", exact: true }).click()
+  await expect(page).toHaveURL("/product-drafts")
+})
+
+test("店長可結束批次並查看異常與歷史待歸類資料", async ({ page, context }) => {
+  const data = fixture({ name: `Batch ${randomUUID().slice(0, 8)}`, batch: "true" })
+  await login(page, admin)
+  await page.goto("/admin/line-groups")
+  const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
+  await expect(row).toContainText("收集中")
+  await expect(row).toContainText("無法確認訊息歸屬")
+  await row.getByRole("button", { name: "結束批次", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "結束批次", exact: true }).click()
+  await expect(row).toContainText("等待 /start")
+  await expect(row.getByRole("button", { name: "結束批次", exact: true })).toHaveCount(0)
+  await context.grantPermissions(["clipboard-read", "clipboard-write"])
+  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+  await expect(page.getByRole("link", { name: "待歸類訊息", exact: true })).toHaveCount(0)
+  await page.getByRole("link", { name: "歷史待歸類資料", exact: true }).click()
   await page.getByRole("button", { name: "先到的文字", exact: true }).click()
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("先到的文字")
-  await open(page, data.id)
+  await page.getByRole("button", { name: "刪除歷史訊息", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "刪除", exact: true }).click()
   await expect(page.getByRole("button", { name: "先到的文字", exact: true })).toHaveCount(0)
+  await open(page, data.id)
+  await expect(page.getByRole("button", { name: "第一行 第二行", exact: true })).toBeVisible()
 })
 
 test("click_message_copies_full_text and draft_fields_remain_user_controlled", async ({ page, context }) => {

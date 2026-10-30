@@ -42,7 +42,7 @@ class MemorySession:
 
     def add(self, row):
         row.id = row.id or uuid.uuid4()
-        for key, value in {"created_at": BASE, "version": 1, "fields": {},
+        for key, value in {"created_at": BASE, "received_at": BASE, "version": 1, "fields": {},
                            "collecting": True, "has_text": False, "attempts": 0}.items():
             if hasattr(row, key) and getattr(row, key) is None:
                 setattr(row, key, value)

@@ -52,3 +52,14 @@ async def group_name(group_id: str, token: str) -> GroupName:
             return GroupName(name=name)
     except (httpx.HTTPError, ValueError, AttributeError):
         raise LineTransportError() from None
+
+
+async def reply_message(reply_token: str, text: str, token: str) -> None:
+    try:
+        async with LineClient() as client:
+            response = await client.post("https://api.line.me/v2/bot/message/reply",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"replyToken": reply_token, "messages": [{"type": "text", "text": text}]})
+            _check_status(response)
+    except httpx.HTTPError:
+        raise LineTransportError() from None

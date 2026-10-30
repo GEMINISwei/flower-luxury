@@ -44,3 +44,7 @@ export async function deleteDraftPhoto(id: string, version: number, photo_id: st
   return apiDelete({ url: "/product-drafts/{id}/photos/{photo_id}", params: { id, photo_id },
     query: { version } })
 }
+
+export async function deleteLegacyMessage(id: string) {
+  return apiDelete({ url: "/product-drafts/messages/{id}", params: { id }, refresh })
+}

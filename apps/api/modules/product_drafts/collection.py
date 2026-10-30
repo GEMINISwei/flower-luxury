@@ -43,32 +43,38 @@ async def ingest_message(form: IncomingMessage) -> IngestResult:
                 draft.collecting = False
                 _bump(draft)
                 await active_session().flush()
-            draft = model.DraftTable(source_key=form.source_key)
+            draft = model.DraftTable(source_key=form.source_key, received_at=form.occurred_at)
             active_session().add(draft)
             await active_session().flush()
         assigned = draft if decision.assign else None
-        stream.next_sequence += 1
-        stream.last_occurred_at = max(stream.last_occurred_at or form.occurred_at, form.occurred_at)
-        message = model.MessageTable(source_key=form.source_key, external_id=form.external_id,
-                                     draft_id=assigned.id if assigned else None, kind=form.kind,
-                                     text=form.text, sender_id=form.sender_id,
-                                     sender_name=form.sender_name,
-                                     occurred_at=form.occurred_at, sequence=stream.next_sequence)
-        active_session().add(message)
+        return await _store_message(form, stream, assigned)
+
+
+async def _store_message(
+    form: IncomingMessage, stream: model.StreamTable, draft: model.DraftTable | None,
+) -> IngestResult:
+    stream.next_sequence += 1
+    stream.last_occurred_at = max(stream.last_occurred_at or form.occurred_at, form.occurred_at)
+    message = model.MessageTable(source_key=form.source_key, external_id=form.external_id,
+                                 draft_id=draft.id if draft else None, kind=form.kind,
+                                 text=form.text, sender_id=form.sender_id,
+                                 sender_name=form.sender_name,
+                                 occurred_at=form.occurred_at, sequence=stream.next_sequence)
+    active_session().add(message)
+    await active_session().flush()
+    if form.kind == "image":
+        photo = model.PhotoTable(message_id=message.id, draft_id=message.draft_id,
+                                 sort_order=stream.next_sequence, status="pending")
+        active_session().add(photo)
         await active_session().flush()
-        if form.kind == "image":
-            photo = model.PhotoTable(message_id=message.id, draft_id=message.draft_id,
-                                     sort_order=stream.next_sequence, status="pending")
-            active_session().add(photo)
-            await active_session().flush()
-            if assigned and assigned.main_photo_id is None:
-                assigned.main_photo_id = photo.id
-        if assigned:
-            assigned.has_text = assigned.has_text or form.kind == "text"
-            _bump(assigned)
-        return IngestResult(message_id=str(message.id),
-                            draft_id=str(assigned.id) if assigned else None,
-                            unassigned=assigned is None)
+        if draft and draft.main_photo_id is None:
+            draft.main_photo_id = photo.id
+    if draft:
+        draft.has_text = draft.has_text or form.kind == "text"
+        _bump(draft)
+    return IngestResult(message_id=str(message.id),
+                        draft_id=str(draft.id) if draft else None,
+                        unassigned=draft is None)
 
 
 async def expire_receipt(job: Job) -> None:

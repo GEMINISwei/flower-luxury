@@ -24,13 +24,16 @@ export default async function DraftsPage({ searchParams }: DraftsPageProps) {
   const unassigned = params.view === "messages"
   const options = { ...pagination, limit: 20, errorFallback: t("failed"),
     query: params.source_key ? { source_key: params.source_key } : {} }
-  const [sources, drafts, messages] = await Promise.all([
+  const [sources, drafts, messages, legacy] = await Promise.all([
     apiGet({ url: "/line/sources" }),
     unassigned ? null : fetchPaginatedList({ url: "/product-drafts/", ...options }),
     unassigned ? fetchPaginatedList({ url: "/product-drafts/messages", ...options }) : null,
+    unassigned ? null : fetchPaginatedList({ url: "/product-drafts/messages", limit: 1, direction: "next",
+      query: options.query, errorFallback: t("failed") }),
   ])
   return <DraftsView drafts={drafts} messages={messages} unassigned={unassigned}
     sources={sources.status === "success" ? sources.data.list_data : []}
     source={params.source_key ?? ""} seq={pagination.seq} limit={20}
-    sourceError={sources.status === "success" ? "" : t("failed")} />
+    hasLegacy={Boolean(legacy?.meta.totalCount)}
+    sourceError={sources.status === "success" ? (legacy?.errorMessage ?? "") : t("failed")} />
 }

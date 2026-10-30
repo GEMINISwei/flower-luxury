@@ -29,5 +29,6 @@ def image_bytes():
 
 def info(version=1):
     return DraftInfo(id=ID, source_key="group-a", version=version, fields=DraftFields(),
-                     main_photo_id=None, collecting=True, created_at=BASE, updated_at=None,
+                     main_photo_id=None, collecting=True, received_at=BASE,
+                     created_at=BASE, updated_at=None,
                      messages=[], photos=[])

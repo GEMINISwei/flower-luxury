@@ -7,7 +7,7 @@
 .detailGrid { display: grid; align-items: start;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--container-auth)), 1fr));
   gap: var(--space-5); }
-.sectionHeader, .reloadBar, .listToolbar { display: flex; align-items: center;
+.sectionHeader, .reloadBar { display: flex; align-items: center;
   justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); min-width: 0; }
 .sectionHeader h2 { display: flex; align-items: center; gap: var(--space-2); }
 .count { display: inline-flex; align-items: center; justify-content: center;
@@ -73,13 +73,6 @@
 .upload { display: grid; gap: var(--space-2); min-width: 0; overflow-wrap: anywhere; }
 .upload { font-size: var(--fs-sm); font-weight: var(--fw-medium); }
 .upload input { max-width: 100%; font: inherit; }
-.tabs { display: flex; gap: var(--space-1); padding: var(--space-1);
-  border-radius: var(--radius-md); background: var(--color-surface-sunken); }
-.tabs a { display: block; padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm);
-  color: var(--color-text-secondary); font-size: var(--fs-sm); font-weight: var(--fw-medium); }
-.tabs a[aria-current="page"] { background: var(--color-surface-card);
-  color: var(--color-text-heading); box-shadow: var(--shadow-xs); }
-.sourceFilter { flex: 1 1 var(--size-flow-step); max-width: var(--container-auth); min-width: 0; }
 .wrap { overflow-wrap: anywhere; }
 .feedback { display: grid; gap: var(--space-3); }
 .reloadBar { padding: var(--space-4); border-radius: var(--radius-md);

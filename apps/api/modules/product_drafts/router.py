@@ -54,6 +54,13 @@ async def get_unassigned_route(
     return await messages.get_unassigned_messages(**pagination.model_dump(), source_key=source_key)
 
 
+@router.delete("/messages/{id}")
+async def discard_legacy_message_route(
+    id: UuidText, _: CurrentUser = Depends(check_user_permission()),
+) -> DiscardInfo:
+    return await messages.discard_legacy_message(id)
+
+
 @router.post("/messages/{id}/move")
 async def move_message_route(
     id: UuidText, form: MessageMove, actor: CurrentUser = Depends(check_user_permission()),

@@ -8,7 +8,7 @@ from shared.http.errors import LangException, ensure_found
 from . import model, storage
 from .errors import DraftError
 from .rules import check_version
-from .schema import DraftInfo, MessageList, MessageMove, WithdrawalResult
+from .schema import DiscardInfo, DraftInfo, MessageList, MessageMove, WithdrawalResult
 from .service import _bump, _photo_info, get_draft
 
 
@@ -85,3 +85,16 @@ async def withdraw_message(source_key: str, external_id: str,
             _bump(draft)
         await active_session().flush()
         return WithdrawalResult(removed=True)
+
+
+async def discard_legacy_message(id: str) -> DiscardInfo:
+    async with transaction():
+        message = ensure_found(await model.get_message_row(id, lock=True), DraftError.NOT_FOUND)
+        if message.draft_id is not None:
+            raise LangException(409, DraftError.STALE)
+        photo = await model.photo_for_message(id)
+        if photo:
+            await storage.schedule_cleanup([photo])
+        await active_session().delete(message)
+        await active_session().flush()
+        return DiscardInfo(id=id)

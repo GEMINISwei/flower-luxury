@@ -1,3 +1,7 @@
+from .batches import control_collection as control_collection
+from .batches import finish_collection as finish_collection
+from .batches import get_collection_state as get_collection_state
+from .batches import ingest_batch_message as ingest_batch_message
 from .collection import ingest_message as ingest_message
 from .messages import withdraw_message as withdraw_message
 from .photos import complete_photo as complete_photo

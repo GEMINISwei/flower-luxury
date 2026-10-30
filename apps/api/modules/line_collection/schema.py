@@ -14,6 +14,7 @@ class LineEvent(BaseModel):
     message: dict[str, object] | None = None
     unsend: dict[str, str] | None = None
     mode: str = "active"
+    replyToken: str | None = Field(default=None, max_length=200, repr=False)  # noqa: N815
 
     @property
     def occurred_at(self) -> datetime:
@@ -48,6 +49,11 @@ class GroupUpdate(BaseModel):
     enabled: bool = Field(strict=True)
 
 
+class GroupIssue(BaseModel):
+    occurred_at: UtcDateTime
+    reason: str
+
+
 class GroupInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
@@ -57,6 +63,12 @@ class GroupInfo(BaseModel):
     joined: bool
     created_at: UtcDateTime
     review_product_id: str | None
+    collecting: bool = False
+    batch_started_at: UtcDateTime | None = None
+    batch_ended_at: UtcDateTime | None = None
+    issue_count: int = 0
+    issues: list[GroupIssue] = Field(default_factory=list)
+    reply_failed: bool = False
 
 
 class GroupList(PaginatedResponse[GroupInfo]):
