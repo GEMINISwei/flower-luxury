@@ -3,7 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { ApiListMeta } from "@/shared/api/response"
-import { Button, Container, ErrorState, Flex, ListTableCard, PageHeader, Pagination,
+import { Button, Container, ErrorState, ListTableCard, PageHeader, Pagination,
   SelectInput, StatusBadge, TableRow } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
@@ -36,16 +36,19 @@ export default function DraftsView({ drafts, messages, unassigned, sources, sour
     <PageHeader title={t("title")} subtitle={t("subtitle")}
       actions={<Button variant="outlined" onClick={() => router.refresh()}>{t("refresh")}</Button>} />
     <div className={styles.stack}>
-      <Flex gap={4} className={styles.tabs}>
-        <Link aria-current={!unassigned ? "page" : undefined} href={`/product-drafts?${query}`}>
-          {t("drafts")}</Link>
-        <Link aria-current={unassigned ? "page" : undefined}
-          href={`/product-drafts?view=messages&${query}`}>{t("unassigned")}</Link>
-      </Flex>
-      <SelectInput label={t("source")} value={source} onChange={filter}
-        options={[{ value: "", label: t("all") }, ...sources.map((item) => ({
-          value: item.source_key, label: item.name ?? item.source_key,
-        }))]} />
+      <div className={styles.listToolbar}>
+        <nav className={styles.tabs} aria-label={t("title")}>
+          <Link aria-current={!unassigned ? "page" : undefined} href={`/product-drafts?${query}`}>
+            {t("drafts")}</Link>
+          <Link aria-current={unassigned ? "page" : undefined}
+            href={`/product-drafts?view=messages&${query}`}>{t("unassigned")}</Link>
+        </nav>
+        <div className={styles.sourceFilter}><SelectInput label={t("source")} value={source} onChange={filter}
+          options={[{ value: "", label: t("all") }, ...sources.map((item) => ({
+            value: item.source_key, label: item.name ?? item.source_key,
+          }))]} />
+        </div>
+      </div>
       {error && <ErrorState>{error}<Button variant="outlined"
         onClick={() => router.refresh()}>{t("retry")}</Button></ErrorState>}
       {drafts && <ListTableCard headers={[t("name"), t("source"), t("updated"), t("open")]}

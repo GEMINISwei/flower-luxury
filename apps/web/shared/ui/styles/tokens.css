@@ -135,6 +135,8 @@
   --size-icon-md: 20px;
   --size-icon-lg: 24px;
   --size-avatar-sm: 32px;
+  --size-draft-photo: 280px;
+  --size-draft-messages: 360px;
   --size-media-preview: 160px;
   --size-media-preview-compact: 96px;
   --size-brand-mark: 48px;

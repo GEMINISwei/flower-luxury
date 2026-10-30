@@ -51,3 +51,8 @@ export function photoOrder(photos: { id: string }[], id: string, direction: numb
   }
   return ids
 }
+export function photoSelection(photos: { id: string }[], selected: string | null) {
+  const found = photos.findIndex((photo) => photo.id === selected)
+  const index = found >= 0 ? found : Math.min(0, photos.length - 1)
+  return { id: photos[index]?.id ?? null, index }
+}

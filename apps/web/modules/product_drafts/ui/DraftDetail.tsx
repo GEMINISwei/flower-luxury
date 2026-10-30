@@ -34,11 +34,13 @@ export default function DraftDetail({ initial, brands, sources }: {
       actions={<Link href="/product-drafts">{t("back")}</Link>} />
     <div className={styles.stack}>
       <div className={styles.feedback}>
+        <div className={styles.reloadBar}>
+          <p className={styles.hint}>{t("reloadHint")}</p>
+          <Button variant="outlined" disabled={pending} onClick={editor.reload}>{t("reload")}</Button>
+        </div>
         {editor.error && <p role="alert">{editor.error}</p>}
         {editor.status && <p role="status">{editor.status}</p>}
         {editor.dirty && <p className={styles.hint}>{t("unsaved")}</p>}
-        <Button variant="outlined" disabled={pending} onClick={editor.reload}>{t("reload")}</Button>
-        <p className={styles.hint}>{t("reloadHint")}</p>
         {editor.comparison && <details open><summary>{t("latest")}</summary><dl>
           {Object.entries(editor.comparison.fields).map(([key, value]) => <div key={key}>
             <dt>{t(key as keyof typeof values)}</dt><dd>{String(value ?? "")}</dd>
@@ -46,28 +48,28 @@ export default function DraftDetail({ initial, brands, sources }: {
         </dl></details>}
       </div>
       <div className={styles.detailGrid}>
-        <div className={styles.panel}>
-          <MessageList messages={draft.messages} disabled={disabled}
+        <div className={styles.sourceColumn}>
+          <DraftPhotos draft={draft} disabled={disabled}
+            mutate={editor.run} onError={editor.setError} />
+          <div className={styles.panel}><MessageList messages={draft.messages} disabled={disabled}
             onMove={setMoving}
             onCopy={(success) => {
               editor.setStatus(success ? t("copied") : "")
               editor.setError(success ? "" : t("copyFailed"))
-            }} />
+            }} /></div>
         </div>
-        <div className={styles.stack}>
+        <div className={styles.editorColumn}>
           <DraftFields values={values} brands={brands} disabled={pending} onChange={editor.set} />
           <Flex gap={3} className={styles.actions}>
-            <Button disabled={disabled} onClick={() => editor.save()}>{t("save")}</Button>
+            <Button variant="outlined" disabled={disabled} onClick={() => editor.save()}>{t("save")}</Button>
             <Button disabled={disabled} onClick={() => {
               if (editor.validate(true)) setDialog("approve")
             }}>{t("approve")}</Button>
-            <Button variant="outlined" disabled={disabled}
+            <Button variant="outlined" disabled={disabled} className={styles.dangerAction}
               onClick={() => setDialog("discard")}>{t("discard")}</Button>
           </Flex>
         </div>
       </div>
-      <DraftPhotos draft={draft} disabled={disabled}
-        mutate={editor.run} onError={editor.setError} />
     </div>
     <ConfirmDialog title={t(dialog === "approve" ? "approve" : "discard")} open={Boolean(dialog)}
       isPending={pending} confirmText={t(dialog === "approve" ? "approve" : "discard")}
