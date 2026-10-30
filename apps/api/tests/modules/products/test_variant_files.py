@@ -54,7 +54,8 @@ async def test_legacy_photo_variants_are_generated_from_original(db, tmp_path):
         result = await photos.photo_path(photo_id, size=size)
         with Image.open(result.path) as image:
             assert image.size == ((3000, 1500) if size == "full" else (int(size), int(size)))
-            assert image.getpixel((image.width // 2, image.height // 2)) == (23, 100, 201, 255)
+            center = image.convert("RGBA").getpixel((image.width // 2, image.height // 2))
+            assert center == (23, 100, 201, 255)
         before = result.path.stat().st_mtime_ns
         assert (await photos.photo_path(photo_id, size=size)).path.stat().st_mtime_ns == before
     assert (await photos.original_file(photo_id)).path.read_bytes() == image_bytes()
@@ -74,7 +75,7 @@ async def test_legacy_photo_without_original_can_generate_previews(db, tmp_path)
     preview = await photos.photo_path(photo_id, size="128")
     with Image.open(preview.path) as image:
         assert image.size == (128, 128)
-        assert image.getpixel((64, 64)) == (0, 0, 255, 255)
+        assert image.convert("RGBA").getpixel((64, 64)) == (0, 0, 255, 255)
 
 
 async def test_upload_writes_all_preview_sizes_before_reading(db, tmp_path):

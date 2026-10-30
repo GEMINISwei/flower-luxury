@@ -28,7 +28,7 @@ def test_display_photo_respects_exif_orientation():
     source.save(buffer, "JPEG", exif=exif)
     with Image.open(BytesIO(prepare_photo(buffer.getvalue(), None).display)) as image:
         assert image.size == (8, 16)
-        assert image.getchannel("A").getbbox() == (0, 0, 8, 16)
+        assert image.convert("RGBA").getchannel("A").getbbox() == (0, 0, 8, 16)
         assert not image.getexif()
 
 

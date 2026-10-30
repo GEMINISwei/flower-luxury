@@ -37,8 +37,8 @@ async def test_draft_photo_variants_survive_approval_and_cleanup(db, tmp_path):
     approval = await review.approve_draft(draft.id, VersionRequest(version=draft.version), ACTOR)
     product = (await product_photos.list_photos(approval.product_id)).list_data[0]
     for size in SIZES:
-        stored = await product_photos.photo_path(product.id, size=size)
-        with Image.open(stored.path) as image:
+        product_file = await product_photos.photo_path(product.id, size=size)
+        with Image.open(product_file.path) as image:
             assert image.size == ((8, 4) if size == "full" else (int(size), int(size)))
     assert (await product_photos.original_file(product.id)).path.read_bytes() == image_bytes()
     await active_session().commit()
@@ -64,7 +64,8 @@ async def test_draft_legacy_photo_generates_variants_from_original(db, tmp_path)
         stored = await photos.read_photo(str(row.id), size=size)
         with Image.open(stored.path) as image:
             assert image.size == ((8, 4) if size == "full" else (int(size), int(size)))
-            assert image.getpixel((image.width // 2, image.height // 2)) == (255, 0, 0, 255)
+            center = image.convert("RGBA").getpixel((image.width // 2, image.height // 2))
+            assert center == (255, 0, 0, 255)
 
 
 async def test_draft_variant_write_failure_preserves_existing_photos(db, tmp_path, monkeypatch):
