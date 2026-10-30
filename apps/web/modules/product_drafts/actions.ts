@@ -2,11 +2,9 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { apiDelete, apiGet, apiPatch, apiPost, apiUpload } from "@/shared/api/request.server"
-import { fetchPaginatedList } from "@/shared/pagination/fetch.server"
-import { getLocale, getT } from "@/shared/i18n/locale.server"
+import { getLocale } from "@/shared/i18n/locale.server"
 import { validatePhotoBatch } from "@/modules/products/public.client"
 import type { DraftFields } from "./types"
-import { draftMessages } from "./i18n"
 
 const refresh = { path: "/product-drafts" }
 export async function reloadDraft(id: string) {
@@ -42,21 +40,7 @@ export async function setDraftMainPhoto(id: string, version: number, photo_id: s
   return apiPatch({ url: "/product-drafts/{id}/photos/main", params: { id },
     data: { version, photo_id } })
 }
-export async function reorderDraftPhotos(id: string, version: number, photo_ids: string[]) {
-  return apiPatch({ url: "/product-drafts/{id}/photos/order", params: { id },
-    data: { version, photo_ids } })
-}
 export async function deleteDraftPhoto(id: string, version: number, photo_id: string) {
   return apiDelete({ url: "/product-drafts/{id}/photos/{photo_id}", params: { id, photo_id },
     query: { version } })
-}
-export async function loadMoveTargets(source_key: string, cursor?: string) {
-  return fetchPaginatedList({ url: "/product-drafts/", limit: 20, direction: "next", cursor,
-    query: { source_key }, errorFallback: (await getT(draftMessages))("failed") })
-}
-export async function moveMessage(
-  id: string, target_draft_id: string, target_version: number, source_version: number | null,
-) {
-  return apiPost({ url: "/product-drafts/messages/{id}/move", params: { id },
-    data: { target_draft_id, target_version, source_version }, refresh })
 }

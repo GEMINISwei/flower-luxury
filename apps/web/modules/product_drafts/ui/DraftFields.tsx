@@ -15,7 +15,8 @@ export default function DraftFields({ values, brands, disabled, onChange }: {
   const productT = useT(productMessages)
   const available = brands.filter((brand) => brand.is_active || brand.id === values.brand_id)
   return <section className={styles.panel} aria-label={t("fields")}>
-    <h2>{t("fields")}</h2><div className={styles.fields}>
+    <h2>{t("fields")}</h2><p className={styles.hint}>{t("fieldsHint")}</p>
+    <div className={styles.fields}>
       <TextInput label={t("name")} value={values.name} disabled={disabled}
         onChange={(value) => onChange("name", value)} />
       <div className={styles.field}><span>{t("brand_id")}</span>
