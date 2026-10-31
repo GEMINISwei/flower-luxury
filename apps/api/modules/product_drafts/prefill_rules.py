@@ -6,6 +6,8 @@ from .prefill_schema import PrefillContent, PrefillJsonSchema
 from .schema import DraftFields
 
 MAX_INPUT_CHARACTERS = 200000
+MIN_PREFILL_YEAR = 1900
+MAX_PREFILL_YEAR = 2100
 
 
 class TextMessage(Protocol):
@@ -24,6 +26,10 @@ def output_schema() -> PrefillJsonSchema:
     schema["required"] = list(DraftFields.model_fields)
     for field in schema["properties"].values():
         field.pop("default", None)
+    schema["properties"]["year"]["anyOf"] = [
+        {"type": "integer", "minimum": MIN_PREFILL_YEAR, "maximum": MAX_PREFILL_YEAR},
+        {"type": "null"},
+    ]
     return PrefillJsonSchema(json_schema=schema)
 
 
@@ -52,6 +58,11 @@ def parse_prefill(content: str, brand_ids: set[str]) -> DraftFields:
     data = json.loads(content, object_pairs_hook=_unique_object)
     if not isinstance(data, dict) or set(data) != set(DraftFields.model_fields):
         raise ValueError("prefill fields do not match schema")
+    year = data["year"]
+    if isinstance(year, int) and not isinstance(year, bool) and not (
+        MIN_PREFILL_YEAR <= year <= MAX_PREFILL_YEAR
+    ):
+        data["year"] = None
     result = DraftFields.model_validate(data, strict=True)
     if result.brand_id is not None and result.brand_id not in brand_ids:
         raise ValueError("prefill brand is not available")

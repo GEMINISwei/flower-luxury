@@ -48,3 +48,13 @@ export function photoSelection(photos: { id: string }[], selected: string | null
   const index = found >= 0 ? found : Math.min(0, photos.length - 1)
   return { id: photos[index]?.id ?? null, index }
 }
+
+export function parsePrefillConditions(supplement: string): string[] {
+  return supplement.split(/\r?\n/).map((condition) => condition.trim()).filter(Boolean)
+}
+
+export function prefillConditionState(conditions: string[], configured: boolean) {
+  const supplement = conditions.map((condition) => condition.trim()).filter(Boolean).join("\n")
+  const tooLong = Array.from(supplement).length > 10000
+  return { supplement, tooLong, canSave: !tooLong, canPreview: configured && !tooLong }
+}
