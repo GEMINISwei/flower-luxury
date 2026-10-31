@@ -73,11 +73,6 @@ export async function updateQuote(
   return apiPatch({ url: "/products/{id}/quotes/{quote_id}", params: { id, quote_id }, data, refresh })
 }
 
-export async function refreshQuote(id: string, quote_id: string) {
-  return apiPost({ url: "/products/{id}/quotes/{quote_id}/refresh-rate",
-    params: { id, quote_id }, refresh })
-}
-
 export async function deleteQuote(id: string, quote_id: string) {
   return apiDelete({ url: "/products/{id}/quotes/{quote_id}", params: { id, quote_id }, refresh })
 }

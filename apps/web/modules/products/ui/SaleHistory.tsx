@@ -13,11 +13,11 @@ export default function SaleHistory({ sales }: { sales: SaleInfo[] }) {
     <h2>{t("history")}</h2>
     {!sales.length && <p>{t("noSales")}</p>}
     {sales.map((sale) => <section className={styles.quote} key={sale.id}>
-      <div className={styles.actions}><h3>{sale.vendor_name} · {t(sale.vendor_country)}</h3>
+      <div className={styles.actions}><h3>{sale.vendor_name}</h3>
         <StatusBadge label={t(sale.is_current ? "current" : "returned")}
           variant={sale.is_current ? "success" : "muted"} /></div>
       <dl className={styles.facts}>
-        <div><dt>{t("amount")}</dt><dd>{sale.currency} {sale.original_amount}</dd></div>
+        <div><dt>{t("amount")}</dt><dd>{sale.original_amount}</dd></div>
         <div><dt>{t("rate")}</dt><dd>{sale.exchange_rate}</dd></div>
         <div><dt>{t("confirmAmount")}</dt><dd>{sale.amount_twd.toLocaleString()}</dd></div>
         <div><dt>{t("cost")}</dt><dd>{sale.cost_price.toLocaleString()}</dd></div>

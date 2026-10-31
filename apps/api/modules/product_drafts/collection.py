@@ -42,6 +42,7 @@ async def ingest_message(form: IncomingMessage) -> IngestResult:
         if decision.start_new:
             if draft:
                 draft.collecting = False
+                await schedule_prefill(draft)
                 _bump(draft)
                 await active_session().flush()
             draft = model.DraftTable(source_key=form.source_key, received_at=form.occurred_at)
@@ -73,8 +74,6 @@ async def _store_message(
     if draft:
         draft.has_text = draft.has_text or form.kind == "text"
         _bump(draft)
-        if form.kind == "text":
-            await schedule_prefill(draft)
     return IngestResult(message_id=str(message.id),
                         draft_id=str(draft.id) if draft else None,
                         unassigned=draft is None)

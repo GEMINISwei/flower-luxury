@@ -36,8 +36,6 @@ async def update_vendor(id: str, form_data: VendorUpdate) -> VendorInfo:
     try:
         async with transaction():
             row = await lock_vendor(id)
-            if row.country_locked and row.country != form_data.country:
-                raise LangException(409, VendorError.COUNTRY_LOCKED)
             for field, value in form_data.model_dump().items():
                 setattr(row, field, value)
             row.updated_at = utc_now()
@@ -53,8 +51,8 @@ async def delete_vendor(id: str) -> VendorInfo:
     async with transaction():
         row = await lock_vendor(id)
         result = VendorInfo.model_validate(row.to_dict())
-        # 鎖定標記是永久的, 避免刪掉最後一筆未成交詢價就失去曾有詢價的事實.
-        if row.country_locked:
+        # 曾有正式詢價的廠商保留識別, 即使最後一筆未成交詢價已刪除.
+        if row.has_quotes:
             row.is_active, row.updated_at = False, utc_now()
             await active_session().flush()
             return VendorInfo.model_validate(row.to_dict())

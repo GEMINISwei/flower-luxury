@@ -25,5 +25,5 @@ MODULE = ModuleManifest(
             BatchTable, WindowTable, BatchIssueTable, PrefillSettingsTable),
     tasks=(TaskSpec("product_drafts.cleanup", cleanup_files),
            TaskSpec("product_drafts.expire_receipt", expire_receipt),
-           TaskSpec("product_drafts.prefill", run_prefill, timeout_seconds=45)),
+           TaskSpec("product_drafts.prefill", run_prefill, max_attempts=1, timeout_seconds=45)),
 )

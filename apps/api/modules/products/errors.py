@@ -24,10 +24,11 @@ class QuoteError(BaseError):
         zh="此廠商已有詢價，請修改既有報價", en="This vendor already has a quote; edit it instead",
     )
     AMOUNT = LangText(
-        zh="報價須大於零；臺幣為整數，人民幣最多兩位小數，且金額不可超出範圍",
-        en="Quote must be positive: whole TWD or up to two CNY decimals, within the amount limit",
+        zh="報價須大於零，最多兩位小數，且換算金額不可超出範圍",
+        en="Quote must be positive with up to two decimals, within the converted amount limit",
     )
-    NO_RATE = LangText(zh="請先由店長設定人民幣匯率", en="Ask a manager to set the CNY rate first")
+    RATE = LangText(zh="匯率須大於零，最多六位小數，且不可超出範圍",
+                    en="Rate must be positive with up to six decimals, within the rate limit")
     REFERENCED = LangText(
         zh="曾用於成交的詢價不能刪除", en="A previously sold quote cannot be deleted",
     )

@@ -1,27 +1,25 @@
-# 品牌、廠商與匯率
+# 品牌與廠商
 
-共用業務資料的基礎模組，沿用舊版規則與資料欄位。商品核心見[商品核心](products.md)，
-照片見[商品照片](product-photos.md)，交易見[詢價、成交與退回](product-trading.md)，舊資料搬移另案處理。
+共用業務資料的基礎模組。商品核心見[商品核心](products.md)，照片見[商品照片](product-photos.md)，
+逐筆匯率與成交見[詢價、成交與退回](product-trading.md)，舊資料搬移另案處理。
 
 ## 行為與限制
 
 - 品牌與廠商由所有登入者共用，員工可以新增、編輯與刪除，沒有店家或使用者資料隔離。
 - 名稱去除首尾空白、不分大小寫去重，列表按名稱排序。品牌未引用時可刪除，有引用時改為停用。
 - 停用品牌不能供新的引用使用，既有引用可保留原品牌；引用規則不依賴商品模組，包含保留的軟刪除引用。
-- 廠商國家只支援臺灣／中國，分別決定 TWD／CNY。`country_locked` 保留曾建立詢價的永久鎖定語意，
-  鎖定後不能改國家，刪除會改為停用。建立詢價與鎖定國家同一交易完成，即使刪除最後一筆詢價也不解除。
-- 匯率設定只開放店長，代表 1 CNY 換算的 TWD 金額，沒有預設匯率。API 與資料庫最多六位小數，
-  設定畫面顯示及儲存四捨五入至兩位。保留最後操作者與時間，之後不回寫歷史詢價與成交。
-- `brands`、`vendors`、`exchange_rate_settings` 的表名、欄位、型別、唯一索引與約束沿用舊版。
-  本次 migration 不帶入舊資料，不更動既有帳號及註冊設定的 migration。
+- 廠商只設定名稱、備註與啟用狀態，不設定國家或幣別。`has_quotes` 永久保存曾建立正式詢價的事實，
+  曾有詢價的廠商刪除時改為停用，即使最後一筆未成交詢價已刪除也不解除。
+- 不再提供全域匯率設定；每筆報價自行帶入匯率，未指定時為 1。匯率最多六位小數，
+  修改報價不改寫過去成交的金額與匯率，詳細限制見[詢價、成交與退回](product-trading.md)。
+- 升級時先把舊暫存報價依原廠商國家補入匯率：臺灣為 1，中國為當時系統設定值。
+  中國廠商仍有暫存報價但未設定系統匯率時，migration 會停止，須先設定後再升級。
+  舊廠商的國家欄位與全域匯率表於補值後移除，既有正式報價與成交快照不變。
 
 ## 為什麼
 
-停用與永久鎖定保留引用歷史，避免後續修改名稱、國家或刪除業務資料時，讓既有交易的意義改變。
-品牌的使用狀態從外鍵引用推導，不反向依賴商品模組；商品與成交引用流程另有整合驗收。
-
-金額的精度留在後端契約，設定頁的兩位小數只是這個業務功能的操作規則。畫面統一以臺北時間顯示，
-固定組合日期數字，避免伺服器與瀏覽器 ICU 的分隔符差異造成 hydration 不一致。
+報價與匯率屬於每筆詢價的條件，廠商名稱不再決定換算方式。停用與永久引用記錄保留歷史識別，
+避免刪除曾有業務往來的廠商。金額與匯率精度由後端契約驗證，畫面輸入與審核轉入使用同一份規則。
 
 ## 程式與測試
 
@@ -29,6 +27,5 @@
   [`test_model.py`](../../apps/api/tests/modules/brands/test_model.py)
 - 廠商：[`service.py`](../../apps/api/modules/vendors/service.py)、
   [`test_model.py`](../../apps/api/tests/modules/vendors/test_model.py)
-- 匯率：[`test_rates.py`](../../apps/api/tests/modules/exchange_rates/test_rates.py)、
-  [`format.test.ts`](../../apps/web/tests/modules/exchange_rates/format.test.ts)
+- 舊暫存匯率轉換：[`test_quote_rate_migration.py`](../../apps/api/tests/modules/product_drafts/test_quote_rate_migration.py)
 - 瀏覽器流程：[`catalog.spec.ts`](../../e2e/tests/catalog.spec.ts)

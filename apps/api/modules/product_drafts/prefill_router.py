@@ -5,8 +5,12 @@ from shared.auth.contracts import CurrentUser
 from shared.auth.dependency import check_user_permission
 
 from . import prefill_settings
-from .prefill_schema import PrefillPreview, PrefillSettingsInfo, PrefillSettingsUpdate
-from .schema import DraftFields
+from .prefill_schema import (
+    PrefillPreview,
+    PrefillResult,
+    PrefillSettingsInfo,
+    PrefillSettingsUpdate,
+)
 
 router = APIRouter(prefix="/draft-prefill", tags=["draft-prefill"])
 
@@ -30,5 +34,5 @@ async def update_settings_route(
 async def preview_route(
     form: PrefillPreview,
     _: CurrentUser = Depends(check_user_permission(Permission.ALL)),
-) -> DraftFields:
+) -> PrefillResult:
     return await prefill_settings.preview(form)

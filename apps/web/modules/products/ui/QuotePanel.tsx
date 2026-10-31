@@ -10,7 +10,7 @@ import type { ProductInfo, QuoteInfo } from "../types"
 import { quoteMessages } from "../i18n"
 import { productCapabilities } from "../capabilities"
 import { availableQuoteVendors, quoteCapabilities } from "../quote-capabilities"
-import { deleteQuote, refreshQuote } from "../actions"
+import { deleteQuote } from "../actions"
 import QuoteDialog from "./QuoteDialog"
 import SaleDialog from "./SaleDialog"
 import QuoteActionDialog from "./QuoteActionDialog"
@@ -24,15 +24,13 @@ export default function QuotePanel({ product, quotes, vendors }: {
   const [editor, setEditor] = useState<QuoteInfo | "new" | null>(null)
   const [selected, setSelected] = useState<QuoteInfo | null>(null)
   const [error, setError] = useState("")
-  const [action, setAction] = useState<{ quote: QuoteInfo; refreshing: boolean } | null>(null)
+  const [action, setAction] = useState<QuoteInfo | null>(null)
   const { isPending, submit } = useActionSubmit()
   const { canEdit } = productCapabilities(product.status)
   const available = availableQuoteVendors(vendors, quotes)
   function act() {
     if (!action) return
-    const { quote, refreshing } = action
-    submit(() => refreshing ? refreshQuote(product.id, quote.id)
-      : deleteQuote(product.id, quote.id), {
+    submit(() => deleteQuote(product.id, action.id), {
       onSuccess: () => { setAction(null); router.refresh() }, onError: setError,
     })
   }
@@ -46,11 +44,11 @@ export default function QuotePanel({ product, quotes, vendors }: {
     {!quotes.length && <p>{t("empty")}</p>}
     {canEdit && !vendors.length && <p>{t("vendorsHint")}</p>}
     {quotes.map((quote) => {
-      const caps = quoteCapabilities(product.status, quote.vendor_country, quote.has_sales)
+      const caps = quoteCapabilities(product.status, quote.has_sales)
       return <section key={quote.id} className={styles.quote}>
-        <h3>{quote.vendor_name} · {t(quote.vendor_country)}</h3>
+        <h3>{quote.vendor_name}</h3>
         <dl className={styles.facts}>
-          <div><dt>{t("amount")}</dt><dd>{quote.currency} {quote.original_amount}</dd></div>
+          <div><dt>{t("amount")}</dt><dd>{quote.original_amount}</dd></div>
           <div><dt>{t("rate")}</dt><dd>{quote.exchange_rate}</dd></div>
           <div><dt>{t("twd")}</dt><dd>TWD {quote.amount_twd.toLocaleString()}</dd></div>
           {quote.note && <div><dt>{t("note")}</dt><dd>{quote.note}</dd></div>}
@@ -59,11 +57,8 @@ export default function QuotePanel({ product, quotes, vendors }: {
         <div className={styles.actions}>
           {caps.canEdit && <Button variant="outlined" disabled={isPending}
             onClick={() => setEditor(quote)}>{t("edit")}</Button>}
-          {caps.canRefresh && <Button variant="outlined" disabled={isPending}
-            onClick={() => { setError(""); setAction({ quote, refreshing: true }) }}>
-            {t("refresh")}</Button>}
           {caps.canDelete && <Button variant="outlined" disabled={isPending}
-            onClick={() => { setError(""); setAction({ quote, refreshing: false }) }}>
+            onClick={() => { setError(""); setAction(quote) }}>
             {t("delete")}</Button>}
           {caps.canConfirm && <Button disabled={isPending} onClick={() => setSelected(quote)}>
             {t("confirm")}</Button>}

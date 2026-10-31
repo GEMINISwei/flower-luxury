@@ -32,13 +32,6 @@ async def update_quote_route(
     return await quotes.update_quote(id, quote_id, form_data, actor)
 
 
-@router.post("/{quote_id}/refresh-rate")
-async def refresh_quote_route(
-    id: UuidText, quote_id: UuidText, actor: CurrentUser = Depends(check_user_permission()),
-) -> QuoteInfo:
-    return await quotes.refresh_quote(id, quote_id, actor)
-
-
 @router.delete("/{quote_id}")
 async def delete_quote_route(
     id: UuidText, quote_id: UuidText, actor: CurrentUser = Depends(check_user_permission()),

@@ -77,10 +77,9 @@ export const prefillMessages = defineMessages({
     failed: "操作失敗，請重試。",
     testText: "測試文字", test: "測試預填", testHint: "使用目前輸入的補充條件測試，不儲存設定或修改商品。",
     result: "預填預覽", required: "請輸入測試文字。",
-    idle: "AI 預填等待商品文字。", disabled: "未設定 Gemini API 金鑰，AI 預填暫停使用。",
+    idle: "AI 將在收集結束後，彙整全部文字預填一次。", disabled: "未設定 Gemini API 金鑰，AI 預填暫停使用。",
     queued: "AI 預填排程中，完成後請重新載入資料。", ready: "AI 已完成預填，請確認後再審核建檔。",
-    prefillFailed: "AI 預填失敗，既有欄位已保留，可稍後重試。", retry: "重新預填",
-    protection: "人工修改的欄位會保留，包含刻意清空的值。",
+    prefillFailed: "AI 預填未完成，請參考原始訊息手動整理。",
   },
   en: {
     title: "AI assistant", prefill: "Review prefill", supplement: "Additional conditions",
@@ -91,27 +90,26 @@ export const prefillMessages = defineMessages({
     failed: "Action failed. Please retry.",
     testText: "Test text", test: "Test prefill", testHint: "Test the current rules without saving settings or changing products.",
     result: "Prefill preview", required: "Enter test text.",
-    idle: "AI prefill is waiting for product text.",
+    idle: "AI will prefill once using all text when collection ends.",
     disabled: "AI prefill is unavailable: Gemini API key is not configured.",
     queued: "AI prefill is queued. Reload data after it completes.", ready: "AI prefill is ready. Confirm the fields before approval.",
-    prefillFailed: "AI prefill failed. Existing fields are preserved. Retry later.", retry: "Run prefill again",
-    protection: "Manually edited fields are preserved, including values you cleared.",
+    prefillFailed: "AI prefill did not complete. Use the original messages to fill in the fields manually.",
   },
 })
 
 export const draftQuoteMessages = defineMessages({
   zh: {
     title: "廠商詢價", create: "新增詢價", edit: "編輯詢價", delete: "刪除詢價",
-    empty: "尚無詢價。可手動新增廠商報價。", hint: "審核建檔時一併建立正式詢價，依當時系統匯率換算。",
-    vendor: "廠商", amount: "原幣報價", note: "詢價備註", choose: "請選擇", save: "儲存",
-    required: "請選擇廠商並填寫原幣報價。", confirm: "確定刪除此筆暫存詢價？",
+    empty: "尚無詢價。可手動新增廠商報價。", hint: "審核建檔時一併帶入廠商報價與逐筆匯率。",
+    vendor: "廠商", amount: "報價", rate: "匯率", note: "詢價備註", choose: "請選擇", save: "儲存",
+    required: "請選擇廠商並填寫報價與匯率。", confirm: "確定刪除此筆暫存詢價？",
     unavailable: "廠商已不存在", failed: "詢價操作失敗，請重試。",
   },
   en: {
     title: "Vendor quotes", create: "Add quote", edit: "Edit quote", delete: "Delete quote",
-    empty: "No quotes yet. Add a vendor quote manually.", hint: "Quotes are created on approval using the system exchange rate at that time.",
-    vendor: "Vendor", amount: "Original amount", note: "Quote note", choose: "Choose", save: "Save",
-    required: "Select a vendor and enter the original amount.", confirm: "Delete this draft quote?",
+    empty: "No quotes yet. Add a vendor quote manually.", hint: "Vendor quotes and their exchange rates are carried over on approval.",
+    vendor: "Vendor", amount: "Quote amount", rate: "Exchange rate", note: "Quote note", choose: "Choose", save: "Save",
+    required: "Select a vendor and enter the quote amount and exchange rate.", confirm: "Delete this draft quote?",
     unavailable: "Vendor no longer exists", failed: "Quote action failed. Please retry.",
   },
 })

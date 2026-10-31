@@ -168,8 +168,8 @@ class ProductQuoteTable(BaseTable):
 
     product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id", ondelete="RESTRICT"))
     vendor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("vendors.id", ondelete="RESTRICT"))
-    vendor_country: Mapped[str]
-    currency: Mapped[str]
+    vendor_country: Mapped[str | None]
+    currency: Mapped[str | None]
     original_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     exchange_rate: Mapped[Decimal] = mapped_column(Numeric(16, 6))
     amount_twd: Mapped[int] = mapped_column(BigInteger)
@@ -186,11 +186,6 @@ class ProductQuoteTable(BaseTable):
         CheckConstraint("exchange_rate > 0", name="quote_rate_positive"),
         CheckConstraint("amount_twd BETWEEN 0 AND 9007199254740991", name="quote_twd_range"),
         CheckConstraint("revision > 0", name="quote_revision_positive"),
-        CheckConstraint(
-            "(vendor_country = 'TW' AND currency = 'TWD' AND exchange_rate = 1 "
-            "AND original_amount = trunc(original_amount)) "
-            "OR (vendor_country = 'CN' AND currency = 'CNY')", name="quote_country_currency",
-        ),
     )
 
 
@@ -203,8 +198,8 @@ class ProductSaleTable(BaseTable):
     )
     vendor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("vendors.id", ondelete="RESTRICT"))
     vendor_name: Mapped[str]
-    vendor_country: Mapped[str]
-    currency: Mapped[str]
+    vendor_country: Mapped[str | None]
+    currency: Mapped[str | None]
     original_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     exchange_rate: Mapped[Decimal] = mapped_column(Numeric(16, 6))
     amount_twd: Mapped[int] = mapped_column(BigInteger)
@@ -227,11 +222,6 @@ class ProductSaleTable(BaseTable):
         CheckConstraint("profit_amount = amount_twd - cost_price", name="sale_profit_matches"),
         CheckConstraint("original_amount > 0 AND exchange_rate > 0", name="sale_positive_amounts"),
         CheckConstraint("amount_twd BETWEEN 0 AND 9007199254740991", name="sale_twd_range"),
-        CheckConstraint(
-            "(vendor_country = 'TW' AND currency = 'TWD' AND exchange_rate = 1 "
-            "AND original_amount = trunc(original_amount)) "
-            "OR (vendor_country = 'CN' AND currency = 'CNY')", name="sale_country_currency",
-        ),
         CheckConstraint(
             "(is_current AND returned_at IS NULL AND returned_by IS NULL "
             "AND return_reason IS NULL) OR (NOT is_current AND returned_at IS NOT NULL "

@@ -15,9 +15,8 @@ from tests.modules.product_drafts.test_integration import count_products, prepar
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
 
-async def vendor(country="TW"):
-    return await VendorTable.create({"name": "報價廠商", "country": country,
-                                     "is_active": True, "country_locked": False})
+async def vendor():
+    return await VendorTable.create({"name": "報價廠商", "is_active": True, "has_quotes": False})
 
 
 async def test_draft_quotes_validate_and_reject_stale_updates(db):
@@ -29,18 +28,16 @@ async def test_draft_quotes_validate_and_reject_stale_updates(db):
     added = await draft_quotes.save_quote(draft.id, form, ACTOR)
     assert len(added.quotes) == 1 and added.quotes[0].original_amount == Decimal(1200)
     saved_vendor = await VendorTable.find_by_id(company["id"])
-    assert saved_vendor is not None and not saved_vendor.country_locked
+    assert saved_vendor is not None and not saved_vendor.has_quotes
     with pytest.raises(LangException) as error:
         await draft_quotes.save_quote(draft.id, form, ACTOR)
     assert error.value.status_code == 409
-    with pytest.raises(LangException):
-        await draft_quotes.save_quote(draft.id, form.model_copy(update={
-            "version": added.version, "original_amount": Decimal("1.01")}), ACTOR,
-            quote_id=added.quotes[0].id)
     changed = await draft_quotes.save_quote(draft.id, form.model_copy(update={
-        "version": added.version, "original_amount": Decimal(1500)}), ACTOR,
+        "version": added.version, "original_amount": Decimal("1500.25"),
+        "exchange_rate": Decimal("4.5")}), ACTOR,
         quote_id=added.quotes[0].id)
-    assert changed.quotes[0].original_amount == Decimal(1500)
+    assert changed.quotes[0].original_amount == Decimal("1500.25")
+    assert changed.quotes[0].exchange_rate == Decimal("4.5")
     with pytest.raises(LangException):
         await draft_quotes.save_quote(draft.id, form.model_copy(update={
             "version": changed.version}), ACTOR)
@@ -57,7 +54,7 @@ async def test_approval_imports_quotes_atomically(db, monkeypatch, tmp_path):
     draft = await prepared_draft()
     company = await vendor()
     draft = await draft_quotes.save_quote(draft.id, DraftQuoteUpdate(version=draft.version,
-        vendor_id=str(company["id"]), original_amount="1200"), ACTOR)
+        vendor_id=str(company["id"]), original_amount="1200", exchange_rate="4.5"), ACTOR)
     before = await count_products()
     real = review.create_quote
     monkeypatch.setattr(review, "create_quote", AsyncMock(side_effect=RuntimeError("fail")))
@@ -69,11 +66,13 @@ async def test_approval_imports_quotes_atomically(db, monkeypatch, tmp_path):
     result = await review.approve_draft(draft.id, VersionRequest(version=draft.version), ACTOR)
     saved = await quotes.get_quotes(result.product_id)
     assert saved.count == 1 and saved.list_data[0].original_amount == Decimal(1200)
+    assert saved.list_data[0].exchange_rate == Decimal("4.5")
+    assert saved.list_data[0].amount_twd == 5400
     saved_vendor = await VendorTable.find_by_id(company["id"])
-    assert saved_vendor is not None and saved_vendor.country_locked
+    assert saved_vendor is not None and saved_vendor.has_quotes
 
 
-async def test_draft_cny_quote_does_not_require_rate_until_approval(db, monkeypatch, tmp_path):
+async def test_draft_quote_defaults_exchange_rate_to_one(db, monkeypatch, tmp_path):
     from modules.products import photos as product_photos
 
     monkeypatch.setattr(storage, "UPLOADS_DIR", tmp_path / "drafts")
@@ -81,7 +80,8 @@ async def test_draft_cny_quote_does_not_require_rate_until_approval(db, monkeypa
     first = await collection.ingest_message(incoming())
     await photos.complete_photo(first.message_id, image_bytes(), "original.png")
     draft = await service.get_draft(first.draft_id)
-    company = await vendor("CN")
+    company = await vendor()
     draft = await draft_quotes.save_quote(draft.id, DraftQuoteUpdate(version=draft.version,
         vendor_id=str(company["id"]), original_amount="12.34"), ACTOR)
     assert draft.quotes[0].original_amount == Decimal("12.34")
+    assert draft.quotes[0].exchange_rate == 1

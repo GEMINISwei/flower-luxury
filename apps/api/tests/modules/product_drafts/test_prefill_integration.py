@@ -5,14 +5,28 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import select
 
-from modules.brands.public import BrandTable
-from modules.product_drafts import collection, messages, model, prefill, prefill_settings, service
-from modules.product_drafts.prefill_schema import PrefillContent, PrefillSettingsUpdate
-from modules.product_drafts.schema import DraftFields, DraftUpdate, MessageMove, VersionRequest
+from modules.product_drafts import (
+    batches,
+    collection,
+    draft_quotes,
+    messages,
+    model,
+    prefill,
+    prefill_settings,
+    service,
+)
+from modules.product_drafts.prefill_schema import (
+    PrefillContent,
+    PrefillResult,
+    PrefillSettingsUpdate,
+)
+from modules.product_drafts.quote_schema import DraftQuoteUpdate
+from modules.product_drafts.schema import DraftFields, DraftUpdate, MessageMove
+from modules.vendors.public import VendorTable
 from shared.db.session import active_session
 from shared.jobs.contracts import Job
 from shared.jobs.model import JobTable
-from tests.modules.product_drafts.helpers import ACTOR, incoming
+from tests.modules.product_drafts.helpers import ACTOR, BASE, incoming
 
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
@@ -21,6 +35,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 def worker_connection(monkeypatch):
     # 測試沿用 fixture 的未提交交易, 不歸還其中的連線.
     monkeypatch.setattr(prefill, "release_connection", AsyncMock())
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
 
 
 def job(id, revision):
@@ -28,98 +43,136 @@ def job(id, revision):
                payload={"draft_id": id, "revision": revision})
 
 
-async def draft_with_text(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+def output(**fields):
+    return PrefillContent(content=PrefillResult(**fields).model_dump_json())
+
+
+async def draft_with_text(*, close=True):
     first = await collection.ingest_message(incoming())
     await collection.ingest_message(incoming("text", text="手袋 成本3000", second=1))
+    if close:
+        await collection.ingest_message(incoming(second=3))
     return await service.get_draft(first.draft_id)
 
 
-async def test_prefill_discards_stale_and_deleted_results(db, monkeypatch):
-    draft = await draft_with_text(monkeypatch)
-    settings = await prefill_settings.get_settings()
-    await collection.ingest_message(incoming("text", text="改為紅色", second=2))
-    result = await prefill.apply_prefill(draft.id, draft.prefill_revision, settings.revision,
-                                         DraftFields(name="舊結果"))
-    assert not result.applied
-    latest = await service.get_draft(draft.id)
-    assert latest.fields.name is None
-    row = await model.get_draft_row(draft.id)
-    await active_session().delete(row)
-    await active_session().flush()
-    result = await prefill.apply_prefill(draft.id, latest.prefill_revision, settings.revision,
-                                         DraftFields(name="不能復活"))
-    assert not result.applied
-
-
-async def test_prefill_failure_preserves_fields_and_can_retry(db, monkeypatch):
-    draft = await draft_with_text(monkeypatch)
-    draft = await service.update_draft(draft.id, DraftUpdate(
-        version=draft.version, fields=DraftFields(name="人工名稱")), ACTOR)
-    monkeypatch.setattr(prefill, "generate_prefill", AsyncMock(side_effect=ValueError("invalid")))
-    await prefill.run_prefill(job(draft.id, draft.prefill_revision))
-    failed = await service.get_draft(draft.id)
-    assert failed.prefill_status == "failed" and failed.fields.name == "人工名稱"
-    retried = await prefill.retry_prefill(draft.id, VersionRequest(version=failed.version))
-    assert retried.prefill_status == "queued"
-    monkeypatch.setattr(prefill, "generate_prefill", AsyncMock(return_value=PrefillContent(
-        content=json.dumps(DraftFields(name="AI 名稱", color="紅色").model_dump()))))
-    await prefill.run_prefill(job(draft.id, retried.prefill_revision))
-    result = await service.get_draft(draft.id)
-    assert result.prefill_status == "ready"
-    assert result.fields.name == "人工名稱" and result.fields.color == "紅色"
-
-
-async def test_text_changes_schedule_prefill_for_affected_drafts(db, monkeypatch):
-    draft = await draft_with_text(monkeypatch)
-    assert draft.prefill_status == "queued" and draft.prefill_revision == 1
+async def test_prefill_schedules_once_when_collection_closes(db):
+    draft = await draft_with_text(close=False)
+    await collection.ingest_message(incoming("text", text="黑色", second=2))
+    draft = await service.get_draft(draft.id)
+    assert draft.collecting and draft.prefill_revision == 0 and draft.prefill_status == "idle"
+    assert not list(await active_session().scalars(select(JobTable).where(
+        JobTable.task_name == "product_drafts.prefill")))
+    await collection.ingest_message(incoming(second=3))
+    draft = await service.get_draft(draft.id)
+    assert not draft.collecting and draft.prefill_status == "queued" and draft.prefill_revision == 1
     jobs = list(await active_session().scalars(select(JobTable).where(
         JobTable.task_name == "product_drafts.prefill")))
-    assert len(jobs) == 1 and set(jobs[0].payload) == {"draft_id", "revision"}
-    second = await collection.ingest_message(incoming(second=2))
-    target = await service.get_draft(second.draft_id)
-    assert target.prefill_revision == 0
+    assert len(jobs) == 1 and jobs[0].payload["draft_id"] == draft.id
+
+
+async def test_batch_closure_schedules_prefill_once(db):
+    from datetime import timedelta
+
+    await batches.control_collection("batch", "start", BASE)
+    first = await batches.ingest_batch_message(incoming(source="batch", second=1))
+    await batches.ingest_batch_message(incoming("text", source="batch", second=2, text="A 100"))
+    second = await batches.ingest_batch_message(incoming(source="batch", second=3))
+    assert (await service.get_draft(first.draft_id)).prefill_status == "queued"
+    assert (await service.get_draft(second.draft_id)).prefill_revision == 0
+    await batches.control_collection("batch", "end", BASE + timedelta(seconds=4))
+    await batches.finish_collection("batch", BASE + timedelta(seconds=5))
+    assert (await service.get_draft(second.draft_id)).prefill_revision == 1
+    jobs = list(await active_session().scalars(select(JobTable).where(
+        JobTable.task_name == "product_drafts.prefill")))
+    assert len(jobs) == 2
+
+
+async def test_prefill_failure_is_final_and_preserves_fields(db, monkeypatch):
+    draft = await draft_with_text()
+    draft = await service.update_draft(draft.id, DraftUpdate(
+        version=draft.version, fields=DraftFields(name="人工名稱")), ACTOR)
+    generate = AsyncMock(side_effect=ValueError("invalid"))
+    monkeypatch.setattr(prefill, "generate_prefill", generate)
+    queued = job(draft.id, draft.prefill_revision)
+    await prefill.run_prefill(queued)
+    failed = await service.get_draft(draft.id)
+    assert failed.prefill_status == "failed" and failed.fields.name == "人工名稱"
+    await prefill.run_prefill(queued)
+    generate.assert_awaited_once()
+
+
+async def test_text_changes_do_not_reschedule_prefill(db):
+    draft = await draft_with_text()
+    target = await model.current_draft("group-a")
+    assert target is not None
     text = next(item for item in draft.messages if item.kind == "text")
-    draft = await service.get_draft(draft.id)
-    moved = await messages.move_message(text.id, MessageMove(target_draft_id=target.id,
+    moved = await messages.move_message(text.id, MessageMove(target_draft_id=str(target.id),
         target_version=target.version, source_version=draft.version), ACTOR)
-    assert moved.prefill_revision == 1
-    assert (await service.get_draft(draft.id)).prefill_revision == 2
+    assert moved.prefill_revision == 0
+    assert (await service.get_draft(draft.id)).prefill_revision == 1
     await messages.withdraw_message("group-a", text.external_id)
-    assert (await service.get_draft(target.id)).prefill_revision == 2
+    assert (await service.get_draft(str(target.id))).prefill_revision == 0
 
 
-async def test_prefill_rechecks_settings_and_preserves_manual_clear(db, monkeypatch):
-    draft = await draft_with_text(monkeypatch)
+async def test_prefill_uses_initial_settings_and_applies_once(db, monkeypatch):
+    draft = await draft_with_text()
     settings = await prefill_settings.get_settings()
-    applied = await prefill.apply_prefill(draft.id, draft.prefill_revision, settings.revision,
-                                         DraftFields(name="舊名", color="紅色"))
-    assert applied.applied
-    draft = await service.get_draft(draft.id)
-    draft = await service.update_draft(draft.id, DraftUpdate(version=draft.version,
-        fields=DraftFields(color="紅色"), manual_fields=["name"]), ACTOR)
-    assert "name" in draft.manual_fields and "color" not in draft.manual_fields
-    await prefill_settings.update_settings(PrefillSettingsUpdate(
-        supplement="底價代表成本", revision=settings.revision), ACTOR)
-    applied = await prefill.apply_prefill(draft.id, draft.prefill_revision, settings.revision,
-                                         DraftFields(name="不該寫入"))
-    assert not applied.applied
-    latest_settings = await prefill_settings.get_settings()
-    latest = await service.get_draft(draft.id)
-    applied = await prefill.apply_prefill(
-        draft.id, latest.prefill_revision, latest_settings.revision,
-        DraftFields(name="新名", color="黑色"))
-    assert applied.applied
+
+    async def generate(*args):
+        await prefill_settings.update_settings(PrefillSettingsUpdate(
+            supplement="新規則", revision=settings.revision), ACTOR)
+        current = await service.get_draft(draft.id)
+        await service.update_draft(draft.id, DraftUpdate(version=current.version,
+            fields=DraftFields(name="人工名稱"), manual_fields=["color"]), ACTOR)
+        return output(name="AI 名稱", color="黑色", year=2026)
+
+    generate_mock = AsyncMock(side_effect=generate)
+    monkeypatch.setattr(prefill, "generate_prefill", generate_mock)
+    queued = job(draft.id, draft.prefill_revision)
+    await prefill.run_prefill(queued)
     result = await service.get_draft(draft.id)
-    assert result.fields.name is None and result.fields.color == "黑色"
+    assert result.fields.name == "人工名稱" and result.fields.color is None
+    assert result.fields.year == 2026 and result.prefill_status == "ready"
+    await prefill.run_prefill(queued)
+    generate_mock.assert_awaited_once()
+    assert result.prefill_revision == 1
 
 
-async def test_prefill_rejects_invalid_brand_and_uses_all_text(db, monkeypatch):
-    draft = await draft_with_text(monkeypatch)
-    brand = await BrandTable.create({"name": "測試品牌", "is_active": True})
-    generate = AsyncMock(return_value=PrefillContent(content=json.dumps(DraftFields(
-        brand_id=str(brand["id"]), name="手袋").model_dump())))
+async def test_prefill_imports_vendor_quotes_and_preserves_manual_quotes(db, monkeypatch):
+    draft = await draft_with_text()
+    first = await VendorTable.create({"name": "大明", "is_active": True, "has_quotes": False})
+    second = await VendorTable.create({"name": "小華", "is_active": True, "has_quotes": False})
+    draft = await draft_quotes.save_quote(draft.id, DraftQuoteUpdate(version=draft.version,
+        vendor_id=str(first["id"]), original_amount="999", exchange_rate="2"), ACTOR)
+    payload = PrefillResult(name="手袋").model_dump(mode="json")
+    payload["vendor_info"] = [
+        {"vendor_id": str(first["id"]), "original_amount": "100", "exchange_rate": "4.5"},
+        {"vendor_id": str(second["id"]), "original_amount": "200", "exchange_rate": "1"},
+    ]
+    generate = AsyncMock(return_value=PrefillContent(content=json.dumps(payload)))
     monkeypatch.setattr(prefill, "generate_prefill", generate)
     await prefill.run_prefill(job(draft.id, draft.prefill_revision))
-    assert (await service.get_draft(draft.id)).fields.brand_id == str(brand["id"])
-    assert "手袋 成本3000" in str(generate.call_args)
+    result = await service.get_draft(draft.id)
+    saved = {quote.vendor_id: quote for quote in result.quotes}
+    assert len(saved) == 2
+    assert saved[str(first["id"])].original_amount == 999
+    assert saved[str(first["id"])].exchange_rate == 2
+    assert saved[str(second["id"])].original_amount == 200
+    assert saved[str(second["id"])].exchange_rate == 1
+    sent = json.loads(generate.call_args.args[1])
+    assert {item["name"] for item in sent["vendors"]} == {"大明", "小華"}
+    assert sent["messages"][0]["text"] == "手袋 成本3000"
+
+
+async def test_prefill_discards_deleted_draft_and_invalid_vendor(db, monkeypatch):
+    draft = await draft_with_text()
+    generate = AsyncMock(return_value=output(vendor_info=[{
+        "vendor_id": "11111111-1111-4111-8111-111111111111", "original_amount": "100",
+    }]))
+    monkeypatch.setattr(prefill, "generate_prefill", generate)
+    await prefill.run_prefill(job(draft.id, draft.prefill_revision))
+    assert (await service.get_draft(draft.id)).prefill_status == "failed"
+    await active_session().delete(await model.get_draft_row(draft.id))
+    await active_session().flush()
+    await prefill.run_prefill(job(draft.id, draft.prefill_revision))
+    generate.assert_awaited_once()

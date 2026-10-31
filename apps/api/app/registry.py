@@ -6,7 +6,6 @@
 
 from app.permissions import Permission
 from modules.brands.manifest import MODULE as BRANDS_MODULE
-from modules.exchange_rates.manifest import MODULE as EXCHANGE_RATES_MODULE
 from modules.languages.manifest import MODULE as LANGUAGES_MODULE
 from modules.line_collection.manifest import MODULE as LINE_COLLECTION_MODULE
 from modules.product_drafts.manifest import MODULE as PRODUCT_DRAFTS_MODULE
@@ -28,7 +27,6 @@ ENABLED_MODULES: tuple[ModuleManifest, ...] = validate_modules(
         REGISTRATION_MODULE,
         BRANDS_MODULE,
         VENDORS_MODULE,
-        EXCHANGE_RATES_MODULE,
         PRODUCTS_MODULE,
         PRODUCT_DRAFTS_MODULE,
         LINE_COLLECTION_MODULE,

@@ -35,9 +35,6 @@ export async function deleteDraftPhoto(id: string, version: number, photo_id: st
   return apiDelete({ url: "/product-drafts/{id}/photos/{photo_id}", params: { id, photo_id },
     query: { version } })
 }
-export async function retryDraftPrefill(id: string, version: number) {
-  return apiPost({ url: "/product-drafts/{id}/prefill", params: { id }, data: { version } })
-}
 export async function savePrefillSettings(supplement: string, revision: number) {
   return apiPatch({ url: "/draft-prefill/settings", data: { supplement, revision },
     refresh: { path: "/admin/draft-prefill" } })
@@ -46,7 +43,8 @@ export async function previewPrefill(text: string, supplement: string) {
   return apiPost({ url: "/draft-prefill/preview", data: { text, supplement } })
 }
 export async function saveDraftQuote(id: string, version: number,
-  data: { vendor_id: string; original_amount: string; note: string | null }, quote_id?: string) {
+  data: { vendor_id: string; original_amount: string; exchange_rate: string; note: string | null },
+  quote_id?: string) {
   return quote_id
     ? apiPatch({ url: "/product-drafts/{id}/quotes/{quote_id}", params: { id, quote_id },
       data: { version, ...data } })

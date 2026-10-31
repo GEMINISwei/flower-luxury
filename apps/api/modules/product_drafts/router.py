@@ -9,7 +9,7 @@ from shared.auth.dependency import check_user_permission
 from shared.http.errors import LangException
 from shared.http.schema import PaginationParams, UuidText
 
-from . import draft_quotes, messages, photos, prefill, review, service
+from . import draft_quotes, messages, photos, review, service
 from .errors import DraftError
 from .quote_schema import DraftQuoteUpdate
 from .schema import (
@@ -26,14 +26,6 @@ from .schema import (
 )
 
 router = APIRouter(prefix="/product-drafts", tags=["product-drafts"])
-
-
-@router.post("/{id}/prefill")
-async def retry_prefill_route(
-    id: UuidText, form: VersionRequest,
-    _: CurrentUser = Depends(check_user_permission()),
-) -> DraftInfo:
-    return await prefill.retry_prefill(id, form)
 
 
 @router.post("/{id}/quotes")

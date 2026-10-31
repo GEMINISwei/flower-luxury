@@ -13,7 +13,7 @@ QUOTE = "22222222-2222-4222-8222-222222222222"
 @pytest.mark.asyncio
 @pytest.mark.parametrize("method,suffix", [
     ("GET", "/quotes"), ("POST", "/quotes"), ("PATCH", f"/quotes/{QUOTE}"),
-    ("DELETE", f"/quotes/{QUOTE}"), ("POST", f"/quotes/{QUOTE}/refresh-rate"),
+    ("DELETE", f"/quotes/{QUOTE}"),
     ("GET", "/sales"), ("POST", "/sales"),
 ])
 async def test_trading_routes_require_login(client, method, suffix):
