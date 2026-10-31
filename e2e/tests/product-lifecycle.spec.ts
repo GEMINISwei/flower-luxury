@@ -37,8 +37,6 @@ async function createCatalog(page: Page) {
   await page.getByRole("button", { name: "新增廠商", exact: true }).click()
   dialog = page.getByRole("dialog")
   await dialog.getByLabel(/^名稱\*?$/).fill(vendorName)
-  // 臺幣不需系統匯率, 單獨跑此案例也不依賴其他 spec 的設定.
-  await dialog.getByRole("combobox", { name: /^國家\*?$/ }).selectOption("TW")
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
 }
@@ -135,8 +133,8 @@ test("員工建立商品上傳照片後可詢價成交退回再成交並保留�
     await page.getByRole("button", { name: "新增詢價", exact: true }).click()
     const dialog = page.getByRole("dialog", { name: "新增詢價", exact: true })
     await dialog.getByRole("combobox", { name: /^廠商\*?$/ })
-      .selectOption({ label: `${vendorName} · 臺灣 (TWD)` })
-    await dialog.getByLabel(/^原幣報價\*?$/).fill("5000")
+      .selectOption({ label: `${vendorName}` })
+    await dialog.getByLabel(/^報價\*?$/).fill("5000")
     await dialog.getByRole("button", { name: "儲存", exact: true }).click()
     await expect(dialog).toBeHidden()
     await expect(page.getByText("TWD 5,000", { exact: true })).toBeVisible()
@@ -171,7 +169,7 @@ test("員工建立商品上傳照片後可詢價成交退回再成交並保留�
     await expect(dialog).toBeHidden()
     await page.getByRole("button", { name: "編輯", exact: true }).click()
     dialog = page.getByRole("dialog", { name: "詢價", exact: true })
-    await dialog.getByLabel(/^原幣報價\*?$/).fill("6500")
+    await dialog.getByLabel(/^報價\*?$/).fill("6500")
     await dialog.getByRole("button", { name: "儲存", exact: true }).click()
     await expect(dialog).toBeHidden()
     await expect(page.getByText("TWD 6,500", { exact: true })).toBeVisible()

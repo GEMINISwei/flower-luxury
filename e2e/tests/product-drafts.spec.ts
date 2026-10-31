@@ -39,6 +39,8 @@ async def run():
     configure_session_factory(engine)
     async with session_scope():
         arg = json.loads(sys.argv[1])
+        if arg.get("ai"):
+            os.environ["GEMINI_API_KEY"] = "fixture-only"
         if arg.get("conflict"):
             draft = await service.get_draft(arg["conflict"])
             await service.update_draft(draft.id, DraftUpdate(version=draft.version, fields=DraftFields(name="其他人的修改")), actor)
@@ -76,6 +78,17 @@ async def run():
                 await batches.control_collection(source, "start", base + timedelta(seconds=45))
                 await batches.record_issue(source, base + timedelta(seconds=46), "ambiguous")
             brand = await BrandTable.create({"name": arg["name"], "is_active": True})
+            if arg.get("ai"):
+                from unittest.mock import AsyncMock, patch
+                from modules.product_drafts import prefill
+                from modules.product_drafts.prefill_schema import PrefillContent, PrefillResult
+                from modules.vendors.public import VendorTable
+                from shared.jobs.contracts import Job
+                vendor = await VendorTable.create({"name": arg["name"] + " buyer", "is_active": True, "has_quotes": False})
+                draft = await service.get_draft(first.draft_id)
+                result = PrefillResult(name="AI 商品", vendor_info=[{"vendor_id": str(vendor["id"]), "original_amount": "100", "exchange_rate": "4.5"}])
+                with patch.object(prefill, "release_connection", AsyncMock()), patch.object(prefill, "generate_prefill", AsyncMock(return_value=PrefillContent(content=result.model_dump_json()))):
+                    await prefill.run_prefill(Job(id=uuid.uuid4(), task_name="product_drafts.prefill", attempts=1, payload={"draft_id": draft.id, "revision": draft.prefill_revision}))
             print(json.dumps({"id": first.draft_id, "second": second.draft_id,
                 "source": source, "group": str(group.id), "name": arg["name"],
                 "review": left.review_product_id, "brand": str(brand["id"])}))
@@ -507,7 +520,6 @@ workspaceTest("暫存詢價可手動管理並於審核轉入正式商品", async
   await page.getByRole("button", { name: "新增廠商", exact: true }).click()
   let dialog = page.getByRole("dialog")
   await dialog.getByLabel(/^名稱\*?$/).fill(data.name)
-  await dialog.getByRole("combobox", { name: /^國家\*?$/ }).selectOption("TW")
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
   await open(page, data.id)
@@ -517,15 +529,16 @@ workspaceTest("暫存詢價可手動管理並於審核轉入正式商品", async
   expect((await section.boundingBox())!.y).toBeGreaterThan(info.y + info.height)
   await section.getByRole("button", { name: "新增詢價", exact: true }).click()
   dialog = page.getByRole("dialog", { name: "新增詢價", exact: true })
-  await dialog.getByLabel(/^廠商\*?$/).selectOption({ label: `${data.name} · TWD` })
-  await dialog.getByLabel(/^原幣報價\*?$/).fill("1200")
+  await dialog.getByLabel(/^廠商\*?$/).selectOption({ label: `${data.name}` })
+  await dialog.getByLabel(/^報價\*?$/).fill("1200")
+  await expect(dialog.getByLabel(/^匯率\*?$/)).toHaveValue("1")
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue(data.name)
   await expect(section).toContainText("1,200")
   await section.getByRole("button", { name: "編輯詢價", exact: true }).click()
   dialog = page.getByRole("dialog", { name: "編輯詢價", exact: true })
-  await dialog.getByLabel(/^原幣報價\*?$/).fill("1500")
+  await dialog.getByLabel(/^報價\*?$/).fill("1500")
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
   await expect(section).toContainText("1,500")
@@ -536,15 +549,16 @@ workspaceTest("暫存詢價可手動管理並於審核轉入正式商品", async
   await expect(section).toContainText("尚無詢價")
   await section.getByRole("button", { name: "新增詢價", exact: true }).click()
   dialog = page.getByRole("dialog", { name: "新增詢價", exact: true })
-  await dialog.getByLabel(/^廠商\*?$/).selectOption({ label: `${data.name} · TWD` })
-  await dialog.getByLabel(/^原幣報價\*?$/).fill("1800")
+  await dialog.getByLabel(/^廠商\*?$/).selectOption({ label: `${data.name}` })
+  await dialog.getByLabel(/^報價\*?$/).fill("1800")
+  await dialog.getByLabel(/^匯率\*?$/).fill("2")
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
   await page.getByRole("button", { name: "審核建檔", exact: true }).click()
   dialog = page.getByRole("dialog")
   await dialog.getByRole("button", { name: "審核建檔", exact: true }).click()
   await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
-  await expect(page.getByText("TWD 1,800", { exact: true }).first()).toBeVisible()
+  await expect(page.getByText("TWD 3,600", { exact: true }).first()).toBeVisible()
 })
 
 workspaceTest("手機英文暫存詢價與預填狀態不溢出", async ({ page }) => {
@@ -553,9 +567,30 @@ workspaceTest("手機英文暫存詢價與預填狀態不溢出", async ({ page 
   await page.setViewportSize({ width: 390, height: 844 })
   await open(page, data.id)
   await expect(page.getByRole("region", { name: "Vendor quotes", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Run prefill again", exact: true })).toHaveCount(0)
   await expect(page.getByText("AI prefill is unavailable: Gemini API key is not configured.",
     { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Add quote", exact: true }).click()
   await expect(page.getByRole("dialog", { name: "Add quote", exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
+
+workspaceTest("AI 報價顯示於暫存且不提供重新預填", async ({ page }) => {
+  const data = fixture({ name: `AI ${randomUUID().slice(0, 8)}`, ai: "yes" })
+  await open(page, data.id)
+  await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("AI 商品")
+  await expect(page.getByRole("button", { name: "重新預填", exact: true })).toHaveCount(0)
+  const quotes = page.getByRole("region", { name: "廠商詢價", exact: true })
+  await expect(quotes.getByText(`${data.name} buyer`, { exact: true })).toBeVisible()
+  await quotes.getByRole("button", { name: "編輯詢價", exact: true }).click()
+  const dialog = page.getByRole("dialog", { name: "編輯詢價", exact: true })
+  await expect(dialog.getByLabel(/^報價\*?$/)).toHaveValue("100")
+  await expect(dialog.getByLabel(/^匯率\*?$/)).toHaveValue("4.5")
+  await dialog.getByRole("button", { name: "取消", exact: true }).click()
+  await page.getByLabel("名稱", { exact: true }).fill("人工修正")
+  await page.getByRole("button", { name: "儲存暫存", exact: true }).click()
+  await expect(page.getByRole("status")).toContainText("已儲存")
+  await page.reload()
+  await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("人工修正")
 })

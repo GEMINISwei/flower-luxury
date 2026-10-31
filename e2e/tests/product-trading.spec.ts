@@ -1,20 +1,12 @@
 import { expect, test, type Page } from "@playwright/test"
 import { admin, login } from "./support"
 
-async function setRate(page: Page, rate: string) {
-  await page.goto("/admin/exchange-rates")
-  await page.getByLabel(/^1 CNY/).fill(rate)
-  await page.getByRole("button", { name: "儲存匯率", exact: true }).click()
-  await expect(page.getByRole("status")).toContainText("已儲存")
-}
-
-async function prepareTrade(page: Page, name: string, country: string) {
+async function prepareTrade(page: Page, name: string) {
   await login(page, admin)
   await page.goto("/vendors")
   await page.getByRole("button", { name: "新增廠商", exact: true }).click()
   let dialog = page.getByRole("dialog")
   await dialog.getByLabel(/^名稱\*?$/).fill(name)
-  await dialog.getByRole("combobox", { name: /^國家\*?$/ }).selectOption(country)
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
   await page.goto("/brands")
@@ -32,39 +24,39 @@ async function prepareTrade(page: Page, name: string, country: string) {
   await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
 }
 
-async function addQuote(page: Page, vendor: string, country: "TW" | "CN", amount: string) {
+async function addQuote(page: Page, vendor: string, amount: string, rate = "1") {
   await page.getByRole("button", { name: "新增詢價", exact: true }).click()
   const dialog = page.getByRole("dialog", { name: "新增詢價", exact: true })
-  const suffix = country === "TW" ? "臺灣 (TWD)" : "中國 (CNY)"
-  await dialog.getByRole("combobox", { name: /^廠商\*?$/ }).selectOption({ label: `${vendor} · ${suffix}` })
-  await dialog.getByLabel(/^原幣報價\*?$/).fill(amount)
+  await dialog.getByRole("combobox", { name: /^廠商\*?$/ }).selectOption({ label: vendor })
+  await dialog.getByLabel(/^報價\*?$/).fill(amount)
+  await expect(dialog.getByLabel(/^匯率\*?$/)).toHaveValue("1")
+  await dialog.getByLabel(/^匯率\*?$/).fill(rate)
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
 }
 
-test("詢價沿用舊匯率且成交退回再成交保留快照", async ({ page }) => {
-  await prepareTrade(page, "Phase5 CNY", "CN")
+test("詢價逐筆修改匯率且成交退回再成交保留快照", async ({ page }) => {
+  await prepareTrade(page, "Phase5 CNY")
   const detail = page.url()
-  await setRate(page, "4.50")
   await page.goto(detail)
-  await addQuote(page, "Phase5 CNY", "CN", "100")
+  await addQuote(page, "Phase5 CNY", "100", "4.5")
   await page.goto("/vendors")
   const row = page.getByRole("row").filter({ hasText: "Phase5 CNY" })
   await row.getByRole("button", { name: "編輯", exact: true }).click()
   let dialog = page.getByRole("dialog")
-  await expect(dialog.getByRole("combobox", { name: /^國家\*?$/ })).toBeDisabled()
   await dialog.getByRole("button", { name: "取消", exact: true }).click()
-  await setRate(page, "5.00")
   await page.goto(detail)
   await page.getByRole("button", { name: "編輯", exact: true }).click()
   dialog = page.getByRole("dialog", { name: "詢價", exact: true })
-  await dialog.getByLabel(/^原幣報價\*?$/).fill("200")
+  await dialog.getByLabel(/^報價\*?$/).fill("200")
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
   await expect(page.getByText("TWD 900", { exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "套用最新匯率", exact: true }).click()
-  dialog = page.getByRole("dialog", { name: "套用最新匯率", exact: true })
-  await dialog.getByRole("button", { name: "套用最新匯率", exact: true }).click()
+  await page.getByRole("button", { name: "編輯", exact: true }).click()
+  dialog = page.getByRole("dialog", { name: "詢價", exact: true })
+  await expect(dialog.getByLabel(/^匯率\*?$/)).toHaveValue("4.5")
+  await dialog.getByLabel(/^匯率\*?$/).fill("5")
+  await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
   await expect(page.getByText("TWD 1,000", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "確認成交", exact: true }).click()
@@ -104,15 +96,17 @@ test("詢價沿用舊匯率且成交退回再成交保留快照", async ({ page 
   await expect(page.getByText("990", { exact: true })).toBeVisible()
 })
 
-test("臺幣詢價驗證整數且未成交詢價可取消刪除", async ({ page }) => {
-  await prepareTrade(page, "Phase5 TWD", "TW")
+test("詢價驗證匯率且未成交詢價可取消刪除", async ({ page }) => {
+  await prepareTrade(page, "Phase5 TWD")
   await page.getByRole("button", { name: "新增詢價", exact: true }).click()
   const dialog = page.getByRole("dialog", { name: "新增詢價", exact: true })
-  await dialog.getByRole("combobox", { name: /^廠商\*?$/ }).selectOption({ label: "Phase5 TWD · 臺灣 (TWD)" })
-  await dialog.getByLabel(/^原幣報價\*?$/).fill("1.01")
+  await dialog.getByRole("combobox", { name: /^廠商\*?$/ }).selectOption({ label: "Phase5 TWD" })
+  await dialog.getByLabel(/^報價\*?$/).fill("1.01")
+  await dialog.getByLabel(/^匯率\*?$/).fill("0")
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
-  await expect(dialog.getByRole("alert")).toHaveText("臺幣報價必須是整數")
-  await dialog.getByLabel(/^原幣報價\*?$/).fill("100")
+  await expect(dialog.getByRole("alert")).toHaveText("請輸入大於 0 且最多六位小數的匯率")
+  await dialog.getByLabel(/^報價\*?$/).fill("100")
+  await dialog.getByLabel(/^匯率\*?$/).fill("1")
   await dialog.getByRole("button", { name: "儲存", exact: true }).click()
   await expect(dialog).toBeHidden()
   await expect(page.getByText("TWD 100", { exact: true }).first()).toBeVisible()
