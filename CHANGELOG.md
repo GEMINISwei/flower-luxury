@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- 同步 Project Starter 的共用 AI skills、指令守衛與測試修改確認，加入 commit 共同作者及 PR 格式檢查、開發初始化檢查，精簡搜尋與檢查輸出並拆分測試及開發流程文件。
+
 ## [0.0.8]
 
 ### Changed

@@ -46,3 +46,12 @@ Flower Luxury 是供精品團隊使用的商品與交易管理系統，讓店長
 
 每位使用者都可在個人設定修改自己的暱稱、密碼與顯示語言。
 系統提供繁體中文與英文介面，並依電腦或手機畫面調整操作版面。
+
+## 開發與維護
+
+環境與指令見 [開發指南](docs/development.md)，測試策略見 [測試指南](docs/testing.md)，
+提交、PR 與 CI 見 [開發流程](docs/workflow.md)。
+
+`make init dev` 會啟用 Git hook，並檢查 AI agent 所需的 Python 與共用 skills symlink。
+首次使用及 hook 設定變更後，依 [啟用清單](docs/extending/agent-hooks.md#啟用與停用)
+確認專案及 hook 信任，並確認 GitHub required checks 包含 `pr`。
