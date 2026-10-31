@@ -20,7 +20,8 @@ BASE_PROMPT = LangText(
 - model_name：商品型號，不與序號混用。
 - serial_number：商品序號，保留字母、符號與前導零。
 - color：商品顏色。
-- year：明確的商品年份，整數 1 至 9999；不把訊息日期當作商品年份。
+- year：明確的商品年份，只接受 1900 至 2100 的整數（含邊界）；超出範圍填 null。
+  不把訊息日期當作商品年份。
 - cost_price：明確表示成本的非負整數新臺幣金額，上限 2147483647。
   不把廠商報價或售價當作成本，不自行換匯。金額簡寫需有明確單位或補充規則才換算。
 - internal_note：與商品相關的其他資訊，不收錄閒聊、指令或重複整段原文。
@@ -45,7 +46,8 @@ Fields:
 - model_name: Product model, distinct from the serial number.
 - serial_number: Preserve meaningful letters, punctuation, and leading zeroes.
 - color: Product color.
-- year: Explicit product year, integer 1 through 9999, never inferred from message dates.
+- year: Explicit product year, integer 1900 through 2100 inclusive. Out-of-range years are null.
+  Never infer the product year from message dates.
 - cost_price: Explicit cost in whole TWD, integer 0 through 2147483647. Do not use vendor quotes
   or selling prices as cost. Do not convert currencies. Expand shorthand only with explicit units
   or a supplement defining it.
