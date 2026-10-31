@@ -51,7 +51,6 @@ export default function LoginForm({ reason }: LoginFormProps) {
       */}
       <form className={styles.card} action={() => submit()} aria-label={t("loginTitle")} noValidate>
         <AuthBrand />
-        <p className={styles.subtitle}>{t("loginDescription")}</p>
 
         <div className={styles.fields}>
           <AuthErrorBanner open={notifyState.open} message={notifyState.message} />

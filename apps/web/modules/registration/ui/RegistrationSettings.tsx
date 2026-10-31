@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Button, ErrorState, FormPageShell, Surface, TextInput, useActionSubmit } from "@/shared/ui"
+import { Save } from "lucide-react"
+import { ICON_SIZE, ErrorState, FormPageShell, Surface, TextInput, useActionSubmit } from "@/shared/ui"
 import { USERS_PATH } from "@/modules/users/manifest"
 import { createActionFormData } from "@/shared/api/action-form-data"
 import { useLocale, useT } from "@/shared/i18n/context"
@@ -37,10 +38,8 @@ export default function RegistrationSettings({ configured, errorMessage }: {
   return (
     <FormPageShell title={t("settingsTitle")} subtitle={t("settingsDescription")}
       backHref={USERS_PATH} backLabel={t("backToUsers")}
-      actions={<Button type="submit" form="registration-settings"
-        disabled={isPending || Boolean(errorMessage)}>
-        {isPending ? t("saving") : t("save")}
-      </Button>}>
+      actions={[{ label: t("save"), icon: <Save size={ICON_SIZE.md} />, primary: true,
+        type: "submit", form: "registration-settings", disabled: isPending || Boolean(errorMessage) }]}>
       <Surface>
         <form id="registration-settings" action={handleSubmit} className={styles.form} noValidate>
           {errorMessage ? <ErrorState>{errorMessage}</ErrorState> : <>

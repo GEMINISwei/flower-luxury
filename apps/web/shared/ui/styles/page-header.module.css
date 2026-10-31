@@ -2,11 +2,12 @@
   position: relative;
   left: 50%;
   width: calc(100vw - var(--layout-sidebar-width));
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-6);
+  column-gap: var(--space-6);
+  row-gap: var(--space-2);
   margin: calc(var(--space-8) * -1) 0 var(--space-8);
   margin-left: calc((100vw - var(--layout-sidebar-width)) / -2);
   padding: var(--space-8) var(--space-8) var(--space-5);
@@ -14,8 +15,11 @@
   background: var(--color-surface-card);
 }
 
-.pageHeaderText { min-width: 0; flex: 1 1 var(--size-page-header-title-min); }
+.pageHeaderText { display: contents; }
 .pageTitle {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
   margin: 0;
   color: var(--color-text-display);
   font-family: var(--font-serif);
@@ -24,7 +28,9 @@
   line-height: var(--lh-tight);
 }
 .pageSubtitle {
-  margin: var(--space-2) 0 0;
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
   color: var(--color-text-muted);
   font-family: var(--font-sans);
   font-size: var(--fs-sm);
@@ -32,41 +38,37 @@
   line-height: var(--lh-snug);
 }
 .pageHeaderActions {
-  min-width: 0;
-  max-width: 100%;
-  flex: 0 1 auto;
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-3);
+  gap: var(--space-1);
 }
-.pageHeaderActions > * { min-width: 0; max-width: 100%; }
-/* 模組可把多個操作包成一組, 內層也必須能換行以保留操作. */
-.pageHeaderActions > div { flex-wrap: wrap; justify-content: inherit; }
-.pageHeaderActions :where(button, a) {
-  max-width: 100%;
-  min-width: 0;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  line-height: var(--lh-snug);
-  padding-block: var(--space-2);
+.pageHeaderActions button, .iconButton {
+  width: var(--control-height-md);
+  height: var(--control-height-md);
 }
-.pageHeaderMobileActions { display: none; flex-shrink: 0; }
-.refreshIcon {
+.iconButton {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
   padding: 0;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   cursor: pointer;
 }
-.refreshIcon:hover:not(:disabled) { background: var(--color-surface-hover); }
-.refreshIcon:disabled { opacity: var(--opacity-disabled); cursor: default; }
+.iconButton > span { display: inline-flex; }
+.iconButton svg { width: var(--size-icon-md); height: var(--size-icon-md); }
+.iconButton:hover:not(:disabled) { background: var(--color-surface-hover); }
+.iconButton:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iconButton:disabled { opacity: var(--opacity-disabled); cursor: default; }
+.primaryAction { background: var(--color-action-primary); color: var(--color-text-on-primary); }
+.primaryAction:hover:not(:disabled) { background: var(--color-action-primary-hover); }
+.dangerAction { color: var(--color-danger-fg); }
 
 @media (max-width: 720px) {
   .pageHeader {
@@ -76,8 +78,7 @@
     z-index: var(--z-sticky);
     width: calc(100% + var(--space-8));
     min-height: calc(var(--control-height-lg) + var(--space-2) + env(safe-area-inset-top));
-    flex-direction: row;
-    gap: var(--space-3);
+    column-gap: var(--space-3);
     margin: calc(var(--space-8) * -1) calc(var(--space-4) * -1) var(--space-5);
     padding: calc(env(safe-area-inset-top) + var(--space-3))
       max(var(--space-4), env(safe-area-inset-right)) var(--space-3)
@@ -86,23 +87,8 @@
     backdrop-filter: blur(var(--blur-surface));
   }
   .pageSubtitle { display: none; }
-  .pageTitle { font-size: var(--fs-h3); overflow-wrap: anywhere; }
-  .pageHeaderActions { justify-content: flex-start; gap: var(--space-2); }
-  .pageHeaderActions > div > button { flex: 1 1 var(--size-page-header-action-min); }
-  .pageHeaderActions:has(+ .pageHeaderMobileActions) { display: none; }
-  .pageHeaderMobileActions { display: flex; }
-  .pageHeader:has(.pageHeaderMobileActions) .pageHeaderText { flex: 1; }
-  .pageHeaderCompact { flex-wrap: nowrap; }
-  .pageHeaderCompact .pageTitle {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .pageHeaderCompact .pageHeaderMobileActions { gap: var(--space-1); }
-  .pageHeaderCompact .pageHeaderMobileActions button {
-    width: var(--control-height-md);
-    height: var(--control-height-md);
-  }
+  .pageTitle { font-size: var(--fs-h3); overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
 }
 
 .detailBackLink {

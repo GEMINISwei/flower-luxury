@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
-import { Button, ConfirmDialog, FormPageShell } from "@/shared/ui"
+import { FileCheck2, RefreshCw, Save, Trash2 } from "lucide-react"
+import { ConfirmDialog, FormPageShell, ICON_SIZE } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
@@ -32,23 +33,15 @@ export default function DraftDetail({ initial, brands, sources, vendors }: {
   const disabled = pending || editor.stale
   return <FormPageShell title={t("detail")} subtitle={source?.name ?? draft.source_key}
     backHref="/product-drafts" backLabel={t("back")}
-    mobileRefresh={{ label: t("reload"), onClick: editor.reload, disabled: pending }}
-    mobileActions={[
-      { label: t("save"), disabled, onClick: () => editor.save() },
-      { label: t("approve"), disabled, onClick: () => {
-        if (editor.validate(true)) setDialog("approve")
-      } },
-      { label: t("discard"), disabled, color: "error", onClick: () => setDialog("discard") },
-    ]}
-    actions={<div className={styles.headerActions}>
-      <Button variant="outlined" disabled={pending} onClick={editor.reload}>{t("reload")}</Button>
-      <Button variant="outlined" disabled={disabled} onClick={() => editor.save()}>{t("save")}</Button>
-      <Button disabled={disabled} onClick={() => {
-        if (editor.validate(true)) setDialog("approve")
-      }}>{t("approve")}</Button>
-      <Button variant="outlined" disabled={disabled} className={styles.dangerAction}
-        onClick={() => setDialog("discard")}>{t("discard")}</Button>
-    </div>}>
+    actions={[
+      { label: t("reload"), icon: <RefreshCw size={ICON_SIZE.md} />, refresh: true,
+        disabled: pending, onClick: editor.reload },
+      { label: t("approve"), icon: <FileCheck2 size={ICON_SIZE.md} />, primary: true, disabled,
+        onClick: () => { if (editor.validate(true)) setDialog("approve") } },
+      { label: t("save"), icon: <Save size={ICON_SIZE.md} />, disabled, onClick: () => editor.save() },
+      { label: t("discard"), icon: <Trash2 size={ICON_SIZE.md} />, disabled, color: "error",
+        onClick: () => setDialog("discard") },
+    ]}>
     <div className={styles.stack}>
       <div className={styles.feedback}>
         <p className={styles.hint}>{t("reloadHint")}</p>

@@ -1,10 +1,11 @@
 "use client"
 import { useState, useTransition } from "react"
 import Link from "next/link"
+import { RefreshCw, SlidersHorizontal } from "lucide-react"
 import { useRouter } from "next/navigation"
 import type { ApiListMeta } from "@/shared/api/response"
 import { Button, Container, ErrorState, ListTableCard, PageHeader, Pagination,
-  StatusBadge, TableRow } from "@/shared/ui"
+  ICON_SIZE, StatusBadge, TableRow } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { DraftSummary, SourceInfo } from "../types"
@@ -25,14 +26,12 @@ export default function DraftsView({ drafts, sources, source, seq, limit, source
   const error = sourceError || drafts.errorMessage
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
-      actions={<>
-        <Button variant="outlined" onClick={() => setFilterOpen(true)}>
-          {t(source ? "filtered" : "filter")}</Button>
-        <Button variant="outlined" disabled={refreshing} onClick={reload}>{t("refresh")}</Button>
-      </>}
-      mobileRefresh={{ label: t("refresh"), onClick: reload, disabled: refreshing }}
-      mobileActions={[{ label: t(source ? "filtered" : "filter"),
-        onClick: () => setFilterOpen(true) }]} />
+      actions={[
+        { label: t("refresh"), icon: <RefreshCw size={ICON_SIZE.md} />, refresh: true,
+          onClick: reload, disabled: refreshing },
+        { label: t(source ? "filtered" : "filter"), icon: <SlidersHorizontal size={ICON_SIZE.md} />,
+          primary: true, onClick: () => setFilterOpen(true) },
+      ]} />
     <DraftFilters key={filterOpen ? source : "closed"} sources={sources} source={source}
       open={filterOpen} onClose={() => setFilterOpen(false)} />
     <div className={styles.stack}>

@@ -4,13 +4,14 @@ import Link from "next/link"
 import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { ChevronRight, ImageOff, Plus, SlidersHorizontal, RefreshCw } from "lucide-react"
-import { Button, Container, ErrorState, ICON_SIZE, PageHeader, Pagination,
+import { ChevronRight, ClipboardList, ImageOff, Plus, SlidersHorizontal, RefreshCw } from "lucide-react"
+import { Button, Container, ErrorState, ICON_SIZE, IconButton, PageHeader, Pagination,
   StatusBadge, usePaginationResetHref } from "@/shared/ui"
-import { useT } from "@/shared/i18n/context"
+import { useLocale, useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { ApiListMeta } from "@/shared/api/response"
 import type { BrandInfo } from "@/modules/brands/public.client"
+import { DRAFTS_ROUTE } from "@/modules/product_drafts/public.client"
 import type { ProductInfo } from "../types"
 import { productMessages } from "../i18n"
 import ProductFilters from "./ProductFilters"
@@ -22,6 +23,7 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
   meta: ApiListMeta; seq: number; errorMessage: string
 }) {
   const t = useT(productMessages)
+  const locale = useLocale()
   const router = useRouter()
   const resetHref = usePaginationResetHref()
   const [filterOpen, setFilterOpen] = useState(false)
@@ -29,16 +31,18 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
   const mobile = useMobileProducts({ products, meta, filters, sentinel, errorFallback: t("failed") })
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
-      actions={<>
-        <Button variant="outlined" icon={<SlidersHorizontal size={ICON_SIZE.md} aria-hidden />}
-          onClick={() => setFilterOpen(true)}>{t("filterTitle")}</Button>
-        <Button icon={<Plus size={ICON_SIZE.md} aria-hidden />}
-          onClick={() => router.push("/products/new")}>{t("create")}</Button>
-      </>} />
-    {meta.hasPrevious && <div className={styles.toolbar}>
-      <Button variant="outlined" icon={<RefreshCw size={ICON_SIZE.sm} />}
-        onClick={() => router.push(resetHref)}>{t("reload")}</Button>
-    </div>}
+      actions={[
+        { label: t("reload"), icon: <RefreshCw size={ICON_SIZE.md} />, refresh: true,
+          onClick: () => { if (meta.hasPrevious) router.push(resetHref); else router.refresh() } },
+        { label: DRAFTS_ROUTE.label[locale], icon: <ClipboardList size={ICON_SIZE.md} />,
+          onClick: () => router.push(DRAFTS_ROUTE.path) },
+        { label: t("create"), icon: <Plus size={ICON_SIZE.md} />, primary: true,
+          onClick: () => router.push("/products/new") },
+      ]} />
+    <div className={styles.toolbar}>
+      <IconButton label={t("filterTitle")} icon={<SlidersHorizontal size={ICON_SIZE.md} />}
+        onClick={() => setFilterOpen(true)} />
+    </div>
     <ProductFilters key={filterOpen ? JSON.stringify(filters) : "closed"}
       brands={brands} filters={filters} open={filterOpen} onClose={() => setFilterOpen(false)} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}

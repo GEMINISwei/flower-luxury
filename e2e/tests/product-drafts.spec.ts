@@ -22,6 +22,11 @@ const workspaceTest = test.extend({
     await use(workspaceState)
   },
 })
+async function draftMenu(page: Page, label: string) {
+  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
+  await page.getByRole("menuitem", { name: label, exact: true }).click()
+}
+
 const seedScript = String.raw`
 import asyncio, json, os, sys, uuid
 from datetime import timedelta
@@ -232,7 +237,7 @@ test("click_message_copies_full_text and draft_fields_remain_user_controlled", a
   await expect(page.getByRole("button", { name: "移動訊息" })).toHaveCount(0)
   await page.getByRole("button", { name: "成本三萬元", exact: true }).click()
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("成本三萬元")
-  await page.getByRole("button", { name: "儲存暫存", exact: true }).click()
+  await draftMenu(page, "儲存暫存")
   await expect(page.getByRole("status")).toContainText("已儲存")
   await page.reload()
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("使用者輸入")
@@ -257,12 +262,12 @@ test("stale_draft_preserves_unsaved_input", async ({ page }) => {
   await open(page, data.id)
   await page.getByLabel("名稱", { exact: true }).fill("尚未儲存的名稱")
   fixture({ conflict: data.id })
-  await page.getByRole("button", { name: "儲存暫存", exact: true }).click()
+  await draftMenu(page, "儲存暫存")
   await expect(page.getByRole("main").getByRole("alert")).toContainText("資料已變更")
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("尚未儲存的名稱")
   await page.getByRole("button", { name: "重新載入資料", exact: true }).click()
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("尚未儲存的名稱")
-  await page.getByRole("button", { name: "儲存暫存", exact: true }).click()
+  await draftMenu(page, "儲存暫存")
   await expect(page.getByRole("status")).toContainText("已儲存")
 })
 
@@ -307,10 +312,10 @@ test("discard_requires_confirmation", async ({ page }) => {
   const data = seed()
   await login(page, staff)
   await open(page, data.id)
-  await page.getByRole("button", { name: "放棄暫存", exact: true }).click()
+  await draftMenu(page, "放棄暫存")
   await page.getByRole("dialog").getByRole("button", { name: "取消", exact: true }).click()
   await expect(page).toHaveURL(`/product-drafts/${data.id}`)
-  await page.getByRole("button", { name: "放棄暫存", exact: true }).click()
+  await draftMenu(page, "放棄暫存")
   await page.getByRole("dialog").getByRole("button", { name: "放棄暫存", exact: true }).click()
   await expect(page).toHaveURL("/product-drafts")
   await open(page, data.id)
@@ -422,7 +427,7 @@ workspaceTest("暫存返回位於內容頂端且操作集中於頁首", async ({
   await expect(back).toHaveAttribute("href", "/product-drafts")
   expect(await back.evaluate((element) => Boolean(element.closest("header")))).toBe(false)
   const backBox = (await back.boundingBox())!
-  for (const label of ["重新載入資料", "儲存暫存", "審核建檔", "放棄暫存"]) {
+  for (const label of ["重新載入資料", "審核建檔", "操作選單"]) {
     const action = page.getByRole("button", { name: label, exact: true })
     expect(await action.evaluate((element) => Boolean(element.closest("header")))).toBe(true)
     const box = (await action.boundingBox())!
@@ -591,7 +596,7 @@ workspaceTest("AI 報價顯示於暫存且不提供重新預填", async ({ page 
   await expect(dialog.getByLabel(/^匯率\*?$/)).toHaveValue("4.5")
   await dialog.getByRole("button", { name: "取消", exact: true }).click()
   await page.getByLabel("名稱", { exact: true }).fill("人工修正")
-  await page.getByRole("button", { name: "儲存暫存", exact: true }).click()
+  await draftMenu(page, "儲存暫存")
   await expect(page.getByRole("status")).toContainText("已儲存")
   await page.reload()
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("人工修正")
@@ -625,7 +630,8 @@ async function expectSingleRowHeader(page: Page) {
           text: button.textContent }
       })
   })
-  expect(layout).toHaveLength(2)
+  expect(layout.length).toBeGreaterThan(0)
+  expect(layout.length).toBeLessThanOrEqual(3)
   for (const control of layout) {
     expect(Math.abs(control.center - control.titleCenter)).toBeLessThan(2)
     expect(control.text).toBe("")
@@ -639,19 +645,16 @@ workspaceTest("英文手機暫存標題與圖示維持單排", async ({ page }) 
   for (const width of [320, 390, 720, 900, 1280]) {
     await page.setViewportSize({ width, height: 844 })
     await expectHeaderFits(page)
-    if (width <= 720) {
-      await expectSingleRowHeader(page)
-      await page.locator("header").getByRole("button", { name: "Actions", exact: true }).click()
-      const sheet = page.getByRole("dialog", { name: "Actions", exact: true })
-      for (const name of ["Save draft", "Approve and create product", "Discard draft"]) {
-        await sheet.getByRole("menuitem", { name, exact: true }).click({ trial: true })
-      }
-      await sheet.getByRole("button", { name: "Close", exact: true }).click()
-    } else {
-      for (const name of ["Reload data", "Save draft", "Approve and create product", "Discard draft"]) {
-        await page.getByRole("button", { name, exact: true }).click({ trial: true })
-      }
+    if (width <= 720) await expectSingleRowHeader(page)
+    for (const name of ["Reload data", "Approve and create product"]) {
+      await page.getByRole("button", { name, exact: true }).click({ trial: true })
     }
+    await page.locator("header").getByRole("button", { name: "Actions", exact: true }).click()
+    const sheet = page.getByRole("dialog", { name: "Actions", exact: true })
+    for (const name of ["Save draft", "Discard draft"]) {
+      await sheet.getByRole("menuitem", { name, exact: true }).click({ trial: true })
+    }
+    await sheet.getByRole("button", { name: "Close", exact: true }).click()
   }
   await page.setViewportSize({ width: 320, height: 844 })
   await page.getByRole("button", { name: "Reload data", exact: true }).click()
@@ -663,8 +666,7 @@ workspaceTest("英文手機暫存標題與圖示維持單排", async ({ page }) 
   await page.getByRole("button", { name: "Cancel", exact: true }).click()
   await page.goto("/product-drafts")
   await expectSingleRowHeader(page)
-  await page.locator("header").getByRole("button", { name: "Actions", exact: true }).click()
-  await page.getByRole("menuitem", { name: "Filter", exact: true }).click()
+  await page.locator("header").getByRole("button", { name: "Filter", exact: true }).click()
   await expect(page.getByRole("dialog", { name: "Filter", exact: true })).toBeVisible()
 })
 
@@ -675,16 +677,13 @@ workspaceTest("手機暫存以重整圖示與操作面板完成整理流程", as
   await page.goto("/product-drafts")
   await expectSingleRowHeader(page)
   await page.getByRole("button", { name: "重新整理", exact: true }).click()
-  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
-  await page.getByRole("menuitem", { name: "篩選", exact: true }).click()
+  await page.locator("header").getByRole("button", { name: "篩選", exact: true }).click()
   const filter = page.getByRole("dialog")
   await filter.getByLabel("來源群組").selectOption(data.source)
   await filter.getByRole("button", { name: "篩選", exact: true }).click()
   await expect(filter).toBeHidden()
   await expect(page).toHaveURL(new RegExp(`source_key=${encodeURIComponent(data.source)}`))
-  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
-  await expect(page.getByRole("menuitem", { name: "篩選（1）", exact: true })).toBeVisible()
-  await page.getByRole("dialog").getByRole("button", { name: "關閉", exact: true }).click()
+  await expect(page.locator("header").getByRole("button", { name: "篩選（1）", exact: true })).toBeVisible()
   await open(page, data.id)
   await expectSingleRowHeader(page)
   await fillRequired(page, data.name, data.brand)
@@ -701,15 +700,15 @@ workspaceTest("手機暫存以重整圖示與操作面板完成整理流程", as
   await page.getByRole("menuitem", { name: "儲存暫存", exact: true }).click()
   await expect(page.getByRole("main").getByRole("alert")).toContainText("資料已變更")
   await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
-  for (const name of ["儲存暫存", "審核建檔", "放棄暫存"]) {
+  for (const name of ["儲存暫存", "放棄暫存"]) {
     await expect(page.getByRole("menuitem", { name, exact: true })).toBeDisabled()
   }
   await page.getByRole("dialog").getByRole("button", { name: "關閉", exact: true }).click()
   await page.getByRole("button", { name: "重新載入資料", exact: true }).click()
   await expect(page.getByRole("status")).toContainText("已載入最新資料")
   await fillRequired(page, data.name, data.brand)
-  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
-  await page.getByRole("menuitem", { name: "審核建檔", exact: true }).click()
+  await expect(page.locator("header").getByRole("button", { name: "審核建檔", exact: true })).toBeEnabled()
+  await page.locator("header").getByRole("button", { name: "審核建檔", exact: true }).click()
   const approve = page.getByRole("dialog", { name: "審核建檔", exact: true })
   await expect(page.getByRole("dialog", { name: "操作選單", exact: true })).toHaveCount(0)
   await approve.getByRole("button", { name: "審核建檔", exact: true }).click()
@@ -725,17 +724,64 @@ workspaceTest("手機暫存以重整圖示與操作面板完成整理流程", as
   await expect(page).toHaveURL("/product-drafts")
 })
 
-workspaceTest("手機頁首的操作選單仍能開啟篩選與新增", async ({ page }) => {
+workspaceTest("手機頁首直接開啟新增與篩選", async ({ page }) => {
   await page.context().addCookies(managerState!.cookies)
   await page.setViewportSize({ width: 320, height: 844 })
   await page.goto("/admin/users")
   await expectHeaderFits(page)
   const header = page.locator("header")
-  await header.getByRole("button", { name: "操作選單", exact: true }).click()
-  await page.getByRole("menuitem", { name: "篩選", exact: true }).click()
+  await header.getByRole("button", { name: "篩選", exact: true }).click()
   await expect(page.getByRole("dialog")).toBeVisible()
   await page.getByRole("dialog").getByRole("button", { name: "關閉", exact: true }).click()
-  await header.getByRole("button", { name: "操作選單", exact: true }).click()
-  await page.getByRole("menuitem", { name: "新增員工", exact: true }).click()
+  await header.getByRole("button", { name: "新增員工", exact: true }).click()
   await expect(page.getByRole("dialog", { name: "新增員工", exact: true })).toBeVisible()
+})
+
+workspaceTest("商品列表提供三個圖示入口且暫存不在導覽列", async ({ page }) => {
+  for (const width of [320, 390, 720, 1280]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto("/products")
+    await expectSingleRowHeader(page)
+    const header = page.locator("header")
+    await expect(header.getByRole("button")).toHaveCount(3)
+    for (const name of ["重新整理", "商品暫存", "新增商品"]) {
+      await expect(header.getByRole("button", { name, exact: true })).toBeVisible()
+    }
+    await expect(header.getByRole("button", { name: "操作選單" })).toHaveCount(0)
+    for (const nav of await page.getByRole("navigation").all()) {
+      await expect(nav.getByRole("link", { name: "商品暫存", exact: true })).toHaveCount(0)
+    }
+    await page.getByRole("button", { name: "篩選", exact: true }).click()
+    await expect(page.getByRole("dialog")).toBeVisible()
+    await page.getByRole("dialog").getByRole("button", { name: "關閉", exact: true }).click()
+    await header.getByRole("button", { name: "商品暫存", exact: true }).click()
+    await expect(page).toHaveURL("/product-drafts")
+  }
+})
+
+workspaceTest("管理導覽將註冊碼設定放在最後", async ({ page }) => {
+  await page.context().addCookies(managerState!.cookies)
+  await page.goto("/admin/users")
+  const links = page.getByRole("navigation", { name: "主要導覽", exact: true }).getByRole("link")
+  await expect(links.last()).toHaveText("註冊碼設定")
+})
+
+workspaceTest("AI 助手以卡片右上角新增條件且隱藏冗餘標籤", async ({ page }) => {
+  await page.context().addCookies(managerState!.cookies)
+  for (const width of [320, 1280]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto("/admin/draft-prefill")
+    const card = page.getByRole("region", { name: "審核預填", exact: true })
+    await expect(card.getByRole("heading", { name: "補充條件", exact: true })).toHaveCount(0)
+    await expect(card.getByText("測試文字", { exact: true })).toHaveCount(0)
+    await expect(card.getByRole("textbox", { name: "測試文字", exact: true })).toBeVisible()
+    const add = card.getByRole("button", { name: "新增條件", exact: true })
+    const heading = card.getByRole("heading", { name: "審核預填", exact: true })
+    const box = (await add.boundingBox())!
+    const title = (await heading.boundingBox())!
+    expect(Math.abs(box.y + box.height / 2 - title.y - title.height / 2)).toBeLessThan(2)
+    expect(box.x).toBeGreaterThan(title.x + title.width)
+    await add.click()
+    await expect(card.getByRole("textbox", { name: /^補充條件 \d+$/ }).last()).toBeVisible()
+  }
 })
