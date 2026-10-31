@@ -1,4 +1,18 @@
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class PrefillContent(BaseModel):
+    content: str
+
+
+class PrefillJsonSchema(BaseModel):
+    json_schema: dict[str, Any]
+
+
+class PrefillApplication(BaseModel):
+    applied: bool
 
 
 class PrefillSettingsUpdate(BaseModel):

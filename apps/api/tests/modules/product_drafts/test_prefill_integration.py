@@ -106,8 +106,9 @@ async def test_prefill_rechecks_settings_and_preserves_manual_clear(db, monkeypa
     assert not applied.applied
     latest_settings = await prefill_settings.get_settings()
     latest = await service.get_draft(draft.id)
-    applied = await prefill.apply_prefill(draft.id, latest.prefill_revision, latest_settings.revision,
-                                         DraftFields(name="新名", color="黑色"))
+    applied = await prefill.apply_prefill(
+        draft.id, latest.prefill_revision, latest_settings.revision,
+        DraftFields(name="新名", color="黑色"))
     assert applied.applied
     result = await service.get_draft(draft.id)
     assert result.fields.name is None and result.fields.color == "黑色"

@@ -2,6 +2,7 @@ import json
 from collections.abc import Iterable
 from typing import Any, Protocol
 
+from .prefill_schema import PrefillContent, PrefillJsonSchema
 from .schema import DraftFields
 
 MAX_INPUT_CHARACTERS = 200000
@@ -18,16 +19,16 @@ class TextMessage(Protocol):
     def sequence(self) -> int: ...
 
 
-def output_schema() -> dict[str, Any]:
+def output_schema() -> PrefillJsonSchema:
     schema = DraftFields.model_json_schema()
     schema["required"] = list(DraftFields.model_fields)
     for field in schema["properties"].values():
         field.pop("default", None)
-    return schema
+    return PrefillJsonSchema(json_schema=schema)
 
 
 def build_input(messages: Iterable[TextMessage], brands: list[dict[str, str]],
-                supplement: str) -> str:
+                supplement: str) -> PrefillContent:
     ordered = sorted(messages, key=lambda item: (item.occurred_at, item.sequence))
     payload = json.dumps({"messages": [
         {"occurred_at": item.occurred_at.isoformat(), "text": item.text}
@@ -35,7 +36,7 @@ def build_input(messages: Iterable[TextMessage], brands: list[dict[str, str]],
     ], "brands": brands, "supplement": supplement}, ensure_ascii=False)
     if len(payload) > MAX_INPUT_CHARACTERS:
         raise ValueError("prefill input exceeds limit")
-    return payload
+    return PrefillContent(content=payload)
 
 
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:

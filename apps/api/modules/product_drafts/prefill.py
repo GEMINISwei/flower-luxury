@@ -13,6 +13,7 @@ from .errors import DraftError
 from .prefill_config import get_env
 from .prefill_prompt import BASE_PROMPT
 from .prefill_rules import build_input, merge_prefill, output_schema, parse_prefill
+from .prefill_schema import PrefillApplication
 from .prefill_transport import PrefillTransportError, generate_prefill
 from .rules import check_version
 from .schema import DraftFields, DraftInfo, VersionRequest
@@ -41,23 +42,23 @@ async def retry_prefill(id: str, form: VersionRequest) -> DraftInfo:
 
 
 async def apply_prefill(id: str, revision: int, settings_revision: int,
-                        result: DraftFields) -> bool:
+                        result: DraftFields) -> PrefillApplication:
     async with transaction():
         settings = await model.prefill_settings_row(lock=True)
         current_settings = settings.revision if settings else 0
         row = await model.get_draft_row(id, lock=True)
         if row is None or row.prefill_revision != revision:
-            return False
+            return PrefillApplication(applied=False)
         if current_settings != settings_revision:
             await schedule_prefill(row)
             _bump(row)
-            return False
+            return PrefillApplication(applied=False)
         row.fields = merge_prefill(DraftFields.model_validate(row.fields), result,
                                    row.manual_fields or []).model_dump(mode="json")
         row.prefill_status = "ready"
         _bump(row)
         await active_session().flush()
-        return True
+        return PrefillApplication(applied=True)
 
 
 async def _mark_failed(id: str, revision: int) -> None:
@@ -83,9 +84,10 @@ async def run_prefill(job: Job) -> None:
     try:
         content = build_input(messages, options, settings.supplement)
         await release_connection()
-        response = await generate_prefill(BASE_PROMPT.zh, content, output_schema())
+        response = await generate_prefill(BASE_PROMPT.zh, content.content,
+                                          output_schema().json_schema)
         available = await get_brands()
-        result = parse_prefill(response, {brand.id for brand in available.list_data})
+        result = parse_prefill(response.content, {brand.id for brand in available.list_data})
     except (PrefillTransportError, ValueError):
         await _mark_failed(id, revision)
         return

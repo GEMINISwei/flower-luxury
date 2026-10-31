@@ -42,8 +42,9 @@ async def preview(form: PrefillPreview) -> DraftFields:
     try:
         content = build_input(messages, options, form.supplement)
         await release_connection()
-        response = await generate_prefill(BASE_PROMPT.zh, content, output_schema())
-        result = parse_prefill(response, {item["id"] for item in options})
+        response = await generate_prefill(BASE_PROMPT.zh, content.content,
+                                          output_schema().json_schema)
+        result = parse_prefill(response.content, {item["id"] for item in options})
         await active_session().flush()
         return result
     except (PrefillTransportError, ValueError) as error:

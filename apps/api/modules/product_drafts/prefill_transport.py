@@ -3,6 +3,7 @@ from typing import Any
 import httpx
 
 from .prefill_config import get_env
+from .prefill_schema import PrefillContent
 
 MODEL = "gemini-3.5-flash-lite"
 
@@ -12,7 +13,7 @@ class PrefillTransportError(Exception):
 
 
 async def generate_prefill(system_prompt: str, input_text: str,
-                           schema: dict[str, Any]) -> str:
+                           schema: dict[str, Any]) -> PrefillContent:
     env = get_env()
     if not env.prefill_configured:
         raise PrefillTransportError()
@@ -35,6 +36,6 @@ async def generate_prefill(system_prompt: str, input_text: str,
                               if not part.get("thought"))
             if not content or len(content) > 50000:
                 raise PrefillTransportError()
-            return content
+            return PrefillContent(content=content)
     except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as error:
         raise PrefillTransportError() from error
