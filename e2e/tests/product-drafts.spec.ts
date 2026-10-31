@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process"
 import { randomUUID } from "node:crypto"
 import { expect, test, type BrowserContext, type Page } from "@playwright/test"
 import { admin, login } from "./support"
+import { expectHeaderFits } from "./header-layout"
 
 // Playwright replaces a failed worker, so each process needs its own disposable account.
 const staff = { username: `draft-staff-${randomUUID().slice(0, 8)}`, password: "draft-staff-password" }
@@ -593,4 +594,52 @@ workspaceTest("AI 報價顯示於暫存且不提供重新預填", async ({ page 
   await expect(page.getByRole("status")).toContainText("已儲存")
   await page.reload()
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("人工修正")
+})
+
+workspaceTest("手機與窄桌面頁首的標題和操作按鈕保持可見且不互相遮擋", async ({ page }) => {
+  test.setTimeout(90_000)
+  const data = seed()
+  await page.context().addCookies(managerState!.cookies)
+  const paths = ["/products", "/product-drafts", "/admin/users", "/admin/draft-prefill",
+    "/admin/registration", `/product-drafts/${data.id}`]
+  for (const width of [320, 390, 720, 900, 1280]) {
+    await page.setViewportSize({ width, height: 844 })
+    for (const path of paths) {
+      await page.goto(path)
+      await expectHeaderFits(page)
+    }
+  }
+})
+
+workspaceTest("英文頁首的長操作文字在窄螢幕仍完整可操作", async ({ page }) => {
+  const data = seed()
+  await page.context().addCookies([{ name: "locale", value: "en", url: process.env.E2E_BASE_URL! }])
+  await open(page, data.id)
+  for (const width of [320, 390, 720, 900, 1280]) {
+    await page.setViewportSize({ width, height: 844 })
+    await expectHeaderFits(page)
+    for (const name of ["Reload data", "Save draft", "Approve and create product", "Discard draft"]) {
+      await page.getByRole("button", { name, exact: true }).click({ trial: true })
+    }
+  }
+  await page.getByRole("button", { name: "Reload data", exact: true }).click()
+  await expect(page.getByRole("status")).toContainText("Latest data loaded")
+  await page.getByRole("button", { name: "Discard draft", exact: true }).click()
+  await expect(page.getByRole("dialog", { name: "Discard draft", exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Cancel", exact: true }).click()
+})
+
+workspaceTest("手機頁首的操作選單仍能開啟篩選與新增", async ({ page }) => {
+  await page.context().addCookies(managerState!.cookies)
+  await page.setViewportSize({ width: 320, height: 844 })
+  await page.goto("/admin/users")
+  await expectHeaderFits(page)
+  const header = page.locator("header")
+  await header.getByRole("button", { name: "操作選單", exact: true }).click()
+  await page.getByRole("menuitem", { name: "篩選", exact: true }).click()
+  await expect(page.getByRole("dialog")).toBeVisible()
+  await page.getByRole("dialog").getByRole("button", { name: "關閉", exact: true }).click()
+  await header.getByRole("button", { name: "操作選單", exact: true }).click()
+  await page.getByRole("menuitem", { name: "新增員工", exact: true }).click()
+  await expect(page.getByRole("dialog", { name: "新增員工", exact: true })).toBeVisible()
 })

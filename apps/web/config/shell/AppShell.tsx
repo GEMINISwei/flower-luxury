@@ -67,7 +67,7 @@ function ShellBrand({ area }: { area: RouteArea }) {
   return (
     <>
       <Link href="/" className={styles.brand} aria-label={systemName} prefetch={false}>
-        <Image src="/logo.svg" alt="" width={150} height={150} className={styles.emblem} />
+        <Image src="/logo.png" alt="" width={150} height={150} className={styles.emblem} />
         <span className={styles.sidebarWordmark}>{systemName}</span>
       </Link>
       {area === "admin" && <span className={styles.areaBadge}>{t("adminAreaBadge")}</span>}

@@ -11,7 +11,7 @@ import styles from "./auth.module.css"
 export function AuthBrand() {
   const { systemName } = usePublicConfig()
   return <>
-    <Image src="/logo.svg" alt="" width={150} height={150} className={styles.emblem} priority />
+    <Image src="/logo.png" alt="" width={150} height={150} className={styles.emblem} priority />
     <h1 className={styles.appName}>{systemName}</h1>
     <div className={styles.brandDivider} aria-hidden="true"><span>◇</span></div>
   </>

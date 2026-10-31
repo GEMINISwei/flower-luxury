@@ -3,6 +3,7 @@
   left: 50%;
   width: calc(100vw - var(--layout-sidebar-width));
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
@@ -13,7 +14,7 @@
   background: var(--color-surface-card);
 }
 
-.pageHeaderText { min-width: 0; }
+.pageHeaderText { min-width: 0; flex: 1 1 var(--size-page-header-title-min); }
 .pageTitle {
   margin: 0;
   color: var(--color-text-display);
@@ -31,10 +32,25 @@
   line-height: var(--lh-snug);
 }
 .pageHeaderActions {
-  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
+  flex: 0 1 auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-3);
+}
+.pageHeaderActions > * { min-width: 0; max-width: 100%; }
+/* 模組可把多個操作包成一組, 內層也必須能換行以保留操作. */
+.pageHeaderActions > div { flex-wrap: wrap; justify-content: inherit; }
+.pageHeaderActions :where(button, a) {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: var(--lh-snug);
+  padding-block: var(--space-2);
 }
 .pageHeaderMobileActions { display: none; flex-shrink: 0; }
 
@@ -45,21 +61,23 @@
     left: auto;
     z-index: var(--z-sticky);
     width: calc(100% + var(--space-8));
-    min-height: calc(60px + env(safe-area-inset-top));
+    min-height: calc(var(--control-height-lg) + var(--space-2) + env(safe-area-inset-top));
     flex-direction: row;
     gap: var(--space-3);
     margin: calc(var(--space-8) * -1) calc(var(--space-4) * -1) var(--space-5);
-    padding: env(safe-area-inset-top) max(var(--space-3), env(safe-area-inset-right)) 0 max(var(--space-4), env(safe-area-inset-left));
+    padding: calc(env(safe-area-inset-top) + var(--space-3))
+      max(var(--space-4), env(safe-area-inset-right)) var(--space-3)
+      max(var(--space-4), env(safe-area-inset-left));
     background: color-mix(in srgb, var(--color-surface-card) 96%, transparent);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--blur-surface));
   }
-  .pageHeaderText { flex: 1; }
   .pageSubtitle { display: none; }
-  .pageTitle { overflow: hidden; font-size: var(--fs-h3); white-space: nowrap; text-overflow: ellipsis; }
-  .pageHeaderActions { width: auto; flex-shrink: 0; flex-wrap: nowrap; gap: var(--space-2); }
-  .pageHeaderActions > * { flex: 0 0 auto; }
+  .pageTitle { font-size: var(--fs-h3); overflow-wrap: anywhere; }
+  .pageHeaderActions { justify-content: flex-start; gap: var(--space-2); }
+  .pageHeaderActions > div > button { flex: 1 1 var(--size-page-header-action-min); }
   .pageHeaderActions:has(+ .pageHeaderMobileActions) { display: none; }
   .pageHeaderMobileActions { display: flex; }
+  .pageHeader:has(.pageHeaderMobileActions) .pageHeaderText { flex: 1; }
 }
 
 .detailBackLink {

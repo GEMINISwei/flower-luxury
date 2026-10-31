@@ -22,7 +22,7 @@
 .meta, .photoActions { flex-wrap: wrap; }
 .meta { overflow-wrap: anywhere; }
 .headerActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3);
-  max-width: min(var(--container-auth), calc(100vw / 2)); }
+  max-width: 100%; }
 .headerActions > button { min-width: 0; white-space: normal; }
 .dangerAction { color: var(--color-danger-fg); }
 .messageScroll { display: grid; align-content: start; gap: var(--space-3); min-width: 0; min-height: 0;

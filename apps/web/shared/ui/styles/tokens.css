@@ -142,6 +142,8 @@
   --size-brand-mark: 48px;
   --size-brand-mark-medium: 64px;
   --size-brand-mark-large: 80px;
+  --size-page-header-title-min: 12rem;
+  --size-page-header-action-min: 8rem;
   --blur-surface: 12px;
   --size-avatar-md: 40px;
 
