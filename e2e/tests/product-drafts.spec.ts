@@ -471,21 +471,27 @@ workspaceTest("店長可設定全域審核預填且員工無法進入", async ({
     await card.getByRole("button", { name: "刪除條件 2", exact: true }).click()
     await expect(card.getByLabel("補充條件 2", { exact: true })).toHaveValue("小香表示 Chanel。")
     await expect(card.getByLabel("補充條件 3", { exact: true })).toHaveCount(0)
-    const header = manager.getByRole("banner").filter({
-      has: manager.getByRole("heading", { name: "AI 助手", exact: true }),
-    })
-    await header.getByRole("button", { name: "儲存設定", exact: true }).click()
+    const save = manager.getByRole("button", { name: "儲存設定", exact: true })
+    await save.click()
     await expect(manager.getByRole("status")).toContainText("已儲存")
     await manager.reload()
     await expect(card.getByLabel("補充條件 1", { exact: true })).toHaveValue("底價表示商品成本。")
     await expect(card.getByLabel("補充條件 2", { exact: true })).toHaveValue("小香表示 Chanel。")
-    await manager.setViewportSize({ width: 390, height: 844 })
-    await expect(header.getByRole("button", { name: "儲存設定", exact: true })).toBeVisible()
-    expect(await manager.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    for (const width of [1280, 390]) {
+      await manager.setViewportSize({ width, height: 844 })
+      await expect(save).toBeVisible()
+      const titleBox = (await manager.getByRole("heading", { name: "AI 助手", exact: true })
+        .boundingBox())!
+      const saveBox = (await save.boundingBox())!
+      expect(saveBox.x).toBeGreaterThan(titleBox.x + titleBox.width)
+      expect(Math.abs(saveBox.y + saveBox.height / 2 - titleBox.y - titleBox.height / 2))
+        .toBeLessThan(2)
+      expect(await manager.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    }
     await card.getByRole("button", { name: "刪除條件 1", exact: true }).click()
     await expect(card.getByLabel("補充條件 1", { exact: true })).toHaveValue("小香表示 Chanel。")
     await card.getByRole("button", { name: "刪除條件 1", exact: true }).click()
-    await header.getByRole("button", { name: "儲存設定", exact: true }).click()
+    await save.click()
     await expect(manager.getByRole("status")).toContainText("已儲存")
     await manager.reload()
     await expect(card.getByRole("textbox", { name: /^補充條件 \d+$/ })).toHaveCount(0)
