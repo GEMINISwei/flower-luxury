@@ -104,6 +104,7 @@ async def test_prefill_failure_is_final_and_preserves_fields(db, monkeypatch):
 async def test_text_changes_do_not_reschedule_prefill(db):
     draft = await draft_with_text()
     target = await model.current_draft("group-a")
+    assert target is not None
     text = next(item for item in draft.messages if item.kind == "text")
     moved = await messages.move_message(text.id, MessageMove(target_draft_id=str(target.id),
         target_version=target.version, source_version=draft.version), ACTOR)

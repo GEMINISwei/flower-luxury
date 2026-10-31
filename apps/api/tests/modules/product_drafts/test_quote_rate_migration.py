@@ -13,6 +13,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 def quote_rate_migration():
     path = next(Path("migrations/versions").glob("*per_quote_rates*.py"))
     spec = importlib.util.spec_from_file_location("quote_rate_migration", path)
+    assert spec is not None and spec.loader is not None
     migration = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(migration)
     return migration

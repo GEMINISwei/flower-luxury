@@ -21,18 +21,21 @@ async def isolated_transaction():
 
 
 @pytest.mark.asyncio
-async def test_inactive_vendor_rejects_quote_before_reading_rate(monkeypatch):
-    rate = AsyncMock()
+async def test_inactive_vendor_rejects_quote_before_pricing_and_writing(monkeypatch):
+    pricing = MagicMock()
+    create = AsyncMock()
     monkeypatch.setattr(quotes, "transaction", isolated_transaction)
     monkeypatch.setattr(quotes, "lock_product", AsyncMock())
     monkeypatch.setattr(
         quotes, "lock_vendor", AsyncMock(return_value=SimpleNamespace(is_active=False)),
     )
-    monkeypatch.setattr(quotes, "get_settings", rate)
+    monkeypatch.setattr(quotes, "price_quote", pricing)
+    monkeypatch.setattr(quotes.ProductQuoteTable, "create", create)
     with pytest.raises(LangException) as error:
         await quotes.create_quote(PRODUCT, QuoteCreate(vendor_id=QUOTE, original_amount="1"), ACTOR)
     assert error.value.status_code == 409
-    rate.assert_not_awaited()
+    pricing.assert_not_called()
+    create.assert_not_awaited()
 
 
 @pytest.mark.asyncio
