@@ -1,10 +1,25 @@
 import { execFileSync } from "node:child_process"
 import { randomUUID } from "node:crypto"
-import { expect, test, type Page } from "@playwright/test"
+import { expect, test, type BrowserContext, type Page } from "@playwright/test"
 import { admin, login } from "./support"
 
 // Playwright replaces a failed worker, so each process needs its own disposable account.
 const staff = { username: `draft-staff-${randomUUID().slice(0, 8)}`, password: "draft-staff-password" }
+let workspaceState: Awaited<ReturnType<BrowserContext["storageState"]>> | undefined
+const workspaceTest = test.extend({
+  storageState: async ({ browser }, use) => {
+    // 版面驗收共用登入憑證, 避免整套 smoke 測試耗盡同一 IP 的登入額度.
+    if (!workspaceState) {
+      const context = await browser.newContext()
+      try {
+        const page = await context.newPage()
+        await login(page, staff)
+        workspaceState = await context.storageState()
+      } finally { await context.close() }
+    }
+    await use(workspaceState)
+  },
+})
 const seedScript = String.raw`
 import asyncio, json, os, sys, uuid
 from datetime import timedelta
@@ -295,9 +310,8 @@ test("mobile and English draft workflow", async ({ page }) => {
 })
 
 
-test("多張暫存照片可左右切換且不改動商品欄位", async ({ page }) => {
+workspaceTest("多張暫存照片可左右切換且不改動商品欄位", async ({ page }) => {
   const data = fixture({ name: `Gallery ${randomUUID().slice(0, 8)}`, photos: "3" })
-  await login(page, staff)
   await open(page, data.id)
   await page.getByLabel("名稱", { exact: true }).fill("待儲存的商品")
   const gallery = page.getByRole("region", { name: "照片瀏覽" })
@@ -323,10 +337,9 @@ test("多張暫存照片可左右切換且不改動商品欄位", async ({ page 
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("待儲存的商品")
 })
 
-test("大量原始訊息在固定高度區域捲動且可逐則完整複製", async ({ page, context }) => {
+workspaceTest("大量原始訊息在固定高度區域捲動且可逐則完整複製", async ({ page, context }) => {
   const data = fixture({ name: `Long ${randomUUID().slice(0, 8)}`, crowded: "yes" })
   await context.grantPermissions(["clipboard-read", "clipboard-write"])
-  await login(page, staff)
   await open(page, data.id)
   const messages = page.getByRole("region", { name: "訊息內容" })
   expect(await messages.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true)
@@ -340,9 +353,8 @@ test("大量原始訊息在固定高度區域捲動且可逐則完整複製", as
     .toBe("補充訊息 24\n" + "商品細節\n".repeat(8))
 })
 
-test("手機版暫存工作區不橫向溢出且可切換照片", async ({ page }) => {
+workspaceTest("手機版暫存工作區不橫向溢出且可切換照片", async ({ page }) => {
   const data = fixture({ name: `Mobile ${randomUUID().slice(0, 8)}`, photos: "2" })
-  await login(page, staff)
   await page.setViewportSize({ width: 390, height: 844 })
   await page.context().addCookies([{ name: "locale", value: "en", url: process.env.E2E_BASE_URL! }])
   await open(page, data.id)
@@ -358,9 +370,8 @@ test("手機版暫存工作區不橫向溢出且可切換照片", async ({ page 
   expect((await messages.boundingBox())!.width).toBeLessThan(390)
 })
 
-test("暫存原始訊息只顯示時間與文字且不提供補上傳", async ({ page }) => {
+workspaceTest("暫存原始訊息只顯示時間與文字且不提供補上傳", async ({ page }) => {
   const data = seed()
-  await login(page, staff)
   await open(page, data.id)
   const messages = page.getByRole("region", { name: "訊息內容", exact: true })
   await expect(messages.getByRole("article")).toHaveCount(2)
@@ -383,9 +394,8 @@ test("暫存原始訊息只顯示時間與文字且不提供補上傳", async ({
   await expect(page.getByRole("main")).not.toContainText("補上傳")
 })
 
-test("暫存返回位於內容頂端且操作集中於頁首", async ({ page }) => {
+workspaceTest("暫存返回位於內容頂端且操作集中於頁首", async ({ page }) => {
   const data = seed()
-  await login(page, staff)
   await open(page, data.id)
   const back = page.getByRole("link", { name: "返回暫存列表", exact: true })
   await expect(back).toHaveAttribute("href", "/product-drafts")
@@ -403,9 +413,8 @@ test("暫存返回位於內容頂端且操作集中於頁首", async ({ page }) 
   await expect(page).toHaveURL("/product-drafts")
 })
 
-test("商品資訊依指定六列排列且最多兩欄", async ({ page }) => {
+workspaceTest("商品資訊依指定六列排列且最多兩欄", async ({ page }) => {
   const data = seed()
-  await login(page, staff)
   await open(page, data.id)
   await expect(page.getByRole("heading", { name: "商品資訊", exact: true })).toBeVisible()
   const rows = [["名稱"], ["成本（新臺幣）"], ["品牌", "分類"],
