@@ -235,16 +235,16 @@ test("英文介面可完成員工商品照片與交易完整流程", async ({ pa
   })
 })
 
-test("英文語系切換與伺服器錯誤在重新登入後持續生效", async ({ page, context }) => {
+test("英文系統設定切換語系後重新登入仍保留選擇", async ({ page, context }) => {
   await login(page, admin)
-  await page.goto("/settings")
-  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible()
+  await page.goto("/settings/system")
+  await expect(page.getByRole("heading", { name: "System settings", exact: true })).toBeVisible()
   await page.getByRole("combobox", { name: "Display language", exact: true }).selectOption("zh")
   await expect(page.getByRole("heading", { name: "系統設定", exact: true })).toBeVisible()
   await page.reload()
   await expect(page.getByRole("combobox", { name: "顯示語言", exact: true })).toHaveValue("zh")
   await page.getByRole("combobox", { name: "顯示語言", exact: true }).selectOption("en")
-  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "System settings", exact: true })).toBeVisible()
   await page.reload()
   await expect(page.getByRole("combobox", { name: "Display language", exact: true })).toHaveValue("en")
   expect((await context.cookies()).find((cookie) => cookie.name === "locale")?.value).toBe("en")
@@ -255,8 +255,8 @@ test("英文語系切換與伺服器錯誤在重新登入後持續生效", async
   await expect(page.getByRole("alert").filter({ hasText: "Invalid Username or Password" }))
     .toContainText("Invalid Username or Password")
   await login(page, admin)
-  await page.goto("/settings")
-  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible()
+  await page.goto("/settings/system")
+  await expect(page.getByRole("heading", { name: "System settings", exact: true })).toBeVisible()
   await expect(page.getByRole("combobox", { name: "Display language", exact: true })).toHaveValue("en")
 })
 

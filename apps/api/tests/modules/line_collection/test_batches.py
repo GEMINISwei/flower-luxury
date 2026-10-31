@@ -221,3 +221,28 @@ async def test_reply_failure_preserves_batch_state(db, monkeypatch):
     await receive(item)
     send.assert_awaited_once()
     assert SETTINGS.configured
+
+
+@pytest.mark.parametrize("text", ["/start", "/end"])
+@pytest.mark.parametrize("previously_enabled", [False, True])
+async def test_disabled_group_commands_do_not_change_state_or_enqueue_replies(
+    db, text, previously_enabled,
+):
+    if previously_enabled:
+        group = await enable_group()
+        await receive(message(second=1))
+        await service.update_group(str(group.id), GroupUpdate(enabled=False))
+    else:
+        await receive(event(event_type="join"))
+    before = await group_info()
+    batches_before = list(await active_session().scalars(select(drafts.BatchTable.id)))
+    jobs_before = list(await active_session().scalars(select(JobTable.id)))
+    receipts_before = list(await active_session().scalars(select(model.EventReceiptTable.id)))
+    result = await command(text, 5, reply="ignored-reply-token")
+    assert result.accepted == 0
+    assert (await group_info()) == before
+    assert list(await active_session().scalars(select(drafts.BatchTable.id))) == batches_before
+    assert list(await active_session().scalars(select(JobTable.id))) == jobs_before
+    assert list(await active_session().scalars(
+        select(model.EventReceiptTable.id))) == receipts_before
+    assert await active_session().scalar(select(model.ReplyTable.id)) is None

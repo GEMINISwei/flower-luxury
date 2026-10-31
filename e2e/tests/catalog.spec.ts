@@ -86,7 +86,7 @@ test("店長儲存兩位匯率且員工無法進入匯率設定", async ({ page 
   await expect(page.getByRole("link", { name: "匯率設定", exact: true })).toHaveCount(0)
 })
 
-test("手機更多可開關並提供設定與管理區入口", async ({ page }) => {
+test("手機更多可開關並提供兩種設定與管理區入口", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await login(page, admin)
   await page.goto("/brands")
@@ -101,8 +101,13 @@ test("手機更多可開關並提供設定與管理區入口", async ({ page }) 
   await expect(dialog).toBeHidden()
   await expect(more).toBeFocused()
   await more.click()
-  await dialog.getByRole("button", { name: "設定", exact: true }).click()
+  await dialog.getByRole("button", { name: "用戶設定", exact: true }).click()
   await expect(page).toHaveURL("/settings")
+  await expect(page.getByRole("heading", { name: "用戶設定", exact: true })).toBeVisible()
+  await more.click()
+  await page.getByRole("dialog").getByRole("button", { name: "系統設定", exact: true }).click()
+  await expect(page).toHaveURL("/settings/system")
+  await expect(page.getByRole("heading", { name: "系統設定", exact: true })).toBeVisible()
   await more.click()
   dialog = page.getByRole("dialog", { name: "更多", exact: true })
   await dialog.getByRole("button", { name: "管理後台", exact: true }).click()

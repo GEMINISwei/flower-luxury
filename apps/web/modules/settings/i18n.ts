@@ -2,7 +2,8 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 
 export const settingsMessages = defineMessages({
   zh: {
-    pageTitle: "系統設定",
+    pageTitle: "用戶設定",
+    systemPageTitle: "系統設定",
     languageSection: "語言",
     languageName: "顯示語言",
     languageDesc: "同時決定伺服器回傳的訊息語言",
@@ -15,7 +16,7 @@ export const settingsMessages = defineMessages({
     savingProfile: "儲存中…",
     profileSaved: "個人資料已更新",
     saveProfileFailed: "個人資料更新失敗",
-    passwordSection: "密碼",
+    passwordSection: "更改密碼",
     passwordDesc: "更新後，其他裝置上的登入會立刻失效；這一台不受影響。",
     currentPassword: "目前密碼",
     newPassword: "新密碼",
@@ -31,7 +32,8 @@ export const settingsMessages = defineMessages({
     versionUnavailable: "無法取得",
   },
   en: {
-    pageTitle: "Settings",
+    pageTitle: "User settings",
+    systemPageTitle: "System settings",
     languageSection: "Language",
     languageName: "Display language",
     languageDesc: "Also selects the language of server messages",
@@ -44,7 +46,7 @@ export const settingsMessages = defineMessages({
     savingProfile: "Saving…",
     profileSaved: "Profile updated",
     saveProfileFailed: "Could not update the profile",
-    passwordSection: "Password",
+    passwordSection: "Change password",
     passwordDesc: "Updating signs out every other device. This one stays signed in.",
     currentPassword: "Current password",
     newPassword: "New password",

@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useTransition } from "react"
-import { ChevronsUpDown, House, LayoutDashboard, LogOut, Settings, type LucideIcon } from "lucide-react"
+import { ChevronsUpDown, House, LayoutDashboard, LogOut, Settings, UserRound, type LucideIcon } from "lucide-react"
 import { ICON_SIZE, Menu, type MenuItem } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import { usePublicConfig } from "@/shared/runtime/context"
@@ -56,7 +56,8 @@ type AppShellProps = {
 const ENTRY_ICONS: Record<AccountMenuLabel, LucideIcon> = {
   goAdminArea: LayoutDashboard,
   goUserArea: House,
-  accountSettings: Settings,
+  accountSettings: UserRound,
+  systemSettings: Settings,
   logout: LogOut,
 }
 
