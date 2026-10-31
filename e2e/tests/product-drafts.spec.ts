@@ -7,10 +7,10 @@ import { admin, login } from "./support"
 const staff = { username: `draft-staff-${randomUUID().slice(0, 8)}`, password: "draft-staff-password" }
 let workspaceState: Awaited<ReturnType<BrowserContext["storageState"]>> | undefined
 const workspaceTest = test.extend({
-  storageState: async ({ browser }, use) => {
+  storageState: async ({ browser, baseURL, locale }, use) => {
     // 版面驗收共用登入憑證, 避免整套 smoke 測試耗盡同一 IP 的登入額度.
     if (!workspaceState) {
-      const context = await browser.newContext()
+      const context = await browser.newContext({ baseURL, locale })
       try {
         const page = await context.newPage()
         await login(page, staff)
