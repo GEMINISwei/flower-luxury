@@ -19,7 +19,7 @@ async def test_gemini_requests_json_schema_and_rejects_blocked_responses(monkeyp
     monkeypatch.setattr(prefill_transport.httpx, "AsyncClient", lambda **kwargs:
                         original_client(transport=httpx.MockTransport(respond), **kwargs))
     result = await prefill_transport.generate_prefill("base", "input", {"type": "object"})
-    assert result == '{"name":null}'
+    assert result.content == '{"name":null}'
     assert calls[0].headers["x-goog-api-key"] == "test-key"
     assert "gemini-3.5-flash-lite:generateContent" in str(calls[0].url)
     import json

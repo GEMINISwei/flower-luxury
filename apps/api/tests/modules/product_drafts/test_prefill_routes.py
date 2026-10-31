@@ -1,9 +1,9 @@
 from unittest.mock import AsyncMock
 
 import pytest
-from modules.product_drafts.prefill_schema import PrefillSettingsInfo
 
 from modules.product_drafts import prefill_settings
+from modules.product_drafts.prefill_schema import PrefillSettingsInfo
 from modules.product_drafts.schema import DraftFields
 from tests.modules.helpers import authenticate
 from tests.modules.product_drafts.helpers import ACTOR

@@ -6,6 +6,7 @@ import { admin, login } from "./support"
 // Playwright replaces a failed worker, so each process needs its own disposable account.
 const staff = { username: `draft-staff-${randomUUID().slice(0, 8)}`, password: "draft-staff-password" }
 let workspaceState: Awaited<ReturnType<BrowserContext["storageState"]>> | undefined
+let managerState: Awaited<ReturnType<BrowserContext["storageState"]>> | undefined
 const workspaceTest = test.extend({
   storageState: async ({ browser, baseURL, locale }, use) => {
     // 版面驗收共用登入憑證, 避免整套 smoke 測試耗盡同一 IP 的登入額度.
@@ -109,6 +110,7 @@ test.beforeAll(async ({ browser }) => {
   await dialog.getByLabel("密碼").fill(staff.password)
   await dialog.getByRole("button", { name: "建立", exact: true }).click()
   await expect(dialog).toBeHidden()
+  managerState = await page.context().storageState()
   await page.close()
 })
 
@@ -444,18 +446,22 @@ workspaceTest("商品資訊依指定六列排列且最多兩欄", async ({ page 
   }
 })
 
-test("店長可設定全域審核預填且員工無法進入", async ({ page }) => {
-  await login(page, admin)
-  await page.goto("/admin/draft-prefill")
-  await expect(page.getByRole("heading", { name: "審核預填設定", exact: true })).toBeVisible()
-  await expect(page.getByLabel("基礎 Prompt", { exact: true })).toHaveAttribute("readonly", "")
-  await page.getByLabel("補充判定條件", { exact: true }).fill("底價表示商品成本。")
-  await page.getByRole("button", { name: "儲存設定", exact: true }).click()
-  await expect(page.getByRole("status")).toContainText("已儲存")
-  await page.reload()
-  await expect(page.getByLabel("補充判定條件", { exact: true })).toHaveValue("底價表示商品成本。")
-  await expect(page.getByText("尚未設定 Gemini API 金鑰", { exact: false })).toBeVisible()
-  await login(page, staff)
+workspaceTest("店長可設定全域審核預填且員工無法進入", async ({ page, browser }) => {
+  if (!managerState) throw new Error("Manager session is not initialized")
+  const context = await browser.newContext({ storageState: managerState,
+    baseURL: process.env.E2E_BASE_URL, locale: "zh-TW" })
+  try {
+    const manager = await context.newPage()
+    await manager.goto("/admin/draft-prefill")
+    await expect(manager.getByRole("heading", { name: "審核預填設定", exact: true })).toBeVisible()
+    await expect(manager.getByLabel("基礎 Prompt", { exact: true })).toHaveAttribute("readonly", "")
+    await manager.getByLabel("補充判定條件", { exact: true }).fill("底價表示商品成本。")
+    await manager.getByRole("button", { name: "儲存設定", exact: true }).click()
+    await expect(manager.getByRole("status")).toContainText("已儲存")
+    await manager.reload()
+    await expect(manager.getByLabel("補充判定條件", { exact: true })).toHaveValue("底價表示商品成本。")
+    await expect(manager.getByText("尚未設定 Gemini API 金鑰", { exact: false })).toBeVisible()
+  } finally { await context.close() }
   await page.goto("/admin/draft-prefill")
   await expect(page).toHaveURL("/products")
 })

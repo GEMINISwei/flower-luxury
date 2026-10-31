@@ -32,11 +32,11 @@ def test_prompt_uses_all_text_and_supplement_without_quotes():
                 SimpleNamespace(kind="image", text=None, occurred_at=BASE, sequence=1),
                 SimpleNamespace(kind="text", text="先到\n完整原文", occurred_at=BASE, sequence=3)]
     payload = json.loads(prefill_rules.build_input(messages, [{"id": ID, "name": "品牌"}],
-                                                 "底價代表成本"))
+                                                 "底價代表成本").content)
     assert [item["text"] for item in payload["messages"]] == ["先到\n完整原文", "後到"]
     assert payload["supplement"] == "底價代表成本"
     assert payload["brands"] == [{"id": ID, "name": "品牌"}]
-    schema = prefill_rules.output_schema()
+    schema = prefill_rules.output_schema().json_schema
     assert set(schema["required"]) == set(DraftFields.model_fields)
     assert schema["additionalProperties"] is False
     assert "quotes" not in schema["properties"]

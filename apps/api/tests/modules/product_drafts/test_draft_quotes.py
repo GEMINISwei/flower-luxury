@@ -2,9 +2,9 @@ from decimal import Decimal
 from unittest.mock import AsyncMock
 
 import pytest
-from modules.product_drafts.quote_schema import DraftQuoteUpdate
 
 from modules.product_drafts import collection, draft_quotes, photos, review, service, storage
+from modules.product_drafts.quote_schema import DraftQuoteUpdate
 from modules.product_drafts.schema import VersionRequest
 from modules.products import quotes
 from modules.vendors.public import VendorTable
@@ -28,7 +28,8 @@ async def test_draft_quotes_validate_and_reject_stale_updates(db):
                             original_amount="1200", note="手動詢價")
     added = await draft_quotes.save_quote(draft.id, form, ACTOR)
     assert len(added.quotes) == 1 and added.quotes[0].original_amount == Decimal(1200)
-    assert not (await VendorTable.find_by_id(company["id"]))["country_locked"]
+    saved_vendor = await VendorTable.find_by_id(company["id"])
+    assert saved_vendor is not None and not saved_vendor.country_locked
     with pytest.raises(LangException) as error:
         await draft_quotes.save_quote(draft.id, form, ACTOR)
     assert error.value.status_code == 409
@@ -68,7 +69,8 @@ async def test_approval_imports_quotes_atomically(db, monkeypatch, tmp_path):
     result = await review.approve_draft(draft.id, VersionRequest(version=draft.version), ACTOR)
     saved = await quotes.get_quotes(result.product_id)
     assert saved.count == 1 and saved.list_data[0].original_amount == Decimal(1200)
-    assert (await VendorTable.find_by_id(company["id"]))["country_locked"]
+    saved_vendor = await VendorTable.find_by_id(company["id"])
+    assert saved_vendor is not None and saved_vendor.country_locked
 
 
 async def test_draft_cny_quote_does_not_require_rate_until_approval(db, monkeypatch, tmp_path):
