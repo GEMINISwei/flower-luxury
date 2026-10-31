@@ -1,4 +1,4 @@
-import { MessagesSquare, ClipboardList, Package, Building2, CircleDollarSign, Tag, KeyRound, Settings, Users, type LucideIcon } from "lucide-react"
+import { MessagesSquare, ClipboardList, Package, Building2, Tag, KeyRound, Settings, Users, type LucideIcon } from "lucide-react"
 import type { NavIconKey } from "@/config/routes"
 
 /**
@@ -14,7 +14,6 @@ export const NAV_ICONS: Record<NavIconKey, LucideIcon> = {
   lineGroups: MessagesSquare,
   brands: Tag,
   vendors: Building2,
-  exchange: CircleDollarSign,
   registration: KeyRound,
   settings: Settings,
 }

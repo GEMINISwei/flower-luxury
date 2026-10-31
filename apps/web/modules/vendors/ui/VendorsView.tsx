@@ -34,13 +34,12 @@ export default function VendorsView({ vendors, errorMessage }: {
       actions={<Button icon={<Plus size={ICON_SIZE.md} />} onClick={() => setEditor("new")}>{t("create")}</Button>} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
     {!removing && error && <p role="alert">{error}</p>}
-    <div className={styles.list}><ListTableCard headers={[t("name"), t("country"), t("note"), t("status"), t("actions")]}
+    <div className={styles.list}><ListTableCard headers={[t("name"), t("note"), t("status"), t("actions")]}
       isEmpty={!vendors.length} emptyText={t("empty")}>
       {vendors.map((vendor) => {
         const action = vendorRemovalAction(vendor)
         return <TableRow key={vendor.id}>
         <td data-label={t("name")}>{vendor.name}</td>
-        <td data-label={t("country")}>{t(vendor.country)}</td>
         <td data-label={t("note")}>{vendor.note || "—"}</td>
         <td data-label={t("status")}><StatusBadge label={t(vendor.is_active ? "active" : "inactive")}
           variant={vendor.is_active ? "success" : "muted"} /></td>

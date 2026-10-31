@@ -1,10 +1,10 @@
 import type { ProductStatus } from "./types"
 
-export function quoteCapabilities(status: ProductStatus, country: "TW" | "CN", hasSales: boolean) {
+export function quoteCapabilities(status: ProductStatus, hasSales: boolean) {
   const canEdit = status !== "sold"
   return {
     canEdit, canDelete: canEdit && !hasSales,
-    canRefresh: canEdit && country === "CN", canConfirm: canEdit,
+    canConfirm: canEdit,
   }
 }
 

@@ -5,7 +5,9 @@ from .images import validate_batch_size as validate_batch_size
 from .imports import create_imported_product as create_imported_product
 from .photos import read_batch as read_batch
 from .quote_rules import price_quote as price_quote
+from .quote_schema import QuoteAmount as QuoteAmount
 from .quote_schema import QuoteCreate as QuoteCreate
+from .quote_schema import QuoteRate as QuoteRate
 from .quotes import create_quote as create_quote
 from .schema import ProductCategory as ProductCategory
 from .schema import ProductCreate as ProductCreate

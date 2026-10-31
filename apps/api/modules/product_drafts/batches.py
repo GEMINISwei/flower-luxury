@@ -9,6 +9,7 @@ from shared.http.errors import LangText, resolve_text
 
 from . import model
 from .collection import _remember, _store_message
+from .prefill import schedule_prefill
 from .schema import BatchControl, BatchIssueInfo, BatchState, IncomingMessage, IngestResult
 from .service import _bump
 
@@ -49,6 +50,7 @@ async def _close_draft(draft_key: str) -> None:
     draft = await model.get_draft_row(draft_key)
     if draft and draft.collecting:
         draft.collecting = False
+        await schedule_prefill(draft)
         _bump(draft)
         await active_session().flush()
 

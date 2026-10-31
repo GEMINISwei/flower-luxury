@@ -26,7 +26,7 @@
 | 文件 | 什麼時候讀 |
 |---|---|
 | [店長註冊](registration.md) | 初始店長建立、共用註冊碼、公開註冊與限流 |
-| [品牌、廠商與匯率](catalog-foundations.md) | 共用資料、刪除／停用、國家鎖定、匯率精度與舊版欄位 |
+| [品牌與廠商](catalog-foundations.md) | 共用資料、刪除／停用、引用歷史與逐筆匯率 |
 | [共用介面與導覽](interface.md) | 主題、手機更多、確認視窗與固定日期格式 |
 | [商品核心](products.md) | 建檔、SKU、篩選分頁、狀態歷程、售出唯讀與軟刪除 |
 | [LINE 商品收集](line-collection.md) | LINE 金鑰與 Webhook 設定、群組啟用、背景下載與撤回 |

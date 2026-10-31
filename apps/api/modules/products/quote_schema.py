@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
@@ -10,8 +10,14 @@ type QuoteAmount = Annotated[Decimal, Field(
 )]
 
 
+type QuoteRate = Annotated[Decimal, Field(
+    gt=0, max_digits=16, decimal_places=6, allow_inf_nan=False,
+)]
+
+
 class QuoteUpdate(BaseModel):
     original_amount: QuoteAmount
+    exchange_rate: QuoteRate = Decimal(1)
     note: str | None = None
 
     def __init__(self, *, original_amount: Decimal | str | None = None, **data: Any) -> None:
@@ -26,7 +32,6 @@ class QuoteCreate(QuoteUpdate):
 
 
 class QuoteAmounts(BaseModel):
-    currency: Literal["TWD", "CNY"]
     exchange_rate: Decimal
     amount_twd: int
 
@@ -35,7 +40,6 @@ class QuoteInfo(QuoteCreate, QuoteAmounts):
     id: str
     product_id: str
     vendor_name: str
-    vendor_country: Literal["TW", "CN"]
     revision: int
     has_sales: bool
     created_at: UtcDateTime
@@ -58,7 +62,6 @@ class SaleInfo(QuoteAmounts):
     quote_id: str
     vendor_id: str
     vendor_name: str
-    vendor_country: Literal["TW", "CN"]
     original_amount: Decimal
     cost_price: int
     profit_amount: int

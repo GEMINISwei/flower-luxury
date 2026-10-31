@@ -1,6 +1,5 @@
 from sqlalchemy.exc import IntegrityError
 
-from modules.exchange_rates.public import get_settings
 from modules.vendors.public import VendorError, lock_vendor
 from shared.auth.contracts import CurrentUser
 from shared.db.session import active_session
@@ -39,16 +38,15 @@ async def create_quote(id: str, form_data: QuoteCreate, actor: CurrentUser) -> Q
             vendor = await lock_vendor(form_data.vendor_id)
             if not vendor.is_active:
                 raise LangException(409, VendorError.INACTIVE)
-            rate = (await get_settings()).rate if vendor.country == "CN" else None
-            amounts = price_quote(vendor.country, form_data.original_amount, rate)
+            amounts = price_quote(form_data.original_amount, form_data.exchange_rate)
             data = await ProductQuoteTable.create(data={
                 "vendor_id": form_data.vendor_id, "original_amount": form_data.original_amount,
-                "note": form_data.note, "currency": amounts.currency,
+                "note": form_data.note,
                 "exchange_rate": amounts.exchange_rate, "amount_twd": amounts.amount_twd,
                 "product_id": id,
-                "vendor_country": vendor.country, "created_by": actor["id"],
+                "created_by": actor["id"],
             })
-            vendor.country_locked, vendor.updated_at = True, utc_now()
+            vendor.has_quotes, vendor.updated_at = True, utc_now()
             await active_session().flush()
             return await quote_info(await load_quote(id, data["id"]))
     except IntegrityError as error:
@@ -62,22 +60,9 @@ async def update_quote(id: str, quote_id: str, form_data: QuoteUpdate,
     async with transaction():
         await lock_product(id)
         row = await load_quote(id, quote_id)
-        amounts = price_quote(row.vendor_country, form_data.original_amount, row.exchange_rate)
+        amounts = price_quote(form_data.original_amount, form_data.exchange_rate)
         row.original_amount, row.note = form_data.original_amount, form_data.note
-        row.amount_twd = amounts.amount_twd
-        row.revision += 1
-        row.updated_by, row.updated_at = actor["id"], utc_now()
-        await active_session().flush()
-        return await quote_info(row)
-
-
-async def refresh_quote(id: str, quote_id: str, actor: CurrentUser) -> QuoteInfo:
-    async with transaction():
-        await lock_product(id)
-        row = await load_quote(id, quote_id)
-        rate = (await get_settings()).rate if row.vendor_country == "CN" else None
-        amounts = price_quote(row.vendor_country, row.original_amount, rate)
-        row.exchange_rate, row.amount_twd = amounts.exchange_rate, amounts.amount_twd
+        row.amount_twd, row.exchange_rate = amounts.amount_twd, amounts.exchange_rate
         row.revision += 1
         row.updated_by, row.updated_at = actor["id"], utc_now()
         await active_session().flush()

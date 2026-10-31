@@ -19,8 +19,8 @@ export default function SaleDialog({ product, quote, onClose }: {
   const { isPending, submit } = useActionSubmit()
   const { profit, loss, isLoss } = salePreview(quote.amount_twd, product.cost_price)
   const rows = [
-    [t("vendor"), `${quote.vendor_name} · ${t(quote.vendor_country)}`],
-    [t("amount"), `${quote.currency} ${quote.original_amount}`],
+    [t("vendor"), quote.vendor_name],
+    [t("amount"), quote.original_amount],
     [t("rate"), quote.exchange_rate],
     [t("confirmAmount"), quote.amount_twd.toLocaleString()],
     [t("cost"), product.cost_price.toLocaleString()], [t("profit"), profit.toLocaleString()],

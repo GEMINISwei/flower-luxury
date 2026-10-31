@@ -1,4 +1,3 @@
-from decimal import Decimal
 from uuid import uuid4
 
 from modules.products.public import price_quote
@@ -29,9 +28,11 @@ async def save_quote(id: str, form: DraftQuoteUpdate, actor: CurrentUser,
         vendor = await lock_vendor(form.vendor_id)
         if not vendor.is_active:
             raise LangException(409, VendorError.INACTIVE)
-        price_quote(vendor.country, form.original_amount, Decimal(1))
+        price_quote(form.original_amount, form.exchange_rate)
         quote = DraftQuoteInfo(id=quote_id or str(uuid4()), vendor_id=form.vendor_id,
-                              original_amount=form.original_amount, note=form.note)
+                              original_amount=form.original_amount,
+                              exchange_rate=form.exchange_rate,
+                              note=form.note)
         row.quotes = [item.model_dump(mode="json") for item in existing if item.id != quote_id]
         row.quotes = [*row.quotes, quote.model_dump(mode="json")]
         _bump(row, actor)

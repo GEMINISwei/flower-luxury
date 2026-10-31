@@ -545,6 +545,10 @@
       },
       "DraftQuoteInfo": {
         "properties": {
+          "exchange_rate": {
+            "$ref": "#/components/schemas/QuoteRate-Output",
+            "default": "1"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -579,6 +583,10 @@
       "DraftQuoteUpdate": {
         "additionalProperties": false,
         "properties": {
+          "exchange_rate": {
+            "$ref": "#/components/schemas/QuoteRate-Input",
+            "default": "1"
+          },
           "note": {
             "anyOf": [
               {
@@ -713,90 +721,6 @@
           "fields"
         ],
         "title": "DraftUpdate",
-        "type": "object"
-      },
-      "ExchangeRateSettings": {
-        "properties": {
-          "base_currency": {
-            "default": "TWD",
-            "title": "Base Currency",
-            "type": "string"
-          },
-          "currency": {
-            "default": "CNY",
-            "title": "Currency",
-            "type": "string"
-          },
-          "operator_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Operator Name"
-          },
-          "rate": {
-            "anyOf": [
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rate"
-          },
-          "updated_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Updated At"
-          },
-          "updated_by": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Updated By"
-          }
-        },
-        "title": "ExchangeRateSettings",
-        "type": "object"
-      },
-      "ExchangeRateUpdate": {
-        "properties": {
-          "rate": {
-            "anyOf": [
-              {
-                "exclusiveMinimum": 0.0,
-                "type": "number"
-              },
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,17}0*$)\\d{0,10}\\.\\d{0,6}0*$)",
-                "type": "string"
-              }
-            ],
-            "title": "Rate"
-          }
-        },
-        "required": [
-          "rate"
-        ],
-        "title": "ExchangeRateUpdate",
         "type": "object"
       },
       "GroupInfo": {
@@ -1442,6 +1366,122 @@
         "title": "PrefillPreview",
         "type": "object"
       },
+      "PrefillResult": {
+        "additionalProperties": false,
+        "properties": {
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProductCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "cost_price": {
+            "anyOf": [
+              {
+                "maximum": 2147483647.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Price"
+          },
+          "internal_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Internal Note"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "serial_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serial Number"
+          },
+          "vendor_info": {
+            "items": {
+              "$ref": "#/components/schemas/PrefillVendorInfo"
+            },
+            "title": "Vendor Info",
+            "type": "array"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "maximum": 9999.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "title": "PrefillResult",
+        "type": "object"
+      },
       "PrefillSettingsInfo": {
         "additionalProperties": false,
         "properties": {
@@ -1492,6 +1532,28 @@
           "revision"
         ],
         "title": "PrefillSettingsUpdate",
+        "type": "object"
+      },
+      "PrefillVendorInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "exchange_rate": {
+            "$ref": "#/components/schemas/QuoteRate-Output",
+            "default": "1"
+          },
+          "original_amount": {
+            "$ref": "#/components/schemas/QuoteAmount-Output"
+          },
+          "vendor_id": {
+            "title": "Vendor Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendor_id",
+          "original_amount"
+        ],
+        "title": "PrefillVendorInfo",
         "type": "object"
       },
       "ProductCategory": {
@@ -1836,6 +1898,10 @@
       },
       "QuoteCreate": {
         "properties": {
+          "exchange_rate": {
+            "$ref": "#/components/schemas/QuoteRate-Input",
+            "default": "1"
+          },
           "note": {
             "anyOf": [
               {
@@ -1873,18 +1939,9 @@
             "title": "Created At",
             "type": "string"
           },
-          "currency": {
-            "enum": [
-              "TWD",
-              "CNY"
-            ],
-            "title": "Currency",
-            "type": "string"
-          },
           "exchange_rate": {
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Exchange Rate",
-            "type": "string"
+            "$ref": "#/components/schemas/QuoteRate-Output",
+            "default": "1"
           },
           "has_sales": {
             "title": "Has Sales",
@@ -1928,14 +1985,6 @@
             ],
             "title": "Updated At"
           },
-          "vendor_country": {
-            "enum": [
-              "TW",
-              "CN"
-            ],
-            "title": "Vendor Country",
-            "type": "string"
-          },
           "vendor_id": {
             "title": "Vendor Id",
             "type": "string"
@@ -1946,15 +1995,12 @@
           }
         },
         "required": [
-          "currency",
-          "exchange_rate",
           "amount_twd",
           "original_amount",
           "vendor_id",
           "id",
           "product_id",
           "vendor_name",
-          "vendor_country",
           "revision",
           "has_sales",
           "created_at"
@@ -1983,8 +2029,28 @@
         "title": "QuoteList",
         "type": "object"
       },
+      "QuoteRate-Input": {
+        "anyOf": [
+          {
+            "exclusiveMinimum": 0.0,
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,17}0*$)\\d{0,10}\\.\\d{0,6}0*$)",
+            "type": "string"
+          }
+        ]
+      },
+      "QuoteRate-Output": {
+        "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,17}0*$)\\d{0,10}\\.\\d{0,6}0*$)",
+        "type": "string"
+      },
       "QuoteUpdate": {
         "properties": {
+          "exchange_rate": {
+            "$ref": "#/components/schemas/QuoteRate-Input",
+            "default": "1"
+          },
           "note": {
             "anyOf": [
               {
@@ -2253,14 +2319,6 @@
             "title": "Cost Price",
             "type": "integer"
           },
-          "currency": {
-            "enum": [
-              "TWD",
-              "CNY"
-            ],
-            "title": "Currency",
-            "type": "string"
-          },
           "exchange_rate": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Exchange Rate",
@@ -2334,14 +2392,6 @@
             "title": "Sold At",
             "type": "string"
           },
-          "vendor_country": {
-            "enum": [
-              "TW",
-              "CN"
-            ],
-            "title": "Vendor Country",
-            "type": "string"
-          },
           "vendor_id": {
             "title": "Vendor Id",
             "type": "string"
@@ -2352,7 +2402,6 @@
           }
         },
         "required": [
-          "currency",
           "exchange_rate",
           "amount_twd",
           "id",
@@ -2360,7 +2409,6 @@
           "quote_id",
           "vendor_id",
           "vendor_name",
-          "vendor_country",
           "original_amount",
           "cost_price",
           "profit_amount",
@@ -2899,18 +2947,8 @@
         "title": "ValidationError",
         "type": "object"
       },
-      "VendorCountry": {
-        "enum": [
-          "TW",
-          "CN"
-        ],
-        "type": "string"
-      },
       "VendorCreate": {
         "properties": {
-          "country": {
-            "$ref": "#/components/schemas/VendorCountry"
-          },
           "name": {
             "minLength": 1,
             "title": "Name",
@@ -2929,29 +2967,16 @@
           }
         },
         "required": [
-          "name",
-          "country"
+          "name"
         ],
         "title": "VendorCreate",
         "type": "object"
       },
       "VendorInfo": {
         "properties": {
-          "country": {
-            "$ref": "#/components/schemas/VendorCountry"
-          },
-          "country_locked": {
-            "title": "Country Locked",
+          "has_quotes": {
+            "title": "Has Quotes",
             "type": "boolean"
-          },
-          "currency": {
-            "enum": [
-              "TWD",
-              "CNY"
-            ],
-            "readOnly": true,
-            "title": "Currency",
-            "type": "string"
           },
           "id": {
             "title": "Id",
@@ -2980,11 +3005,9 @@
         },
         "required": [
           "name",
-          "country",
           "is_active",
           "id",
-          "country_locked",
-          "currency"
+          "has_quotes"
         ],
         "title": "VendorInfo",
         "type": "object"
@@ -3012,9 +3035,6 @@
       },
       "VendorUpdate": {
         "properties": {
-          "country": {
-            "$ref": "#/components/schemas/VendorCountry"
-          },
           "is_active": {
             "title": "Is Active",
             "type": "boolean"
@@ -3038,7 +3058,6 @@
         },
         "required": [
           "name",
-          "country",
           "is_active"
         ],
         "title": "VendorUpdate",
@@ -3272,7 +3291,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DraftFields"
+                  "$ref": "#/components/schemas/PrefillResult"
                 }
               }
             },
@@ -3352,66 +3371,6 @@
         "summary": "Update Settings Route",
         "tags": [
           "draft-prefill"
-        ]
-      }
-    },
-    "/api/exchange-rates/settings": {
-      "get": {
-        "operationId": "get_exchange_settings_route_api_exchange_rates_settings_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRateSettings"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Get Exchange Settings Route",
-        "tags": [
-          "exchange-rates"
-        ]
-      },
-      "patch": {
-        "operationId": "update_exchange_settings_route_api_exchange_rates_settings_patch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ExchangeRateUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRateSettings"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Update Exchange Settings Route",
-        "tags": [
-          "exchange-rates"
         ]
       }
     },
@@ -4477,58 +4436,6 @@
         ]
       }
     },
-    "/api/product-drafts/{id}/prefill": {
-      "post": {
-        "operationId": "retry_prefill_route_api_product_drafts__id__prefill_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "title": "Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VersionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DraftInfo"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Retry Prefill Route",
-        "tags": [
-          "product-drafts"
-        ]
-      }
-    },
     "/api/product-drafts/{id}/quotes": {
       "post": {
         "operationId": "create_quote_route_api_product_drafts__id__quotes_post",
@@ -5574,57 +5481,6 @@
           }
         },
         "summary": "Update Quote Route",
-        "tags": [
-          "product quotes"
-        ]
-      }
-    },
-    "/api/products/{id}/quotes/{quote_id}/refresh-rate": {
-      "post": {
-        "operationId": "refresh_quote_route_api_products__id__quotes__quote_id__refresh_rate_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "title": "Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "quote_id",
-            "required": true,
-            "schema": {
-              "title": "Quote Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QuoteInfo"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Refresh Quote Route",
         "tags": [
           "product quotes"
         ]

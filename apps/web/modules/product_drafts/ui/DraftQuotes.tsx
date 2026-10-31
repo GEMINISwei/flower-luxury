@@ -29,8 +29,8 @@ export default function DraftQuotes({ draft, vendors, disabled, mutate }: {
       return <article key={quote.id} className={styles.message}>
         <div className={styles.sectionHeader}>
           <strong className={styles.wrap}>{vendor?.name ?? t("unavailable")}</strong>
-          <span>{vendor?.currency} {new Intl.NumberFormat(locale)
-            .format(Number(quote.original_amount))}</span></div>
+          <span>{new Intl.NumberFormat(locale)
+            .format(Number(quote.original_amount))} × {quote.exchange_rate}</span></div>
         {quote.note && <p className={styles.wrap}>{quote.note}</p>}
         <div className={styles.sectionHeader}>
           <Button variant="outlined" disabled={disabled} onClick={() => setEditing(quote)}>{t("edit")}</Button>

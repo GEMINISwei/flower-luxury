@@ -56,7 +56,8 @@ async def approve_draft(id: str, form: VersionRequest, actor: CurrentUser) -> Ap
         async def import_quotes(product: ProductInfo) -> None:
             for quote in draft.quotes or []:
                 await create_quote(product.id, QuoteCreate.model_validate({
-                    key: quote.get(key) for key in ("vendor_id", "original_amount", "note")
+                    key: quote.get(key) for key in
+                    ("vendor_id", "original_amount", "exchange_rate", "note")
                 }), actor)
 
         product = await create_imported_product(

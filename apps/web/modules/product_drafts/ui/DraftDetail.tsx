@@ -63,7 +63,7 @@ export default function DraftDetail({ initial, brands, sources, vendors }: {
             }} /></div>
         </div>
         <div className={styles.editorColumn}>
-          <PrefillStatus draft={draft} disabled={disabled} mutate={editor.run} />
+          <PrefillStatus draft={draft} />
           <DraftFields values={values} brands={brands} disabled={pending} onChange={editor.set} />
           <DraftQuotes draft={draft} vendors={vendors} disabled={disabled} mutate={editor.run} />
         </div>

@@ -75,24 +75,6 @@ export interface paths {
         patch: operations["update_settings_route_api_draft_prefill_settings_patch"];
         trace?: never;
     };
-    "/api/exchange-rates/settings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Exchange Settings Route */
-        get: operations["get_exchange_settings_route_api_exchange_rates_settings_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update Exchange Settings Route */
-        patch: operations["update_exchange_settings_route_api_exchange_rates_settings_patch"];
-        trace?: never;
-    };
     "/api/languages/": {
         parameters: {
             query?: never;
@@ -404,23 +386,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/product-drafts/{id}/prefill": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Retry Prefill Route */
-        post: operations["retry_prefill_route_api_product_drafts__id__prefill_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/product-drafts/{id}/quotes": {
         parameters: {
             query?: never;
@@ -630,23 +595,6 @@ export interface paths {
         head?: never;
         /** Update Quote Route */
         patch: operations["update_quote_route_api_products__id__quotes__quote_id__patch"];
-        trace?: never;
-    };
-    "/api/products/{id}/quotes/{quote_id}/refresh-rate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Refresh Quote Route */
-        post: operations["refresh_quote_route_api_products__id__quotes__quote_id__refresh_rate_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/products/{id}/return": {
@@ -1202,6 +1150,8 @@ export interface components {
         };
         /** DraftQuoteInfo */
         DraftQuoteInfo: {
+            /** @default 1 */
+            exchange_rate: components["schemas"]["QuoteRate-Output"];
             /** Id */
             id: string;
             /** Note */
@@ -1212,6 +1162,8 @@ export interface components {
         };
         /** DraftQuoteUpdate */
         DraftQuoteUpdate: {
+            /** @default 1 */
+            exchange_rate: components["schemas"]["QuoteRate-Input"];
             /** Note */
             note?: string | null;
             original_amount: components["schemas"]["QuoteAmount-Input"];
@@ -1253,32 +1205,6 @@ export interface components {
             manual_fields?: ("name" | "brand_id" | "category" | "model_name" | "serial_number" | "color" | "year" | "cost_price" | "internal_note")[];
             /** Version */
             version: number;
-        };
-        /** ExchangeRateSettings */
-        ExchangeRateSettings: {
-            /**
-             * Base Currency
-             * @default TWD
-             */
-            base_currency: string;
-            /**
-             * Currency
-             * @default CNY
-             */
-            currency: string;
-            /** Operator Name */
-            operator_name?: string | null;
-            /** Rate */
-            rate?: string | null;
-            /** Updated At */
-            updated_at?: string | null;
-            /** Updated By */
-            updated_by?: string | null;
-        };
-        /** ExchangeRateUpdate */
-        ExchangeRateUpdate: {
-            /** Rate */
-            rate: number | string;
         };
         /** GroupInfo */
         GroupInfo: {
@@ -1513,6 +1439,28 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** PrefillResult */
+        PrefillResult: {
+            /** Brand Id */
+            brand_id?: string | null;
+            category?: components["schemas"]["ProductCategory"] | null;
+            /** Color */
+            color?: string | null;
+            /** Cost Price */
+            cost_price?: number | null;
+            /** Internal Note */
+            internal_note?: string | null;
+            /** Model Name */
+            model_name?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Serial Number */
+            serial_number?: string | null;
+            /** Vendor Info */
+            vendor_info?: components["schemas"]["PrefillVendorInfo"][];
+            /** Year */
+            year?: number | null;
+        };
         /** PrefillSettingsInfo */
         PrefillSettingsInfo: {
             /** Base Prompt */
@@ -1530,6 +1478,14 @@ export interface components {
             revision: number;
             /** Supplement */
             supplement: string;
+        };
+        /** PrefillVendorInfo */
+        PrefillVendorInfo: {
+            /** @default 1 */
+            exchange_rate: components["schemas"]["QuoteRate-Output"];
+            original_amount: components["schemas"]["QuoteAmount-Output"];
+            /** Vendor Id */
+            vendor_id: string;
         };
         /** @enum {string} */
         ProductCategory: "鞋子" | "配飾" | "皮件" | "包包" | "帽子" | "衣服" | "其他";
@@ -1619,6 +1575,8 @@ export interface components {
         "QuoteAmount-Output": string;
         /** QuoteCreate */
         QuoteCreate: {
+            /** @default 1 */
+            exchange_rate: components["schemas"]["QuoteRate-Input"];
             /** Note */
             note?: string | null;
             original_amount: components["schemas"]["QuoteAmount-Input"];
@@ -1634,13 +1592,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
-            /**
-             * Currency
-             * @enum {string}
-             */
-            currency: "TWD" | "CNY";
-            /** Exchange Rate */
-            exchange_rate: string;
+            /** @default 1 */
+            exchange_rate: components["schemas"]["QuoteRate-Output"];
             /** Has Sales */
             has_sales: boolean;
             /** Id */
@@ -1654,11 +1607,6 @@ export interface components {
             revision: number;
             /** Updated At */
             updated_at?: string | null;
-            /**
-             * Vendor Country
-             * @enum {string}
-             */
-            vendor_country: "TW" | "CN";
             /** Vendor Id */
             vendor_id: string;
             /** Vendor Name */
@@ -1671,8 +1619,12 @@ export interface components {
             /** List Data */
             list_data: components["schemas"]["QuoteInfo"][];
         };
+        "QuoteRate-Input": number | string;
+        "QuoteRate-Output": string;
         /** QuoteUpdate */
         QuoteUpdate: {
+            /** @default 1 */
+            exchange_rate: components["schemas"]["QuoteRate-Input"];
             /** Note */
             note?: string | null;
             original_amount: components["schemas"]["QuoteAmount-Input"];
@@ -1766,11 +1718,6 @@ export interface components {
             changed_by: string;
             /** Cost Price */
             cost_price: number;
-            /**
-             * Currency
-             * @enum {string}
-             */
-            currency: "TWD" | "CNY";
             /** Exchange Rate */
             exchange_rate: string;
             /** Id */
@@ -1798,11 +1745,6 @@ export interface components {
              * Format: date-time
              */
             sold_at: string;
-            /**
-             * Vendor Country
-             * @enum {string}
-             */
-            vendor_country: "TW" | "CN";
             /** Vendor Id */
             vendor_id: string;
             /** Vendor Name */
@@ -1975,11 +1917,8 @@ export interface components {
             /** Error Type */
             type: string;
         };
-        /** @enum {string} */
-        VendorCountry: "TW" | "CN";
         /** VendorCreate */
         VendorCreate: {
-            country: components["schemas"]["VendorCountry"];
             /** Name */
             name: string;
             /** Note */
@@ -1987,14 +1926,8 @@ export interface components {
         };
         /** VendorInfo */
         VendorInfo: {
-            country: components["schemas"]["VendorCountry"];
-            /** Country Locked */
-            country_locked: boolean;
-            /**
-             * Currency
-             * @enum {string}
-             */
-            readonly currency: "TWD" | "CNY";
+            /** Has Quotes */
+            has_quotes: boolean;
             /** Id */
             id: string;
             /** Is Active */
@@ -2013,7 +1946,6 @@ export interface components {
         };
         /** VendorUpdate */
         VendorUpdate: {
-            country: components["schemas"]["VendorCountry"];
             /** Is Active */
             is_active: boolean;
             /** Name */
@@ -2189,7 +2121,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DraftFields"];
+                    "application/json": components["schemas"]["PrefillResult"];
                 };
             };
             /** @description Validation Error */
@@ -2243,59 +2175,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PrefillSettingsInfo"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_exchange_settings_route_api_exchange_rates_settings_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExchangeRateSettings"];
-                };
-            };
-        };
-    };
-    update_exchange_settings_route_api_exchange_rates_settings_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ExchangeRateUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExchangeRateSettings"];
                 };
             };
             /** @description Validation Error */
@@ -2947,41 +2826,6 @@ export interface operations {
             };
         };
     };
-    retry_prefill_route_api_product_drafts__id__prefill_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VersionRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DraftInfo"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     create_quote_route_api_product_drafts__id__quotes_post: {
         parameters: {
             query?: never;
@@ -3597,38 +3441,6 @@ export interface operations {
                 "application/json": components["schemas"]["QuoteUpdate"];
             };
         };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QuoteInfo"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    refresh_quote_route_api_products__id__quotes__quote_id__refresh_rate_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                quote_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

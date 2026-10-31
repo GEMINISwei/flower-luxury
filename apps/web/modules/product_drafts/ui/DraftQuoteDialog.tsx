@@ -21,17 +21,19 @@ export default function DraftQuoteDialog({ draft, quote, vendors, disabled, muta
   const vendorInput = useId()
   const [vendorId, setVendorId] = useState(quote?.vendor_id ?? "")
   const [amount, setAmount] = useState(String(quote?.original_amount ?? ""))
+  const [rate, setRate] = useState(String(quote?.exchange_rate ?? "1"))
   const [note, setNote] = useState(quote?.note ?? "")
   const [error, setError] = useState("")
   function save() {
     const vendor = vendors.find((item) => item.id === vendorId)
     if (!vendor) { setError(t("required")); return }
-    const invalid = validateQuote(amount, vendor.country, locale)
+    const invalid = validateQuote(amount, rate, locale)
     if (invalid) { setError(invalid); return }
     setError("")
     mutate(async () => {
       const result = await saveDraftQuote(draft.id, draft.version, {
-        vendor_id: vendorId, original_amount: amount, note: note.trim() || null }, quote?.id)
+        vendor_id: vendorId, original_amount: amount, exchange_rate: rate,
+        note: note.trim() || null }, quote?.id)
       if (result.status !== "success") setError(getApiResponseErrorMessage(result, t("failed")))
       return result
     }, onClose)
@@ -43,8 +45,9 @@ export default function DraftQuoteDialog({ draft, quote, vendors, disabled, muta
       <SelectInput id={vendorInput} ariaLabel={t("vendor")} value={vendorId}
         onChange={setVendorId} required disabled={disabled}
         options={[{ value: "", label: t("choose") }, ...vendors.filter((item) => item.is_active)
-          .map((item) => ({ value: item.id, label: `${item.name} · ${item.currency}` }))]} /></div>
+          .map((item) => ({ value: item.id, label: item.name }))]} /></div>
     <TextInput label={t("amount")} value={amount} onChange={setAmount} required disabled={disabled} />
+    <TextInput label={t("rate")} value={rate} onChange={setRate} required disabled={disabled} />
     <TextInput label={t("note")} value={note} onChange={setNote} disabled={disabled} />
     {error && <p role="alert">{error}</p>}
   </FormDialog>
