@@ -145,6 +145,7 @@ test("員工建立商品上傳照片後可詢價成交退回再成交並保留�
     await page.getByRole("link", { name: "查看商品歷程", exact: true }).click()
     await expect(page.getByRole("definition")).toContainText(["5,000", "3,100", "1,900", staff.username])
     await page.getByRole("link", { name: "返回商品詳情", exact: true }).click()
+    await expect(page).toHaveURL(detail)
     await checkPhotos(page, sources, true)
   })
 
@@ -165,6 +166,7 @@ test("員工建立商品上傳照片後可詢價成交退回再成交並保留�
     await expect(page.getByText("已退回", { exact: true })).toHaveCount(1)
     await expect(page.getByText(returnReason, { exact: true })).toHaveCount(2)
     await page.getByRole("link", { name: "返回商品詳情", exact: true }).click()
+    await expect(page).toHaveURL(detail)
     await checkPhotos(page, sources, false)
   })
 
@@ -190,6 +192,7 @@ test("員工建立商品上傳照片後可詢價成交退回再成交並保留�
       "5,000", "3,100", "1,900", staff.username, returnReason,
     ])
     await page.getByRole("link", { name: "返回商品詳情", exact: true }).click()
+    await expect(page).toHaveURL(detail)
   })
 
   await test.step("重新載入後同一商品與照片兩次成交及員工流向記錄仍保留", async () => {
@@ -210,6 +213,7 @@ test("員工建立商品上傳照片後可詢價成交退回再成交並保留�
     ])
     await expect(page.getByRole("listitem").filter({ hasText: staff.username })).toHaveCount(4)
     await page.getByRole("link", { name: "返回商品詳情", exact: true }).click()
+    await expect(page).toHaveURL(detail)
     await checkPhotos(page, sources, true)
     await page.getByRole("link", { name: "返回商品列表", exact: true }).click()
     await page.goto(`/products?keyword=${encodeURIComponent(sku)}`)
