@@ -53,7 +53,8 @@ Claude 與 Codex 的 hook 協定相同（事件名稱、stdin 收的 JSON、回�
 就失效。申請指令的寫法固定：直接寫放行檔、換寫法執行申請指令都會被 `guard_commands.py` 擋下，否則就繞過了確認。
 Claude 也能用同一個申請指令（`.claude/settings.json` 的 `permissions.ask` 讓它一樣要確認），但直接按允許比較方便。
 
-agent 用 shell 指令（`sed -i`、重新導向）改測試檔時不會被攔：hook 只看改檔工具。
+測試鎖定只涵蓋改檔工具。shell 寫檔路徑（例如 `sed -i`、重新導向，或在 `exec_command` 中執行
+`apply_patch`）不會被這個 hook 攔下；仍須遵守「改程式不改測試」與不得繞過守衛的規範。
 
 ## 新增一個 hook
 
@@ -85,6 +86,9 @@ agent 用 shell 指令（`sed -i`、重新導向）改測試檔時不會被攔�
   再用 `/hooks` 逐一確認每個 hook。hook 內容改了要重新確認。
 - [ ] **Windows**：先 `git config --global core.symlinks true`（並開啟開發人員模式）再 clone，
   `.claude/skills` 才會是 symlink；否則 Claude 讀不到任何 skill（init 檢查，不是 symlink 就擋）。
+
+驗收請使用新啟動的 session，讓專案設定、hook 與 `AI_AGENT` 一起載入；既有聊天不能只憑
+`/hooks` 的信任狀態推定已套用新設定。
 
 裝好之後，請 agent 執行 `docker compose version` 確認會被指令守衛擋下。
 選這個指令是因為 hook 沒生效時它也只是印出版本，不會造成任何影響。
