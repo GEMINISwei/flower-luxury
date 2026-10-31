@@ -1,4 +1,8 @@
-import type { DraftFields, DraftValues } from "./types"
+import type { DraftFields, DraftValues, MessageInfo } from "./types"
+
+export function draftTextMessages(messages: MessageInfo[]): MessageInfo[] {
+  return messages.filter((message) => message.kind === "text")
+}
 
 const FIELDS = ["name", "brand_id", "category", "model_name", "serial_number",
   "color", "year", "cost_price", "internal_note"] as const

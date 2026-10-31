@@ -19,6 +19,8 @@ export default function DraftFields({ values, brands, disabled, onChange }: {
     <div className={styles.fields}>
       <TextInput label={t("name")} value={values.name} disabled={disabled}
         onChange={(value) => onChange("name", value)} />
+      <TextInput label={t("cost_price")} value={values.cost_price} disabled={disabled} type="number"
+        onChange={(value) => onChange("cost_price", value)} />
       <div className={styles.field}><span>{t("brand_id")}</span>
       <SelectInput ariaLabel={t("brand_id")} value={values.brand_id} disabled={disabled}
         onChange={(value) => onChange("brand_id", value)}
@@ -34,9 +36,9 @@ export default function DraftFields({ values, brands, disabled, onChange }: {
         options={[{ value: "", label: t("choose") }, ...Object.entries(CATEGORIES).map(([value, key]) => ({
           value, label: productT(key),
         }))]} /></div>
-      {(["model_name", "serial_number", "color", "year", "cost_price"] as const).map((key) =>
+      {(["model_name", "serial_number", "year", "color"] as const).map((key) =>
         <TextInput key={key} label={t(key)} value={values[key]} disabled={disabled}
-          type={key === "year" || key === "cost_price" ? "number" : "text"}
+          type={key === "year" ? "number" : "text"}
           onChange={(value) => onChange(key, value)} />)}
       <label className={styles.notes}>{t("internal_note")}
         <textarea aria-label={t("internal_note")} value={values.internal_note} disabled={disabled}

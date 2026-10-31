@@ -7,7 +7,7 @@
 .detailGrid { display: grid; align-items: start;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--container-auth)), 1fr));
   gap: var(--space-5); }
-.sectionHeader, .reloadBar { display: flex; align-items: center;
+.sectionHeader { display: flex; align-items: center;
   justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); min-width: 0; }
 .sectionHeader h2 { display: flex; align-items: center; gap: var(--space-2); }
 .count { display: inline-flex; align-items: center; justify-content: center;
@@ -15,14 +15,15 @@
   font: var(--fw-medium) var(--fs-xs)/var(--lh-normal) var(--font-sans);
   color: var(--color-on-primary-container); background: var(--color-primary-container); }
 .field { display: grid; gap: var(--space-2); min-width: 0; }
-.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--size-flow-step)), 1fr));
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4); min-width: 0; }
-.fields > :first-child, .notes { grid-column: 1 / -1; }
+.fields > :first-child, .fields > :nth-child(2), .notes { grid-column: 1 / -1; }
 .hint, .meta { color: var(--color-text-secondary); font-size: var(--fs-sm); }
-.meta, .actions, .photoActions { flex-wrap: wrap; }
+.meta, .photoActions { flex-wrap: wrap; }
 .meta { overflow-wrap: anywhere; }
-.actions { padding: var(--space-4); background: var(--color-surface-card);
-  border: var(--border-width-hairline) solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+.headerActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3);
+  max-width: min(var(--container-auth), calc(100vw / 2)); }
+.headerActions > button { min-width: 0; white-space: normal; }
 .dangerAction { color: var(--color-danger-fg); }
 .messageScroll { display: grid; align-content: start; gap: var(--space-3); min-width: 0; min-height: 0;
   max-height: var(--size-draft-messages); overflow-y: auto; overscroll-behavior-y: contain;
@@ -68,17 +69,8 @@
   border: var(--border-width-hairline) solid var(--color-border-control); border-radius: var(--radius-sm);
   background: var(--color-surface-input); color: var(--color-text-body); padding: var(--space-3); }
 .notes textarea:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-.uploadSection { display: grid; gap: var(--space-2); padding-top: var(--space-3);
-  border-top: var(--border-width-hairline) solid var(--color-border-subtle); }
-.upload { display: grid; gap: var(--space-2); min-width: 0; overflow-wrap: anywhere; }
-.upload { font-size: var(--fs-sm); font-weight: var(--fw-medium); }
-.upload input { max-width: 100%; font: inherit; }
 .wrap { overflow-wrap: anywhere; }
 .feedback { display: grid; gap: var(--space-3); }
-.reloadBar { padding: var(--space-4); border-radius: var(--radius-md);
-  background: var(--color-primary-container); }
-.reloadBar p { flex: 1 1 var(--container-auth); }
-.reloadBar button { flex-shrink: 0; }
 .feedback [role="alert"] { color: var(--color-danger-fg); }
 .feedback dl { display: grid; gap: var(--space-2); }
 .feedback dd { white-space: pre-wrap; overflow-wrap: anywhere; }

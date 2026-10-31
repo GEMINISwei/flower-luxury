@@ -1,7 +1,6 @@
 "use client"
 import { useState } from "react"
 import Image from "next/image"
-import { Flex } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import { copyText } from "../capabilities"
@@ -32,10 +31,8 @@ export default function MessageList({ messages, onCopy }: {
     <div className={styles.messageScroll} role="region" aria-label={t("messageContent")}
       tabIndex={0}>
       {messages.map((message) => <article key={message.id} className={styles.message}>
-        <Flex gap={2} className={styles.meta}>
-          <span>{message.sender_name ?? message.sender_id ?? t("unknownSender")}</span>
-          <time dateTime={message.occurred_at}>{formatDateTime(message.occurred_at, "Asia/Taipei")}</time>
-        </Flex>
+        <time className={styles.meta} dateTime={message.occurred_at}>
+          {formatDateTime(message.occurred_at, "Asia/Taipei")}</time>
         {message.kind === "text"
           ? <button type="button" className={styles.copyBlock}
             onClick={() => void copy(message.text ?? "")}>{message.text}</button>

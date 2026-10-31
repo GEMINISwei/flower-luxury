@@ -1,9 +1,7 @@
 "use server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { apiDelete, apiGet, apiPatch, apiPost, apiUpload } from "@/shared/api/request.server"
-import { getLocale } from "@/shared/i18n/locale.server"
-import { validatePhotoBatch } from "@/modules/products/public.client"
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/shared/api/request.server"
 import type { DraftFields } from "./types"
 
 const refresh = { path: "/product-drafts" }
@@ -26,15 +24,6 @@ export async function discardDraft(id: string, version: number) {
   const result = await apiDelete({ url: "/product-drafts/{id}", params: { id }, query: { version } })
   if (result.status === "success") { revalidatePath("/product-drafts"); redirect("/product-drafts") }
   return result
-}
-export async function uploadDraftPhotos(id: string, version: number, data: FormData) {
-  const files = data.getAll("files").filter((file): file is File => file instanceof File)
-  const error = validatePhotoBatch(files, await getLocale())
-  if (error) return { status: "failure" as const, code: 422, data: { detail: error }, message: error }
-  const body = new FormData()
-  body.append("version", String(version))
-  files.forEach((file) => body.append("files", file))
-  return apiUpload({ url: "/product-drafts/{id}/photos", params: { id }, data: body })
 }
 export async function setDraftMainPhoto(id: string, version: number, photo_id: string) {
   return apiPatch({ url: "/product-drafts/{id}/photos/main", params: { id },
