@@ -5,8 +5,6 @@ import { admin, login } from "./support"
 
 // Playwright replaces a failed worker, so each process needs its own disposable account.
 const staff = { username: `draft-staff-${randomUUID().slice(0, 8)}`, password: "draft-staff-password" }
-const image = { name: "supplement.png", mimeType: "image/png",
-  buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGP8zwACTGCSAQANHQEDgslx/wAAAABJRU5ErkJggg==", "base64") }
 const seedScript = String.raw`
 import asyncio, json, os, sys, uuid
 from datetime import timedelta
@@ -41,12 +39,15 @@ async def run():
             async def message(kind, second, text=None):
                 return await collection.ingest_message(IncomingMessage(source_key=source,
                     external_id=uuid.uuid4().hex, kind=kind, text=text,
-                    occurred_at=base + timedelta(seconds=second), sender_name="供應商"))
+                    occurred_at=base + timedelta(seconds=second), sender_id="U_hidden_sender_code"))
             await message("text", 0, "先到的文字")
             first = await message("image", 1)
             data = BytesIO()
             Image.new("RGB", (8, 4), "red").save(data, "PNG")
             await photos.complete_photo(first.message_id, data.getvalue(), "line.png")
+            for index in range(1, int(arg.get("photos", "1"))):
+                extra = await message("image", 1 + index / 10)
+                await photos.complete_photo(extra.message_id, data.getvalue(), f"line-{index}.png")
             await message("text", 2, "第一行\n第二行")
             await message("text", 3, "成本三萬元")
             if arg.get("crowded"):
@@ -231,11 +232,11 @@ test("stale_draft_preserves_unsaved_input", async ({ page }) => {
 })
 
 test("draft_photos_can_be_organized_securely", async ({ page, browser }) => {
-  const data = seed()
+  const data = fixture({ name: `Photos ${randomUUID().slice(0, 8)}`, photos: "2" })
   await login(page, staff)
   await open(page, data.id)
-  await page.getByLabel("補上傳照片").setInputFiles(image)
   await expect(page.getByTestId("draft-photo")).toHaveCount(2)
+  await page.getByRole("button", { name: "下一張照片", exact: true }).click()
   const last = page.getByTestId("draft-photo").last()
   await last.getByRole("button", { name: "設為主圖" }).click()
   await expect(last).toContainText("主圖")
@@ -295,13 +296,12 @@ test("mobile and English draft workflow", async ({ page }) => {
 
 
 test("多張暫存照片可左右切換且不改動商品欄位", async ({ page }) => {
-  const data = seed()
+  const data = fixture({ name: `Gallery ${randomUUID().slice(0, 8)}`, photos: "3" })
   await login(page, staff)
   await open(page, data.id)
   await page.getByLabel("名稱", { exact: true }).fill("待儲存的商品")
   const gallery = page.getByRole("region", { name: "照片瀏覽" })
   await expect(page.getByRole("button", { name: "上一張照片", exact: true })).toBeDisabled()
-  await page.getByLabel("補上傳照片").setInputFiles([image, { ...image, name: "third.png" }])
   await expect(page.getByTestId("draft-photo")).toHaveCount(3)
   const firstImage = await gallery.getByTestId("draft-photo").first().boundingBox()
   const galleryBox = await gallery.boundingBox()
@@ -341,12 +341,11 @@ test("大量原始訊息在固定高度區域捲動且可逐則完整複製", as
 })
 
 test("手機版暫存工作區不橫向溢出且可切換照片", async ({ page }) => {
-  const data = seed()
+  const data = fixture({ name: `Mobile ${randomUUID().slice(0, 8)}`, photos: "2" })
   await login(page, staff)
   await page.setViewportSize({ width: 390, height: 844 })
   await page.context().addCookies([{ name: "locale", value: "en", url: process.env.E2E_BASE_URL! }])
   await open(page, data.id)
-  await page.getByLabel("Upload additional photos").setInputFiles(image)
   await page.getByRole("button", { name: "Next photo", exact: true }).click()
   await expect(page.getByText("Photo 2 of 2", { exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -357,4 +356,77 @@ test("手機版暫存工作區不橫向溢出且可切換照片", async ({ page 
   const messages = page.getByRole("region", { name: "Message content" })
   await expect(messages).toHaveAttribute("tabindex", "0")
   expect((await messages.boundingBox())!.width).toBeLessThan(390)
+})
+
+test("暫存原始訊息只顯示時間與文字且不提供補上傳", async ({ page }) => {
+  const data = seed()
+  await login(page, staff)
+  await open(page, data.id)
+  const messages = page.getByRole("region", { name: "訊息內容", exact: true })
+  await expect(messages.getByRole("article")).toHaveCount(2)
+  await expect(messages.getByRole("button")).toHaveText(["第一行\n第二行", "成本三萬元"])
+  await expect(messages.getByRole("img")).toHaveCount(0)
+  await expect(messages).not.toContainText("圖片訊息")
+  await expect(messages).not.toContainText("U_hidden_sender_code")
+  await expect(messages).not.toContainText("未提供傳送者")
+  for (const article of await messages.getByRole("article").all()) {
+    expect(await article.evaluate((element) => element.querySelector("time")?.dateTime))
+      .toMatch(/^\d{4}-\d{2}-\d{2}T/)
+  }
+  await expect(page.getByLabel("補上傳照片")).toHaveCount(0)
+  await expect(page.getByTestId("draft-photo")).toHaveCount(1)
+  await open(page, data.second)
+  await expect(page.getByRole("region", { name: "訊息內容", exact: true }).getByRole("article"))
+    .toHaveCount(0)
+  await expect(page.getByRole("region", { name: "照片整理", exact: true }))
+    .toContainText("下載失敗")
+  await expect(page.getByRole("main")).not.toContainText("補上傳")
+})
+
+test("暫存返回位於內容頂端且操作集中於頁首", async ({ page }) => {
+  const data = seed()
+  await login(page, staff)
+  await open(page, data.id)
+  const back = page.getByRole("link", { name: "返回暫存列表", exact: true })
+  await expect(back).toHaveAttribute("href", "/product-drafts")
+  expect(await back.evaluate((element) => Boolean(element.closest("header")))).toBe(false)
+  const backBox = (await back.boundingBox())!
+  for (const label of ["重新載入資料", "儲存暫存", "審核建檔", "放棄暫存"]) {
+    const action = page.getByRole("button", { name: label, exact: true })
+    expect(await action.evaluate((element) => Boolean(element.closest("header")))).toBe(true)
+    const box = (await action.boundingBox())!
+    expect(box.y + box.height).toBeLessThanOrEqual(backBox.y)
+  }
+  const photos = (await page.getByRole("region", { name: "照片整理", exact: true }).boundingBox())!
+  expect(backBox.y + backBox.height).toBeLessThan(photos.y)
+  await back.click()
+  await expect(page).toHaveURL("/product-drafts")
+})
+
+test("商品資訊依指定六列排列且最多兩欄", async ({ page }) => {
+  const data = seed()
+  await login(page, staff)
+  await open(page, data.id)
+  await expect(page.getByRole("heading", { name: "商品資訊", exact: true })).toBeVisible()
+  const rows = [["名稱"], ["成本（新臺幣）"], ["品牌", "分類"],
+    ["型號", "序號"], ["年份", "顏色"], ["備註"]]
+  for (const width of [1440, 1024, 390]) {
+    await page.setViewportSize({ width, height: 1000 })
+    let bottom = 0
+    for (const row of rows) {
+      const first = (await page.getByLabel(row[0], { exact: true }).boundingBox())!
+      expect(first.y).toBeGreaterThan(bottom)
+      if (row.length === 2) {
+        const second = (await page.getByLabel(row[1], { exact: true }).boundingBox())!
+        expect(Math.abs(first.y - second.y)).toBeLessThan(2)
+        expect(first.x + first.width).toBeLessThan(second.x)
+      } else {
+        const brand = (await page.getByLabel("品牌", { exact: true }).boundingBox())!
+        const category = (await page.getByLabel("分類", { exact: true }).boundingBox())!
+        expect(Math.abs(first.width - (category.x + category.width - brand.x))).toBeLessThan(2)
+      }
+      bottom = first.y + first.height
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  }
 })
