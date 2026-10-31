@@ -11,6 +11,7 @@ from sqlalchemy import (
     String,
     Text,
     delete,
+    func,
     select,
     text,
 )
@@ -36,17 +37,64 @@ class DraftTable(BaseTable):
     version: Mapped[int] = mapped_column(default=1)
     received_at: Mapped[datetime] = mapped_column(default=utc_now)
     fields: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    manual_fields: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    quotes: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    prefill_revision: Mapped[int] = mapped_column(default=0)
+    prefill_status: Mapped[str] = mapped_column(String(16), default="idle")
     collecting: Mapped[bool] = mapped_column(default=True)
     has_text: Mapped[bool] = mapped_column(default=False)
     main_photo_id: Mapped[uuid.UUID | None]
     updated_by: Mapped[str | None]
     __table_args__ = (
         CheckConstraint("version >= 1", name="positive_version"),
+        CheckConstraint("prefill_revision >= 0", name="prefill_positive_revision"),
+        CheckConstraint("prefill_status IN ('idle', 'disabled', 'queued', 'ready', 'failed')",
+                        name="prefill_valid_status"),
         Index("uq_product_drafts_collecting_source", "source_key", unique=True,
               postgresql_where=text("collecting IS TRUE")),
         Index("ix_product_drafts_created_at_id", "created_at", "id"),
         Index("ix_product_drafts_received_at_id", "received_at", "id"),
     )
+
+
+class PrefillSettingsTable(BaseTable):
+    __tablename__ = "draft_prefill_settings"
+    key: Mapped[str] = mapped_column(String(16), unique=True)
+    supplement: Mapped[str] = mapped_column(Text, default="")
+    revision: Mapped[int] = mapped_column(default=1)
+    updated_by: Mapped[str]
+    __table_args__ = (
+        CheckConstraint("key = 'global'", name="prefill_global_only"),
+        CheckConstraint("revision >= 1", name="prefill_settings_positive_revision"),
+    )
+
+
+async def prefill_settings_row(*, lock: bool = False) -> PrefillSettingsTable | None:
+    if lock:
+        # 首次設定還沒有資料列, 也必須與套用 AI 結果互斥.
+        await active_session().execute(select(func.pg_advisory_xact_lock(58379211)))
+    statement = select(PrefillSettingsTable).where(PrefillSettingsTable.key == "global")
+    if lock:
+        statement = statement.with_for_update().execution_options(populate_existing=True)
+    return await active_session().scalar(statement)
+
+
+async def write_prefill_settings(supplement: str, revision: int, actor_id: str) -> bool:
+    row = await prefill_settings_row(lock=True)
+    if row:
+        if row.revision != revision:
+            return False
+        row.supplement, row.revision = supplement, revision + 1
+        row.updated_by, row.updated_at = actor_id, utc_now()
+        await active_session().flush()
+        return True
+    if revision != 0:
+        return False
+    result = await active_session().execute(insert(PrefillSettingsTable).values(
+        key="global", supplement=supplement, revision=1, updated_by=actor_id,
+    ).on_conflict_do_nothing(index_elements=[PrefillSettingsTable.key])
+        .returning(PrefillSettingsTable.id))
+    return result.scalar_one_or_none() is not None
 
 
 class MessageTable(BaseTable):

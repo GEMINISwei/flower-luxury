@@ -4,7 +4,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from modules.products.public import ProductCategory
+from modules.products.public import ProductCategory, QuoteCreate
 from shared.http.errors import resolve_text
 from shared.http.schema import NonEmptyText, PaginatedResponse, UtcDateTime, UuidText
 
@@ -31,6 +31,9 @@ class VersionRequest(BaseModel):
 
 class DraftUpdate(VersionRequest):
     fields: DraftFields
+    manual_fields: list[Literal["name", "brand_id", "category", "model_name", "serial_number",
+                                "color", "year", "cost_price", "internal_note"]] = Field(
+                                    default_factory=list)
 
 
 class PhotoOrder(VersionRequest):
@@ -125,9 +128,18 @@ class DraftSummary(BaseModel):
     updated_at: UtcDateTime | None = None
 
 
+class DraftQuoteInfo(QuoteCreate):
+    id: str
+
+
 class DraftInfo(DraftSummary):
     messages: list[MessageInfo]
     photos: list[DraftPhotoInfo]
+    manual_fields: list[str] = Field(default_factory=list)
+    quotes: list[DraftQuoteInfo] = Field(default_factory=list)
+    prefill_revision: int = 0
+    prefill_configured: bool = False
+    prefill_status: Literal["idle", "disabled", "queued", "ready", "failed"] = "idle"
 
 
 class DraftList(PaginatedResponse[DraftSummary]):

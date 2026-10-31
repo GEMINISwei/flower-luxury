@@ -8,8 +8,9 @@ from shared.time import utc_now
 
 from . import model
 from .errors import DraftError
+from .prefill_config import get_env
 from .rules import check_version
-from .schema import DraftInfo, DraftList, DraftPhotoInfo, DraftUpdate, MessageInfo
+from .schema import DraftFields, DraftInfo, DraftList, DraftPhotoInfo, DraftUpdate, MessageInfo
 
 
 def _message_info(row: model.MessageTable) -> MessageInfo:
@@ -44,7 +45,11 @@ async def get_draft(id: str | None) -> DraftInfo:
     for message in messages:
         message.photo = photo_messages.get(message.id)
     return DraftInfo(**{**row.to_dict(), "id": str(row.id),
-                        "main_photo_id": str(row.main_photo_id) if row.main_photo_id else None},
+                        "main_photo_id": str(row.main_photo_id) if row.main_photo_id else None,
+                        "manual_fields": row.manual_fields or [], "quotes": row.quotes or [],
+                        "prefill_revision": row.prefill_revision or 0,
+                        "prefill_configured": get_env().prefill_configured,
+                        "prefill_status": row.prefill_status or "idle"},
                      messages=messages, photos=photos)
 
 
@@ -63,7 +68,11 @@ async def update_draft(id: str, form: DraftUpdate, actor: CurrentUser) -> DraftI
     async with transaction():
         row = ensure_found(await model.get_draft_row(id, lock=True), DraftError.NOT_FOUND)
         check_version(row.version, form.version)
-        row.fields = form.fields.model_dump(mode="json")
+        previous = DraftFields.model_validate(row.fields).model_dump(mode="json")
+        values = form.fields.model_dump(mode="json")
+        changed = {key for key, value in values.items() if previous[key] != value}
+        row.manual_fields = sorted(set(row.manual_fields or []) | changed | set(form.manual_fields))
+        row.fields = values
         _bump(row, actor)
         await active_session().flush()
         return await get_draft(id)

@@ -7,6 +7,7 @@ from shared.http.errors import LangException, ensure_found
 
 from . import model, storage
 from .errors import DraftError
+from .prefill import schedule_prefill
 from .rules import check_version
 from .schema import DiscardInfo, DraftInfo, MessageList, MessageMove, WithdrawalResult
 from .service import _bump, _photo_info, get_draft
@@ -58,6 +59,8 @@ async def move_message(id: str | None, form: MessageMove, actor: CurrentUser) ->
         for draft in (source, target):
             if draft:
                 _bump(draft, actor)
+                if message.kind == "text":
+                    await schedule_prefill(draft)
         await active_session().flush()
         return await get_draft(str(target.id))
 
@@ -83,6 +86,8 @@ async def withdraw_message(source_key: str, external_id: str,
         await active_session().delete(message)
         if draft:
             _bump(draft)
+            if message.kind == "text":
+                await schedule_prefill(draft)
         await active_session().flush()
         return WithdrawalResult(removed=True)
 

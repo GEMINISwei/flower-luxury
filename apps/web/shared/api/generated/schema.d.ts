@@ -40,6 +40,41 @@ export interface paths {
         patch: operations["update_brand_route_api_brands__id__patch"];
         trace?: never;
     };
+    "/api/draft-prefill/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Route */
+        post: operations["preview_route_api_draft_prefill_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/draft-prefill/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings Route */
+        get: operations["get_settings_route_api_draft_prefill_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Settings Route */
+        patch: operations["update_settings_route_api_draft_prefill_settings_patch"];
+        trace?: never;
+    };
     "/api/exchange-rates/settings": {
         parameters: {
             query?: never;
@@ -367,6 +402,58 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/prefill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Prefill Route */
+        post: operations["retry_prefill_route_api_product_drafts__id__prefill_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Quote Route */
+        post: operations["create_quote_route_api_product_drafts__id__quotes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/quotes/{quote_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Quote Route */
+        delete: operations["delete_quote_route_api_product_drafts__id__quotes__quote_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Quote Route */
+        patch: operations["update_quote_route_api_product_drafts__id__quotes__quote_id__patch"];
         trace?: never;
     };
     "/api/products/": {
@@ -1040,10 +1127,30 @@ export interface components {
             id: string;
             /** Main Photo Id */
             main_photo_id?: string | null;
+            /** Manual Fields */
+            manual_fields?: string[];
             /** Messages */
             messages: components["schemas"]["MessageInfo"][];
             /** Photos */
             photos: components["schemas"]["DraftPhotoInfo"][];
+            /**
+             * Prefill Configured
+             * @default false
+             */
+            prefill_configured: boolean;
+            /**
+             * Prefill Revision
+             * @default 0
+             */
+            prefill_revision: number;
+            /**
+             * Prefill Status
+             * @default idle
+             * @enum {string}
+             */
+            prefill_status: "idle" | "disabled" | "queued" | "ready" | "failed";
+            /** Quotes */
+            quotes?: components["schemas"]["DraftQuoteInfo"][];
             /**
              * Received At
              * Format: date-time
@@ -1093,6 +1200,26 @@ export interface components {
             /** Url */
             url?: string | null;
         };
+        /** DraftQuoteInfo */
+        DraftQuoteInfo: {
+            /** Id */
+            id: string;
+            /** Note */
+            note?: string | null;
+            original_amount: components["schemas"]["QuoteAmount-Output"];
+            /** Vendor Id */
+            vendor_id: string;
+        };
+        /** DraftQuoteUpdate */
+        DraftQuoteUpdate: {
+            /** Note */
+            note?: string | null;
+            original_amount: components["schemas"]["QuoteAmount-Input"];
+            /** Vendor Id */
+            vendor_id: string;
+            /** Version */
+            version: number;
+        };
         /** DraftSummary */
         DraftSummary: {
             /** Collecting */
@@ -1122,6 +1249,8 @@ export interface components {
         /** DraftUpdate */
         DraftUpdate: {
             fields: components["schemas"]["DraftFields"];
+            /** Manual Fields */
+            manual_fields?: ("name" | "brand_id" | "category" | "model_name" | "serial_number" | "color" | "year" | "cost_price" | "internal_note")[];
             /** Version */
             version: number;
         };
@@ -1376,6 +1505,31 @@ export interface components {
             photo_ids: string[];
             /** Version */
             version: number;
+        };
+        /** PrefillPreview */
+        PrefillPreview: {
+            /** Supplement */
+            supplement: string;
+            /** Text */
+            text: string;
+        };
+        /** PrefillSettingsInfo */
+        PrefillSettingsInfo: {
+            /** Base Prompt */
+            base_prompt: string;
+            /** Configured */
+            configured: boolean;
+            /** Revision */
+            revision: number;
+            /** Supplement */
+            supplement: string;
+        };
+        /** PrefillSettingsUpdate */
+        PrefillSettingsUpdate: {
+            /** Revision */
+            revision: number;
+            /** Supplement */
+            supplement: string;
         };
         /** @enum {string} */
         ProductCategory: "鞋子" | "配飾" | "皮件" | "包包" | "帽子" | "衣服" | "其他";
@@ -2003,6 +2157,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BrandInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_route_api_draft_prefill_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrefillPreview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftFields"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_settings_route_api_draft_prefill_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrefillSettingsInfo"];
+                };
+            };
+        };
+    };
+    update_settings_route_api_draft_prefill_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrefillSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrefillSettingsInfo"];
                 };
             };
             /** @description Validation Error */
@@ -2684,6 +2924,146 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["VersionRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_prefill_route_api_product_drafts__id__prefill_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_quote_route_api_product_drafts__id__quotes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftQuoteUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_quote_route_api_product_drafts__id__quotes__quote_id__delete: {
+        parameters: {
+            query: {
+                version: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_quote_route_api_product_drafts__id__quotes__quote_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftQuoteUpdate"];
             };
         };
         responses: {

@@ -74,3 +74,6 @@
 .feedback [role="alert"] { color: var(--color-danger-fg); }
 .feedback dl { display: grid; gap: var(--space-2); }
 .feedback dd { white-space: pre-wrap; overflow-wrap: anywhere; }
+.notes .prompt { min-height: var(--size-draft-messages); }
+.json { white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-sm);
+  padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-sunken); }

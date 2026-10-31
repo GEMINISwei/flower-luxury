@@ -2,6 +2,13 @@ from shared.http.errors import BaseError, LangText
 
 
 class DraftError(BaseError):
+    PREFILL_UNAVAILABLE = LangText(
+        zh="AI 預填暫時無法使用，請確認金鑰或稍後重試。",
+        en="AI prefill is unavailable. Check the API key or retry later.")
+
+    DUPLICATE_QUOTE = LangText(
+        zh="同一廠商只能有一筆詢價。", en="Only one quote per vendor is allowed.")
+
     NOT_FOUND = LangText(
         zh="找不到暫存商品或訊息",
         en="Draft product or message not found")
