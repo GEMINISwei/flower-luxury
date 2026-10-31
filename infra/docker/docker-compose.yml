@@ -24,6 +24,7 @@ services:
       EXPIRE_HOURS: ${EXPIRE_HOURS:?}
       LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:-}
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     # 上傳的檔案一律放這裡 (各模組一個子目錄): 寫在別的路徑, 重建容器就消失, make backup 也備份不到。
     volumes:
       - uploads:/app/uploads
@@ -64,6 +65,7 @@ services:
       <<: *api-db-env
       LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:-}
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     working_dir: /app
     command: ["python", "-m", "app.collector"]
     volumes:

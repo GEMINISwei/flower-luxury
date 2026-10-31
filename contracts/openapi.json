@@ -328,6 +328,13 @@
             ],
             "title": "Main Photo Id"
           },
+          "manual_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Manual Fields",
+            "type": "array"
+          },
           "messages": {
             "items": {
               "$ref": "#/components/schemas/MessageInfo"
@@ -340,6 +347,35 @@
               "$ref": "#/components/schemas/DraftPhotoInfo"
             },
             "title": "Photos",
+            "type": "array"
+          },
+          "prefill_configured": {
+            "default": false,
+            "title": "Prefill Configured",
+            "type": "boolean"
+          },
+          "prefill_revision": {
+            "default": 0,
+            "title": "Prefill Revision",
+            "type": "integer"
+          },
+          "prefill_status": {
+            "default": "idle",
+            "enum": [
+              "idle",
+              "disabled",
+              "queued",
+              "ready",
+              "failed"
+            ],
+            "title": "Prefill Status",
+            "type": "string"
+          },
+          "quotes": {
+            "items": {
+              "$ref": "#/components/schemas/DraftQuoteInfo"
+            },
+            "title": "Quotes",
             "type": "array"
           },
           "received_at": {
@@ -507,6 +543,74 @@
         "title": "DraftPhotoInfo",
         "type": "object"
       },
+      "DraftQuoteInfo": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "original_amount": {
+            "$ref": "#/components/schemas/QuoteAmount-Output"
+          },
+          "vendor_id": {
+            "title": "Vendor Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "original_amount",
+          "vendor_id",
+          "id"
+        ],
+        "title": "DraftQuoteInfo",
+        "type": "object"
+      },
+      "DraftQuoteUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "original_amount": {
+            "$ref": "#/components/schemas/QuoteAmount-Input"
+          },
+          "vendor_id": {
+            "title": "Vendor Id",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "original_amount",
+          "vendor_id"
+        ],
+        "title": "DraftQuoteUpdate",
+        "type": "object"
+      },
       "DraftSummary": {
         "properties": {
           "collecting": {
@@ -579,6 +683,24 @@
         "properties": {
           "fields": {
             "$ref": "#/components/schemas/DraftFields"
+          },
+          "manual_fields": {
+            "items": {
+              "enum": [
+                "name",
+                "brand_id",
+                "category",
+                "model_name",
+                "serial_number",
+                "color",
+                "year",
+                "cost_price",
+                "internal_note"
+              ],
+              "type": "string"
+            },
+            "title": "Manual Fields",
+            "type": "array"
           },
           "version": {
             "minimum": 1.0,
@@ -1296,6 +1418,80 @@
           "photo_ids"
         ],
         "title": "PhotoOrder",
+        "type": "object"
+      },
+      "PrefillPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "supplement": {
+            "maxLength": 10000,
+            "title": "Supplement",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 200000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "supplement"
+        ],
+        "title": "PrefillPreview",
+        "type": "object"
+      },
+      "PrefillSettingsInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "base_prompt": {
+            "title": "Base Prompt",
+            "type": "string"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "revision": {
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "supplement": {
+            "maxLength": 10000,
+            "title": "Supplement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "supplement",
+          "revision",
+          "configured",
+          "base_prompt"
+        ],
+        "title": "PrefillSettingsInfo",
+        "type": "object"
+      },
+      "PrefillSettingsUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "revision": {
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "supplement": {
+            "maxLength": 10000,
+            "title": "Supplement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "supplement",
+          "revision"
+        ],
+        "title": "PrefillSettingsUpdate",
         "type": "object"
       },
       "ProductCategory": {
@@ -3058,6 +3254,107 @@
         ]
       }
     },
+    "/api/draft-prefill/preview": {
+      "post": {
+        "operationId": "preview_route_api_draft_prefill_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrefillPreview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftFields"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Route",
+        "tags": [
+          "draft-prefill"
+        ]
+      }
+    },
+    "/api/draft-prefill/settings": {
+      "get": {
+        "operationId": "get_settings_route_api_draft_prefill_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrefillSettingsInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Settings Route",
+        "tags": [
+          "draft-prefill"
+        ]
+      },
+      "patch": {
+        "operationId": "update_settings_route_api_draft_prefill_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrefillSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrefillSettingsInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Settings Route",
+        "tags": [
+          "draft-prefill"
+        ]
+      }
+    },
     "/api/exchange-rates/settings": {
       "get": {
         "operationId": "get_exchange_settings_route_api_exchange_rates_settings_get",
@@ -4175,6 +4472,230 @@
           }
         },
         "summary": "Delete Photo Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/{id}/prefill": {
+      "post": {
+        "operationId": "retry_prefill_route_api_product_drafts__id__prefill_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retry Prefill Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/{id}/quotes": {
+      "post": {
+        "operationId": "create_quote_route_api_product_drafts__id__quotes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftQuoteUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Quote Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/{id}/quotes/{quote_id}": {
+      "delete": {
+        "operationId": "delete_quote_route_api_product_drafts__id__quotes__quote_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "title": "Quote Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Quote Route",
+        "tags": [
+          "product-drafts"
+        ]
+      },
+      "patch": {
+        "operationId": "update_quote_route_api_product_drafts__id__quotes__quote_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "title": "Quote Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftQuoteUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Quote Route",
         "tags": [
           "product-drafts"
         ]

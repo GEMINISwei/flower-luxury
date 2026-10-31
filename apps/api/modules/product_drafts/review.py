@@ -2,7 +2,14 @@ from collections.abc import AsyncIterator
 
 from pydantic import ValidationError
 
-from modules.products.public import PreparedPhoto, ProductCreate, create_imported_product
+from modules.products.public import (
+    PreparedPhoto,
+    ProductCreate,
+    ProductInfo,
+    QuoteCreate,
+    create_imported_product,
+    create_quote,
+)
 from shared.auth.contracts import CurrentUser
 from shared.db.session import active_session
 from shared.db.table import parse_uuid
@@ -45,8 +52,16 @@ async def approve_draft(id: str, form: VersionRequest, actor: CurrentUser) -> Ap
             raise LangException(409, DraftError.PHOTO_NOT_READY)
         main_index = next((index for index, row in enumerate(rows)
                            if row.id == draft.main_photo_id), 0)
+
+        async def import_quotes(product: ProductInfo) -> None:
+            for quote in draft.quotes or []:
+                await create_quote(product.id, QuoteCreate.model_validate({
+                    key: quote.get(key) for key in ("vendor_id", "original_amount", "note")
+                }), actor)
+
         product = await create_imported_product(
             fields, _prepared_photos(rows), actor, main_index=main_index,
+            on_created=import_quotes,
         )
         await model.remember_approved_messages(id, product.id)
         receipt = model.ApprovalTable(

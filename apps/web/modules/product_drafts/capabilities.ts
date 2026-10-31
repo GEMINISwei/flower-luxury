@@ -9,6 +9,12 @@ const FIELDS = ["name", "brand_id", "category", "model_name", "serial_number",
 export function draftValues(fields: DraftFields): DraftValues {
   return Object.fromEntries(FIELDS.map((key) => [key, String(fields[key] ?? "")])) as DraftValues
 }
+export function reloadDraftValues(current: DraftValues, saved: DraftValues,
+  latest: DraftFields): DraftValues {
+  const updated = draftValues(latest)
+  return Object.fromEntries(FIELDS.map((key) => [key,
+    current[key] === saved[key] ? updated[key] : current[key]])) as DraftValues
+}
 export function draftPayload(values: DraftValues): DraftFields {
   const strings = Object.fromEntries(
     FIELDS.map((key) => [key, values[key].trim() ? values[key] : null]))

@@ -3,18 +3,21 @@ import { useState } from "react"
 import { Button, ConfirmDialog, FormPageShell } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
+import type { VendorInfo } from "@/modules/vendors/public.client"
 import { discardDraft } from "../actions"
 import { draftTextMessages } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { DraftInfo, SourceInfo } from "../types"
 import DraftFields from "./DraftFields"
 import DraftPhotos from "./DraftPhotos"
+import DraftQuotes from "./DraftQuotes"
+import PrefillStatus from "./PrefillStatus"
 import MessageList from "./MessageList"
 import useDraftEditor from "./useDraftEditor"
 import styles from "./drafts.module.css"
 
-export default function DraftDetail({ initial, brands, sources }: {
-  initial: DraftInfo; brands: BrandInfo[]; sources: SourceInfo[]
+export default function DraftDetail({ initial, brands, sources, vendors }: {
+  initial: DraftInfo; brands: BrandInfo[]; sources: SourceInfo[]; vendors: VendorInfo[]
 }) {
   const t = useT(draftMessages)
   const editor = useDraftEditor(initial)
@@ -60,7 +63,9 @@ export default function DraftDetail({ initial, brands, sources }: {
             }} /></div>
         </div>
         <div className={styles.editorColumn}>
+          <PrefillStatus draft={draft} disabled={disabled} mutate={editor.run} />
           <DraftFields values={values} brands={brands} disabled={pending} onChange={editor.set} />
+          <DraftQuotes draft={draft} vendors={vendors} disabled={disabled} mutate={editor.run} />
         </div>
       </div>
     </div>

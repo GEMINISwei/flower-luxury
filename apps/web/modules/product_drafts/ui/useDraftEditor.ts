@@ -5,7 +5,7 @@ import type { ApiResponse } from "@/shared/api/contract"
 import { getApiResponseErrorMessage } from "@/shared/api/error"
 import { useT } from "@/shared/i18n/context"
 import { approveDraft, reloadDraft, saveDraft } from "../actions"
-import { draftPayload, draftValidation, draftValues } from "../capabilities"
+import { draftPayload, draftValidation, draftValues, reloadDraftValues } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { DraftInfo, DraftValues } from "../types"
 
@@ -42,6 +42,7 @@ export default function useDraftEditor(initial: DraftInfo) {
   const [values, setValues] = useState(() => draftValues(initial.fields))
   const [saved, setSaved] = useState(() => JSON.stringify(draftValues(initial.fields)))
   const [comparison, setComparison] = useState<DraftInfo | null>(null)
+  const [manual, setManual] = useState<(keyof DraftValues)[]>([])
   const request = useDraftRequest(setDraft)
   const { run, setError, setStatus } = request
   const dirty = JSON.stringify(values) !== saved
@@ -64,9 +65,9 @@ export default function useDraftEditor(initial: DraftInfo) {
   function save(approving = false) {
     if (!validate(approving)) return
     run(async () => {
-      const result = await saveDraft(draft.id, draft.version, draftPayload(values))
+      const result = await saveDraft(draft.id, draft.version, draftPayload(values), manual)
       if (result.status === "success") {
-        setDraft(result.data); setSaved(JSON.stringify(values)); setComparison(null)
+        setDraft(result.data); setSaved(JSON.stringify(values)); setComparison(null); setManual([])
         if (approving) return await approveDraft(draft.id, result.data.version)
       } else if (approving && result.code === 404) {
         return await approveDraft(draft.id, draft.version)
@@ -77,12 +78,17 @@ export default function useDraftEditor(initial: DraftInfo) {
   function reload() {
     run(async () => {
       const result = await reloadDraft(draft.id)
-      if (result.status === "success") setComparison(result.data)
+      if (result.status === "success") {
+        setComparison(result.data)
+        setValues(reloadDraftValues(values, JSON.parse(saved) as DraftValues, result.data.fields))
+        setSaved(JSON.stringify(draftValues(result.data.fields)))
+      }
       return result
     }, () => setStatus(t("reloaded")))
   }
   function set(key: keyof DraftValues, value: string) {
     setValues((current) => ({ ...current, [key]: value })); setStatus("")
+    setManual((current) => current.includes(key) ? current : [...current, key])
   }
   return { ...request, draft, values, comparison, dirty, set, save, validate, reload }
 }

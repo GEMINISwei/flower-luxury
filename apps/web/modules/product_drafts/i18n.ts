@@ -66,3 +66,51 @@ export const draftMessages = defineMessages({
     unsaved: "Fields are not saved. Leaving this page will lose your changes.",
   },
 })
+
+
+export const prefillMessages = defineMessages({
+  zh: {
+    title: "審核預填設定", subtitle: "全系統共用，將商品文字整理為待人工審核的資訊",
+    base: "基礎 Prompt", supplement: "補充判定條件", save: "儲存設定", saved: "已儲存",
+    hint: "可補充術語、分類與金額寫法；欄位與 JSON 格式由系統固定。設定只影響後續解析。",
+    unconfigured: "尚未設定 Gemini API 金鑰，AI 預填暫停使用。",
+    configured: "Gemini 3.5 Flash-Lite 已設定", failed: "操作失敗，請重試。",
+    testText: "測試文字", test: "測試預填", testHint: "使用目前輸入的補充條件測試，不儲存設定或修改商品。",
+    result: "預填預覽", required: "請輸入測試文字。", limits: "補充條件上限 10,000 字，測試文字上限 200,000 字。",
+    idle: "AI 預填等待商品文字。", disabled: "未設定 Gemini API 金鑰，AI 預填暫停使用。",
+    queued: "AI 預填排程中，完成後請重新載入資料。", ready: "AI 已完成預填，請確認後再審核建檔。",
+    prefillFailed: "AI 預填失敗，既有欄位已保留，可稍後重試。", retry: "重新預填",
+    protection: "人工修改的欄位會保留，包含刻意清空的值。",
+  },
+  en: {
+    title: "Review prefill settings", subtitle: "Global rules for product text extraction and human review",
+    base: "Base Prompt", supplement: "Additional interpretation rules", save: "Save settings", saved: "Saved",
+    hint: "Define terminology, categories, and amount notation. Fields and JSON format are fixed. Changes apply to future runs.",
+    unconfigured: "Gemini API key is not configured. AI prefill is unavailable.",
+    configured: "Gemini 3.5 Flash-Lite is configured", failed: "Action failed. Please retry.",
+    testText: "Test text", test: "Test prefill", testHint: "Test the current rules without saving settings or changing products.",
+    result: "Prefill preview", required: "Enter test text.", limits: "Rules: up to 10,000 characters. Test text: up to 200,000 characters.",
+    idle: "AI prefill is waiting for product text.",
+    disabled: "AI prefill is unavailable: Gemini API key is not configured.",
+    queued: "AI prefill is queued. Reload data after it completes.", ready: "AI prefill is ready. Confirm the fields before approval.",
+    prefillFailed: "AI prefill failed. Existing fields are preserved. Retry later.", retry: "Run prefill again",
+    protection: "Manually edited fields are preserved, including values you cleared.",
+  },
+})
+
+export const draftQuoteMessages = defineMessages({
+  zh: {
+    title: "廠商詢價", create: "新增詢價", edit: "編輯詢價", delete: "刪除詢價",
+    empty: "尚無詢價。可手動新增廠商報價。", hint: "審核建檔時一併建立正式詢價，依當時系統匯率換算。",
+    vendor: "廠商", amount: "原幣報價", note: "詢價備註", choose: "請選擇", save: "儲存",
+    required: "請選擇廠商並填寫原幣報價。", confirm: "確定刪除此筆暫存詢價？",
+    unavailable: "廠商已不存在", failed: "詢價操作失敗，請重試。",
+  },
+  en: {
+    title: "Vendor quotes", create: "Add quote", edit: "Edit quote", delete: "Delete quote",
+    empty: "No quotes yet. Add a vendor quote manually.", hint: "Quotes are created on approval using the system exchange rate at that time.",
+    vendor: "Vendor", amount: "Original amount", note: "Quote note", choose: "Choose", save: "Save",
+    required: "Select a vendor and enter the original amount.", confirm: "Delete this draft quote?",
+    unavailable: "Vendor no longer exists", failed: "Quote action failed. Please retry.",
+  },
+})

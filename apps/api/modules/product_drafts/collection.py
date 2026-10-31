@@ -7,6 +7,7 @@ from shared.jobs.queue import enqueue_job
 from shared.time import utc_now
 
 from . import model
+from .prefill import schedule_prefill
 from .rules import decide_collection
 from .schema import IncomingMessage, IngestResult
 from .service import _bump
@@ -72,6 +73,8 @@ async def _store_message(
     if draft:
         draft.has_text = draft.has_text or form.kind == "text"
         _bump(draft)
+        if form.kind == "text":
+            await schedule_prefill(draft)
     return IngestResult(message_id=str(message.id),
                         draft_id=str(draft.id) if draft else None,
                         unassigned=draft is None)

@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterable, Awaitable, Callable
 from pathlib import Path
 
 from starlette.concurrency import run_in_threadpool
@@ -16,6 +16,7 @@ from .schema import ProductCreate, ProductInfo
 async def create_imported_product(
     form: ProductCreate, prepared: list[PreparedPhoto] | AsyncIterable[PreparedPhoto],
     actor: CurrentUser, *, main_index: int = 0,
+    on_created: Callable[[ProductInfo], Awaitable[None]] | None = None,
 ) -> ProductInfo:
     if main_index < 0 or (isinstance(prepared, list) and main_index >= len(prepared)):
         raise LangException(422, PhotoError.INVALID)
@@ -29,6 +30,8 @@ async def create_imported_product(
             if main_index >= len(stored.list_data):
                 raise LangException(422, PhotoError.INVALID)
             await photos.set_main_photo(product.id, stored.list_data[main_index].id, actor)
+            if on_created:
+                await on_created(product)
             return await service.get_product(product.id)
     except BaseException:
         # SAVEPOINT 回滾後外層仍可能 commit, 所以匯入失敗要即時清理本次寫入。

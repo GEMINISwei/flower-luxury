@@ -9,8 +9,9 @@ from shared.auth.dependency import check_user_permission
 from shared.http.errors import LangException
 from shared.http.schema import PaginationParams, UuidText
 
-from . import messages, photos, review, service
+from . import draft_quotes, messages, photos, prefill, review, service
 from .errors import DraftError
+from .quote_schema import DraftQuoteUpdate
 from .schema import (
     ApprovalInfo,
     DiscardInfo,
@@ -25,6 +26,38 @@ from .schema import (
 )
 
 router = APIRouter(prefix="/product-drafts", tags=["product-drafts"])
+
+
+@router.post("/{id}/prefill")
+async def retry_prefill_route(
+    id: UuidText, form: VersionRequest,
+    _: CurrentUser = Depends(check_user_permission()),
+) -> DraftInfo:
+    return await prefill.retry_prefill(id, form)
+
+
+@router.post("/{id}/quotes")
+async def create_quote_route(
+    id: UuidText, form: DraftQuoteUpdate,
+    actor: CurrentUser = Depends(check_user_permission()),
+) -> DraftInfo:
+    return await draft_quotes.save_quote(id, form, actor)
+
+
+@router.patch("/{id}/quotes/{quote_id}")
+async def update_quote_route(
+    id: UuidText, quote_id: UuidText, form: DraftQuoteUpdate,
+    actor: CurrentUser = Depends(check_user_permission()),
+) -> DraftInfo:
+    return await draft_quotes.save_quote(id, form, actor, quote_id=quote_id)
+
+
+@router.delete("/{id}/quotes/{quote_id}")
+async def delete_quote_route(
+    id: UuidText, quote_id: UuidText, version: int = Query(ge=1),
+    _: CurrentUser = Depends(check_user_permission()),
+) -> DraftInfo:
+    return await draft_quotes.delete_quote(id, quote_id, VersionRequest(version=version))
 
 
 def _delete_version(form: VersionRequest | None, version: int | None) -> VersionRequest:
