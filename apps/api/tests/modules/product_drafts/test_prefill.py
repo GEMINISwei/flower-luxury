@@ -54,3 +54,22 @@ def test_prefill_input_limit_rejects_instead_of_truncating():
     with pytest.raises(ValueError):
         prefill_rules.build_input([SimpleNamespace(kind="text", text="文" * 200001,
                                                    occurred_at=BASE, sequence=1)], [], "")
+
+
+def test_prefill_output_schema_limits_year_to_supported_range():
+    year = prefill_rules.output_schema().json_schema["properties"]["year"]
+    integer = next(option for option in year["anyOf"] if option["type"] == "integer")
+    assert integer["minimum"] == 1900
+    assert integer["maximum"] == 2100
+    assert {"type": "null"} in year["anyOf"]
+
+
+@pytest.mark.parametrize("year, expected", [
+    (-1, None), (0, None), (1899, None), (1900, 1900), (2026, 2026),
+    (2100, 2100), (2101, None), (9999, None), (10000, None), (None, None),
+])
+def test_parse_prefill_ignores_year_outside_supported_range(year, expected):
+    data = {**DraftFields(name="手袋", color="黑色", cost_price=30000).model_dump(), "year": year}
+    result = prefill_rules.parse_prefill(json.dumps(data), set())
+    assert result.year == expected
+    assert result.name == "手袋" and result.color == "黑色" and result.cost_price == 30000
