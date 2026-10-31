@@ -16,20 +16,19 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const { id } = await params
   const product = await apiGet({ url: "/products/{id}", params: { id } })
   if (product.code === 404 || product.code === 422) notFound()
-  const [brands, photos, histories, vendors, quotes, sales] = await Promise.all([
+  const [brands, photos, vendors, quotes, sales] = await Promise.all([
     getBrandOptions(), apiGet({ url: "/products/{id}/photos", params: { id } }),
-    apiGet({ url: "/products/{id}/history", params: { id } }),
     getVendorOptions(), apiGet({ url: "/products/{id}/quotes", params: { id } }),
     apiGet({ url: "/products/{id}/sales", params: { id } }),
   ])
   const t = await getT(productMessages)
   if (product.status !== "success" || brands.status !== "success"
-      || photos.status !== "success" || histories.status !== "success"
+      || photos.status !== "success"
       || vendors.status !== "success" || quotes.status !== "success" || sales.status !== "success") {
     return <Container padded><ErrorState>{t("failed")}</ErrorState></Container>
   }
   return <ProductDetail product={product.data} brands={brands.data.list_data}
-    photos={photos.data.list_data} histories={histories.data.list_data}
+    photos={photos.data.list_data}
     vendors={vendors.data.list_data}
     quotes={quotes.data.list_data} sales={sales.data.list_data} />
 }

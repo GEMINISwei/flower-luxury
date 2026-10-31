@@ -1,6 +1,6 @@
 "use client"
 
-import { MoreVertical } from "lucide-react"
+import { MoreHorizontal, MoreVertical } from "lucide-react"
 import { useT } from "@/shared/i18n/context"
 import { uiMessages } from "../i18n"
 import { ICON_SIZE } from "../internals"
@@ -10,17 +10,20 @@ export type ActionMenuItem = MenuItem
 
 type ActionMenuProps = {
   items: (ActionMenuItem | null | false | undefined)[]
+  sheet?: boolean
 }
 
 /** 表格列尾的「⋮」操作選單。 */
-export default function ActionMenu({ items }: ActionMenuProps) {
+export default function ActionMenu({ items, sheet = false }: ActionMenuProps) {
   const t = useT(uiMessages)
+  const Icon = sheet ? MoreHorizontal : MoreVertical
 
   return (
     <Menu
       items={items}
-      trigger={<MoreVertical size={ICON_SIZE.sm} />}
+      trigger={<Icon size={ICON_SIZE.sm} aria-hidden />}
       triggerLabel={t("actionMenu")}
+      sheetTitle={sheet ? t("actionMenu") : undefined}
     />
   )
 }

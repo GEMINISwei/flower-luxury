@@ -6,3 +6,6 @@ export { default as NewProductPage,
 export { default as ProductDetailPage,
   generateMetadata as generateProductDetailMetadata } from "./detail-page.server"
 export type { ProductDetailPageProps } from "./detail-page.server"
+export { default as ProductHistoryPage,
+  generateMetadata as generateProductHistoryMetadata } from "./history-page.server"
+export type { ProductHistoryPageProps } from "./history-page.server"
