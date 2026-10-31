@@ -50,8 +50,6 @@ export default function SignupForm() {
       <section className={styles.card}>
         <AuthBrand />
         <form action={handleSubmit} className={styles.fields} noValidate>
-          <h2 className={styles.signupTitle}>{t("signupTitle")}</h2>
-          <p className={styles.subtitle}>{t("signupDescription")}</p>
           {created ? <p role="status">{t("signupSuccess")}</p> : <>
             {message && <p role="alert">{message}</p>}
             {fields.map(({ key, label, ...input }) => <TextInput

@@ -66,13 +66,6 @@
   background: linear-gradient(90deg, transparent, var(--color-border-brand), transparent);
 }
 
-.subtitle {
-  text-align: center;
-  text-wrap: balance;
-  font-size: var(--fs-base);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-6);
-}
 
 /* ---- Form fields ---- */
 .fields {
@@ -157,12 +150,6 @@
   text-align: center;
 }
 
-.signupTitle {
-  text-align: center;
-  font-family: var(--font-serif);
-  font-size: var(--fs-h2);
-  color: var(--color-text-display);
-}
 
 .brandDivider { width: min(var(--layout-sidebar-width), 100%); }
 .signupLink { display: flex; align-items: center; justify-content: center; width: 100%; min-height: var(--control-height-md); padding: var(--space-2) var(--space-3); border: var(--border-width-hairline) solid var(--color-border-default); border-radius: var(--radius-md); color: var(--color-text-secondary); text-decoration: none; }

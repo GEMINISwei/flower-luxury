@@ -28,10 +28,10 @@ const ENABLED_MODULES = [
   VENDORS_MODULE,
   USERS_MODULE,
   PRODUCT_DRAFTS_MODULE,
-  REGISTRATION_MODULE,
   LINE_COLLECTION_MODULE,
   ROLES_MODULE,
   SETTINGS_MODULE,
+  REGISTRATION_MODULE,
 ] as const satisfies readonly ModuleManifest[]
 
 /** 啟用清單裡所有路由的聯集。沒有路由的模組貢獻 `never`, 會自動從聯集消失。 */

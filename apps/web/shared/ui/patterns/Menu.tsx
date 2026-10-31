@@ -127,6 +127,7 @@ export default function Menu({
         className={triggerClassName ?? styles.trigger}
         onClick={toggleOpen}
         aria-label={triggerLabel}
+        title={triggerLabel}
         aria-haspopup={sheetTitle === undefined ? "menu" : "dialog"}
         aria-expanded={open}
       >

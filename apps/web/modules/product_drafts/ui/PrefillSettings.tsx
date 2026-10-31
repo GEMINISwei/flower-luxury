@@ -1,7 +1,7 @@
 "use client"
 import { useId, useRef, useState } from "react"
-import { Trash2 } from "lucide-react"
-import { Button, Container, ErrorState, PageHeader, TextInput, useActionSubmit } from "@/shared/ui"
+import { Plus, Save, Trash2 } from "lucide-react"
+import { Button, Container, ErrorState, ICON_SIZE, PageHeader, TextInput, useActionSubmit } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { previewPrefill, savePrefillSettings } from "../actions"
 import { parsePrefillConditions, prefillConditionState } from "../capabilities"
@@ -55,9 +55,6 @@ type PrefillForm = ReturnType<typeof usePrefillForm>
 function ConditionList({ form }: { form: PrefillForm }) {
   const t = useT(prefillMessages)
   return <div className={styles.stack}>
-    <div className={styles.sectionHeader}><h3>{t("supplement")}</h3>
-      <Button variant="outlined" disabled={form.isPending} onClick={form.addCondition}>
-        {t("addCondition")}</Button></div>
     <ol className={styles.conditions}>
       {form.conditions.map((condition, index) =>
         <li key={condition.id} className={styles.condition}>
@@ -80,8 +77,9 @@ function PrefillTest({ form }: { form: PrefillForm }) {
   const textId = useId()
   return <div className={styles.stack}>
     <h3>{t("test")}</h3>
-    <div className={styles.notes}><label htmlFor={textId}>{t("testText")}</label>
-      <textarea id={textId} value={form.text} maxLength={200000} disabled={form.isPending}
+    <div className={styles.notes}>
+      <textarea id={textId} aria-label={t("testText")} value={form.text}
+        maxLength={200000} disabled={form.isPending}
         onChange={(event) => form.setText(event.target.value)} /></div>
     <p className={styles.hint}>{t("testHint")}</p>
     <div><Button variant="outlined" disabled={form.isPending || !form.controls.canPreview}
@@ -97,11 +95,16 @@ export default function PrefillSettings({ initial, errorMessage }: {
   const form = usePrefillForm(initial)
   const formId = useId()
   return <Container size="lg" padded>
-    <PageHeader title={t("title")} actions={<Button type="submit" form={formId}
-      disabled={form.isPending || !form.controls.canSave || !!errorMessage}>{t("save")}</Button>} />
+    <PageHeader title={t("title")} actions={[{ label: t("save"), icon: <Save size={ICON_SIZE.md} />,
+      primary: true, type: "submit", form: formId,
+      disabled: form.isPending || !form.controls.canSave || !!errorMessage }]} />
     {errorMessage ? <ErrorState>{errorMessage}</ErrorState> : <div className={styles.stack}>
       <section className={styles.panel} aria-label={t("prefill")}>
-        <h2>{t("prefill")}</h2>
+        <div className={styles.sectionHeader}>
+          <h2>{t("prefill")}</h2>
+          <Button variant="outlined" icon={<Plus size={ICON_SIZE.md} />} disabled={form.isPending}
+            onClick={form.addCondition}>{t("addCondition")}</Button>
+        </div>
         {!form.settings?.configured && <p className={styles.hint}>{t("unconfigured")}</p>}
         <form id={formId} className={styles.feedback}
           onSubmit={(event) => { event.preventDefault(); form.save() }}>

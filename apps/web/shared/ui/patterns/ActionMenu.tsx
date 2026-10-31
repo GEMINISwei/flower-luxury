@@ -6,10 +6,8 @@ import { uiMessages } from "../i18n"
 import { ICON_SIZE } from "../internals"
 import Menu, { type MenuItem } from "./Menu"
 
-export type ActionMenuItem = MenuItem
-
 type ActionMenuProps = {
-  items: (ActionMenuItem | null | false | undefined)[]
+  items: (MenuItem | null | false | undefined)[]
   sheet?: boolean
 }
 

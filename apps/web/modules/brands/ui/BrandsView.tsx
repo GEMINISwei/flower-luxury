@@ -43,7 +43,8 @@ export default function BrandsView({ brands, errorMessage }: {
   const removalAction = removing ? brandRemovalAction(removing) : "delete"
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
-      actions={<Button icon={<Plus size={ICON_SIZE.md} />} onClick={() => edit(null)}>{t("create")}</Button>} />
+      actions={[{ label: t("create"), icon: <Plus size={ICON_SIZE.md} />,
+        primary: true, onClick: () => edit(null) }]} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
     {!open && !removing && error && <p role="alert">{error}</p>}
     <div className={styles.list}><ListTableCard headers={[t("name"), t("status"), t("actions")]}

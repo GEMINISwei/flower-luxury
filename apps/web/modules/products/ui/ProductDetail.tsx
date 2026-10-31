@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Pencil, Trash2, Undo2 } from "lucide-react"
-import { Button, FormPageShell, ICON_SIZE, Modal, Surface } from "@/shared/ui"
+import { FormPageShell, ICON_SIZE, Modal, Surface } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { BrandInfo } from "@/modules/brands/public.client"
@@ -37,14 +37,14 @@ export default function ProductDetail({
       ? formatDateTime(product.updated_at, "Asia/Taipei").slice(0, 10) : null],
   ]
   return <FormPageShell title={t("detail")} subtitle={product.sku}
-    backHref="/products" backLabel={t("back")} actions={<>
-      {caps.canEdit && <Button icon={<Pencil size={ICON_SIZE.md} />}
-        onClick={() => setAction("edit")}>{t("edit")}</Button>}
-      {caps.canDelete && <Button variant="outlined" icon={<Trash2 size={ICON_SIZE.md} />}
-        onClick={() => setAction("delete")}>{t("deleteProduct")}</Button>}
-      {caps.canReturn && <Button variant="outlined" icon={<Undo2 size={ICON_SIZE.md} />}
-        onClick={() => setAction("return")}>{t("return")}</Button>}
-    </>}>
+    backHref="/products" backLabel={t("back")} actions={[
+      caps.canEdit && { label: t("edit"), icon: <Pencil size={ICON_SIZE.md} />,
+        primary: true, onClick: () => setAction("edit") },
+      caps.canDelete && { label: t("deleteProduct"), icon: <Trash2 size={ICON_SIZE.md} />,
+        color: "error", onClick: () => setAction("delete") },
+      caps.canReturn && { label: t("return"), icon: <Undo2 size={ICON_SIZE.md} />,
+        primary: true, onClick: () => setAction("return") },
+    ]}>
     <div className={styles.stack}>
       <section className={styles.summary}>
         <ProductOverview product={product} photos={photos} onPhotos={() => setAction("photos")} />

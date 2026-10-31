@@ -1,11 +1,12 @@
 "use client"
 import { useState } from "react"
+import { RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { ApiListMeta } from "@/shared/api/response"
 import { useT } from "@/shared/i18n/context"
 import { Button, ConfirmDialog, Container, ErrorState, ListTableCard, PageHeader,
-  Pagination, StatusBadge, TableRow, useActionSubmit } from "@/shared/ui"
+  ICON_SIZE, Pagination, StatusBadge, TableRow, useActionSubmit } from "@/shared/ui"
 import { groupMessages } from "../i18n"
 import { groupCapabilities } from "../capabilities"
 import { stopGroup, updateGroup } from "../actions"
@@ -32,7 +33,8 @@ export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
   }
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
-      actions={<Button variant="outlined" onClick={() => router.refresh()}>{t("refresh")}</Button>} />
+      actions={[{ label: t("refresh"), icon: <RefreshCw size={ICON_SIZE.md} />,
+        refresh: true, onClick: () => router.refresh() }]} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
     <ListTableCard headers={[t("name"), t("bot"), t("status"), t("actions")]}
       isEmpty={!items.length} emptyText={t("empty")}>

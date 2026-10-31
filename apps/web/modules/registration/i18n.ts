@@ -3,7 +3,6 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 export const registrationMessages = defineMessages({
   zh: {
     signupTitle: "註冊店長帳號",
-    signupDescription: "請向店長取得註冊碼。員工帳號由店長建立。",
     signup: "註冊店長",
     signingUp: "註冊中",
     signupFailed: "註冊失敗",
@@ -35,7 +34,6 @@ export const registrationMessages = defineMessages({
   },
   en: {
     signupTitle: "Create a store manager account",
-    signupDescription: "Ask a store manager for the registration code. Staff accounts are created by managers.",
     signup: "Register as manager",
     signingUp: "Registering",
     signupFailed: "Registration failed",

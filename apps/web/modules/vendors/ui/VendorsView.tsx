@@ -31,7 +31,8 @@ export default function VendorsView({ vendors, errorMessage }: {
   const removalAction = removing ? vendorRemovalAction(removing) : "delete"
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
-      actions={<Button icon={<Plus size={ICON_SIZE.md} />} onClick={() => setEditor("new")}>{t("create")}</Button>} />
+      actions={[{ label: t("create"), icon: <Plus size={ICON_SIZE.md} />,
+        primary: true, onClick: () => setEditor("new") }]} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
     {!removing && error && <p role="alert">{error}</p>}
     <div className={styles.list}><ListTableCard headers={[t("name"), t("note"), t("status"), t("actions")]}

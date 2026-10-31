@@ -1,37 +1,47 @@
-import type { ReactNode } from "react"
-import { RefreshCw } from "lucide-react"
-import { cls, ICON_SIZE } from "../internals"
-import styles from "../styles/page-header.module.css"
-import ActionMenu, { type ActionMenuItem } from "./ActionMenu"
+"use client"
 
+import type { ComponentProps } from "react"
+import styles from "../styles/page-header.module.css"
+import IconButton from "./IconButton"
+import ActionMenu from "./ActionMenu"
+
+type PageHeaderAction = ComponentProps<typeof IconButton> & { refresh?: boolean }
 type PageHeaderProps = {
   title: string
   subtitle?: string
-  actions?: ReactNode
-  mobileActions?: (ActionMenuItem | null | false | undefined)[]
-  mobileRefresh?: { label: string; onClick: () => void; disabled?: boolean }
+  actions?: (PageHeaderAction | null | false | undefined)[] | null
 }
 
-export default function PageHeader({
-  title, subtitle, actions, mobileActions, mobileRefresh,
-}: PageHeaderProps) {
+function headerActions(actions: PageHeaderAction[]) {
+  if (actions.length <= 3) return { visible: actions, overflow: [] }
+  const priority = [actions.find((item) => item.refresh), actions.find((item) => item.primary)]
+    .filter((item): item is PageHeaderAction => Boolean(item))
+  const visible = [...new Set([...priority, ...actions])].slice(0, 2)
+  return { visible, overflow: actions.filter((item) => !visible.includes(item)) }
+}
+
+export default function PageHeader({ title, subtitle, actions = [] }: PageHeaderProps) {
+  const { visible, overflow } = headerActions(
+    (actions ?? []).filter((item): item is PageHeaderAction => Boolean(item)),
+  )
   return (
-    <header className={cls(styles.pageHeader, mobileRefresh && styles.pageHeaderCompact)}>
+    <header className={styles.pageHeader}>
       <div className={styles.pageHeaderText}>
         <h1 className={styles.pageTitle}>{title}</h1>
         {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}
       </div>
-      {actions && <div className={styles.pageHeaderActions}>{actions}</div>}
-      {(mobileActions || mobileRefresh) && (
-        <div className={styles.pageHeaderMobileActions}>
-          {mobileRefresh && <button type="button" className={styles.refreshIcon}
-            aria-label={mobileRefresh.label} title={mobileRefresh.label}
-            disabled={mobileRefresh.disabled} onClick={mobileRefresh.onClick}>
-            <RefreshCw size={ICON_SIZE.md} aria-hidden />
-          </button>}
-          {mobileActions && <ActionMenu items={mobileActions} sheet={Boolean(mobileRefresh)} />}
-        </div>
-      )}
+      {visible.length > 0 && <div className={styles.pageHeaderActions}>
+        {visible.map((action) => <IconButton key={action.label} {...action} />)}
+        {overflow.length > 0 && <ActionMenu sheet items={overflow.map((action) => ({
+          ...action,
+          onClick: () => {
+            if (action.type === "submit" && action.form) {
+              const form = document.getElementById(action.form)
+              if (form instanceof HTMLFormElement) form.requestSubmit()
+            } else action.onClick?.()
+          },
+        }))} />}
+      </div>}
     </header>
   )
 }
