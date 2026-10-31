@@ -32,7 +32,14 @@ test("商品核心可建檔編輯篩選並刪除後回列表", async ({ page }) 
   await createProduct(page, "Phase3 Bag", "Phase3 Brand")
   const detailUrl = page.url()
   await expect(page.getByText(/^LX\d{8}[A-Z0-9]{5}$/).first()).toBeVisible()
+  await expect(page.getByRole("heading", { name: "流向記錄", exact: true })).toHaveCount(0)
+  await page.getByRole("link", { name: "查看商品歷程", exact: true }).click()
+  await expect(page).toHaveURL(`${detailUrl}/history`)
   await expect(page.getByRole("heading", { name: "流向記錄", exact: true })).toBeVisible()
+  await expect(page.getByText("尚無成交紀錄", { exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole("heading", { name: "商品歷程", exact: true })).toBeVisible()
+  await page.getByRole("link", { name: "返回商品詳情", exact: true }).click()
   await page.getByRole("button", { name: "編輯商品", exact: true }).click()
   let dialog = page.getByRole("dialog", { name: "編輯商品", exact: true })
   await dialog.getByLabel(/^名稱\*?$/).fill("Phase3 Bag Updated")
@@ -56,6 +63,8 @@ test("商品核心可建檔編輯篩選並刪除後回列表", async ({ page }) 
   await expect(page).toHaveURL("/products")
   await expect(page.getByRole("link").filter({ hasText: "Phase3 Bag Updated" })).toHaveCount(0)
   await page.goto(detailUrl)
+  await expect(page.getByRole("heading", { name: "找不到頁面", exact: true })).toBeVisible()
+  await page.goto(`${detailUrl}/history`)
   await expect(page.getByRole("heading", { name: "找不到頁面", exact: true })).toBeVisible()
 })
 
@@ -110,4 +119,13 @@ test("手機商品列表提供卡片篩選與更多設定入口", async ({ page 
   await expect(more.getByRole("button", { name: "用戶設定", exact: true })).toBeVisible()
   await more.getByRole("button", { name: "用戶設定", exact: true }).click()
   await expect(page).toHaveURL("/settings")
+})
+
+
+test("商品歷程可直接開啟且不存在商品顯示找不到頁面", async ({ page }) => {
+  await login(page, admin)
+  for (const id of ["not-a-product-id", "00000000-0000-4000-8000-000000000000"]) {
+    await page.goto(`/products/${id}/history`)
+    await expect(page.getByRole("heading", { name: "找不到頁面", exact: true })).toBeVisible()
+  }
 })
