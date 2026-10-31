@@ -623,7 +623,7 @@ workspaceTest("英文頁首的長操作文字在窄螢幕仍完整可操作", as
     }
   }
   await page.getByRole("button", { name: "Reload data", exact: true }).click()
-  await expect(page.getByRole("status")).toContainText("Reloaded")
+  await expect(page.getByRole("status")).toContainText("Latest data loaded")
   await page.getByRole("button", { name: "Discard draft", exact: true }).click()
   await expect(page.getByRole("dialog", { name: "Discard draft", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Cancel", exact: true }).click()
