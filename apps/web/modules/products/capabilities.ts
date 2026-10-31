@@ -7,6 +7,13 @@ export function productCapabilities(status: ProductStatus) {
     canReturn: status === "sold" }
 }
 
+export function productSaleState<T extends { is_current: boolean; quote_id: string }>(
+  status: ProductStatus, sales: readonly T[],
+) {
+  const currentSale = status === "sold" ? sales.find((sale) => sale.is_current) ?? null : null
+  return { currentSale, currentQuoteId: currentSale?.quote_id ?? null }
+}
+
 export function availableProductBrands<T extends { id: string; is_active: boolean }>(
   brands: readonly T[], existingId?: string,
 ): T[] {

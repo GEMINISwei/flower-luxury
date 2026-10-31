@@ -23,6 +23,7 @@ export type MenuItem = {
   label: string
   color?: "default" | "error"
   onClick: () => void
+  disabled?: boolean
 }
 
 type MenuProps = {
@@ -104,6 +105,7 @@ export default function Menu({
         key={index}
         type="button"
         role="menuitem"
+        disabled={item.disabled}
         className={cls(itemClassName, item.color === "error" && styles.itemError)}
         onClick={() => {
           setOpen(false)

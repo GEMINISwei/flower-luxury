@@ -324,7 +324,8 @@ test("mobile and English draft workflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await open(page, data.id)
   await expect(page.getByRole("heading", { name: "Original messages", exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "Save draft", exact: true }).click()
+  await page.locator("header").getByRole("button", { name: "Actions", exact: true }).click()
+  await page.getByRole("menuitem", { name: "Save draft", exact: true }).click()
   await expect(page.getByRole("status")).toContainText("Saved")
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
@@ -611,22 +612,117 @@ workspaceTest("手機與窄桌面頁首的標題和操作按鈕保持可見且�
   }
 })
 
-workspaceTest("英文頁首的長操作文字在窄螢幕仍完整可操作", async ({ page }) => {
+async function expectSingleRowHeader(page: Page) {
+  await expectHeaderFits(page)
+  const layout = await page.getByRole("heading", { level: 1 }).evaluate((heading) => {
+    const header = heading.closest("header")!
+    const title = heading.getBoundingClientRect()
+    return [...header.querySelectorAll("button")]
+      .filter((button) => button.getBoundingClientRect().width > 0)
+      .map((button) => {
+        const box = button.getBoundingClientRect()
+        return { center: box.y + box.height / 2, titleCenter: title.y + title.height / 2,
+          text: button.textContent }
+      })
+  })
+  expect(layout).toHaveLength(2)
+  for (const control of layout) {
+    expect(Math.abs(control.center - control.titleCenter)).toBeLessThan(2)
+    expect(control.text).toBe("")
+  }
+}
+
+workspaceTest("英文手機暫存標題與圖示維持單排", async ({ page }) => {
   const data = seed()
   await page.context().addCookies([{ name: "locale", value: "en", url: process.env.E2E_BASE_URL! }])
   await open(page, data.id)
   for (const width of [320, 390, 720, 900, 1280]) {
     await page.setViewportSize({ width, height: 844 })
     await expectHeaderFits(page)
-    for (const name of ["Reload data", "Save draft", "Approve and create product", "Discard draft"]) {
-      await page.getByRole("button", { name, exact: true }).click({ trial: true })
+    if (width <= 720) {
+      await expectSingleRowHeader(page)
+      await page.locator("header").getByRole("button", { name: "Actions", exact: true }).click()
+      const sheet = page.getByRole("dialog", { name: "Actions", exact: true })
+      for (const name of ["Save draft", "Approve and create product", "Discard draft"]) {
+        await sheet.getByRole("menuitem", { name, exact: true }).click({ trial: true })
+      }
+      await sheet.getByRole("button", { name: "Close", exact: true }).click()
+    } else {
+      for (const name of ["Reload data", "Save draft", "Approve and create product", "Discard draft"]) {
+        await page.getByRole("button", { name, exact: true }).click({ trial: true })
+      }
     }
   }
+  await page.setViewportSize({ width: 320, height: 844 })
   await page.getByRole("button", { name: "Reload data", exact: true }).click()
   await expect(page.getByRole("status")).toContainText("Latest data loaded")
-  await page.getByRole("button", { name: "Discard draft", exact: true }).click()
+  await page.locator("header").getByRole("button", { name: "Actions", exact: true }).click()
+  await page.getByRole("menuitem", { name: "Discard draft", exact: true }).click()
+  await expect(page.getByRole("dialog", { name: "Actions", exact: true })).toHaveCount(0)
   await expect(page.getByRole("dialog", { name: "Discard draft", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Cancel", exact: true }).click()
+  await page.goto("/product-drafts")
+  await expectSingleRowHeader(page)
+  await page.locator("header").getByRole("button", { name: "Actions", exact: true }).click()
+  await page.getByRole("menuitem", { name: "Filter", exact: true }).click()
+  await expect(page.getByRole("dialog", { name: "Filter", exact: true })).toBeVisible()
+})
+
+workspaceTest("手機暫存以重整圖示與操作面板完成整理流程", async ({ page }) => {
+  test.setTimeout(90_000)
+  const data = seed()
+  await page.setViewportSize({ width: 320, height: 844 })
+  await page.goto("/product-drafts")
+  await expectSingleRowHeader(page)
+  await page.getByRole("button", { name: "重新整理", exact: true }).click()
+  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
+  await page.getByRole("menuitem", { name: "篩選", exact: true }).click()
+  const filter = page.getByRole("dialog")
+  await filter.getByLabel("來源群組").selectOption(data.source)
+  await filter.getByRole("button", { name: "篩選", exact: true }).click()
+  await expect(filter).toBeHidden()
+  await expect(page).toHaveURL(new RegExp(`source_key=${encodeURIComponent(data.source)}`))
+  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
+  await expect(page.getByRole("menuitem", { name: "篩選（1）", exact: true })).toBeVisible()
+  await page.getByRole("dialog").getByRole("button", { name: "關閉", exact: true }).click()
+  await open(page, data.id)
+  await expectSingleRowHeader(page)
+  await fillRequired(page, data.name, data.brand)
+  await page.getByRole("button", { name: "重新載入資料", exact: true }).click()
+  await expect(page.getByRole("status")).toContainText("已載入最新資料")
+  await expect(page.getByLabel("名稱", { exact: true })).toHaveValue(data.name)
+  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
+  await page.getByRole("menuitem", { name: "儲存暫存", exact: true }).click()
+  await expect(page.getByRole("status")).toContainText("已儲存")
+  await page.reload()
+  await expect(page.getByLabel("名稱", { exact: true })).toHaveValue(data.name)
+  fixture({ conflict: data.id })
+  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
+  await page.getByRole("menuitem", { name: "儲存暫存", exact: true }).click()
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("資料已變更")
+  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
+  for (const name of ["儲存暫存", "審核建檔", "放棄暫存"]) {
+    await expect(page.getByRole("menuitem", { name, exact: true })).toBeDisabled()
+  }
+  await page.getByRole("dialog").getByRole("button", { name: "關閉", exact: true }).click()
+  await page.getByRole("button", { name: "重新載入資料", exact: true }).click()
+  await expect(page.getByRole("status")).toContainText("已載入最新資料")
+  await fillRequired(page, data.name, data.brand)
+  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
+  await page.getByRole("menuitem", { name: "審核建檔", exact: true }).click()
+  const approve = page.getByRole("dialog", { name: "審核建檔", exact: true })
+  await expect(page.getByRole("dialog", { name: "操作選單", exact: true })).toHaveCount(0)
+  await approve.getByRole("button", { name: "審核建檔", exact: true }).click()
+  await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
+  await open(page, data.second)
+  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
+  await page.getByRole("menuitem", { name: "放棄暫存", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "取消", exact: true }).click()
+  await expect(page).toHaveURL(`/product-drafts/${data.second}`)
+  await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
+  await page.getByRole("menuitem", { name: "放棄暫存", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "放棄暫存", exact: true }).click()
+  await expect(page).toHaveURL("/product-drafts")
 })
 
 workspaceTest("手機頁首的操作選單仍能開啟篩選與新增", async ({ page }) => {

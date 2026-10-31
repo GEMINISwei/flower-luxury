@@ -1,5 +1,5 @@
 import { expect, it } from "vitest"
-import { availableProductBrands, productCapabilities, statusTimeline }
+import { availableProductBrands, productCapabilities, productSaleState, statusTimeline }
   from "@/modules/products/capabilities"
 import { validateProduct } from "@/modules/products/validation"
 import type { StatusHistoryInfo } from "@/modules/products/types"
@@ -44,4 +44,18 @@ it("流向依時間排列並保留既有原因", () => {
   const initial: StatusHistoryInfo = { ...rows[0], id: "real-create" }
   expect(statusTimeline([sale, initial], created)).toEqual([initial, sale])
   expect(statusTimeline([], created)).toHaveLength(1)
+})
+
+
+it("目前成交只選有效快照並對應正確詢價", () => {
+  const returned = { id: "old", quote_id: "quote-a", is_current: false, vendor_name: "A" }
+  const current = { id: "new", quote_id: "quote-b", is_current: true, vendor_name: "B" }
+  expect(productSaleState("sold", [returned, current]))
+    .toEqual({ currentSale: current, currentQuoteId: "quote-b" })
+  expect(productSaleState("sold", [current, returned]).currentSale).toBe(current)
+  expect(productSaleState("not_acquired", [returned]))
+    .toEqual({ currentSale: null, currentQuoteId: null })
+  expect(productSaleState("not_acquired", [current]).currentSale).toBeNull()
+  expect(productSaleState("sold", []).currentSale).toBeNull()
+  expect(productSaleState("sold", [returned]).currentQuoteId).toBeNull()
 })

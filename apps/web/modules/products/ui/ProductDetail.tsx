@@ -1,34 +1,34 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Pencil, Trash2, Undo2 } from "lucide-react"
 import { Button, FormPageShell, ICON_SIZE, Modal, Surface } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
-import type { PhotoInfo, ProductInfo, QuoteInfo, SaleInfo, StatusHistoryInfo } from "../types"
+import type { PhotoInfo, ProductInfo, QuoteInfo, SaleInfo } from "../types"
 import { productMessages } from "../i18n"
-import { productCapabilities } from "../capabilities"
+import { productCapabilities, productSaleState } from "../capabilities"
 import ProductForm from "./ProductForm"
 import ProductOverview from "./ProductOverview"
-import StatusTimeline from "./StatusTimeline"
 import PhotoPanel from "./PhotoPanel"
 import QuotePanel from "./QuotePanel"
-import SaleHistory from "./SaleHistory"
 import ReturnStatusDialog from "./ReturnStatusDialog"
 import DeleteProductDialog from "./DeleteProductDialog"
 import styles from "./product-detail.module.css"
 
 export default function ProductDetail({
-  product, brands, photos, histories, vendors, quotes, sales,
+  product, brands, photos, vendors, quotes, sales,
 }: {
-  product: ProductInfo; brands: BrandInfo[]; photos: PhotoInfo[]; histories: StatusHistoryInfo[]
+  product: ProductInfo; brands: BrandInfo[]; photos: PhotoInfo[]
   vendors: VendorInfo[]; quotes: QuoteInfo[]; sales: SaleInfo[]
 }) {
   const t = useT(productMessages)
   const [action, setAction] = useState<"edit" | "delete" | "return" | "photos" | null>(null)
   const caps = productCapabilities(product.status)
+  const { currentSale, currentQuoteId } = productSaleState(product.status, sales)
   const basic = [
     [t("model_name"), product.model_name], [t("serial_number"), product.serial_number],
     [t("year"), product.year], [t("color"), product.color],
@@ -60,9 +60,10 @@ export default function ProductDetail({
           </dl>
         </Surface>
       </section>
-      <QuotePanel product={product} quotes={quotes} vendors={vendors} />
-      <SaleHistory sales={sales} />
-      <StatusTimeline histories={histories} createdAt={product.created_at} />
+      <Link href={`/products/${product.id}/history`} className={styles.historyLink}>
+        {t("viewHistory")}</Link>
+      <QuotePanel product={product} quotes={quotes} vendors={vendors}
+        currentSale={currentSale} currentQuoteId={currentQuoteId} />
     </div>
     {action === "photos" && <PhotoPanel id={product.id} name={product.name}
       photos={photos} status={product.status} onClose={() => setAction(null)} />}

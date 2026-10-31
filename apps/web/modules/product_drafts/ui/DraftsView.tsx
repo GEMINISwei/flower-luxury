@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { ApiListMeta } from "@/shared/api/response"
@@ -20,14 +20,19 @@ export default function DraftsView({ drafts, sources, source, seq, limit, source
   const t = useT(draftMessages)
   const router = useRouter()
   const [filterOpen, setFilterOpen] = useState(false)
+  const [refreshing, startRefresh] = useTransition()
+  const reload = () => startRefresh(() => router.refresh())
   const error = sourceError || drafts.errorMessage
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
       actions={<>
         <Button variant="outlined" onClick={() => setFilterOpen(true)}>
           {t(source ? "filtered" : "filter")}</Button>
-        <Button variant="outlined" onClick={() => router.refresh()}>{t("refresh")}</Button>
-      </>} />
+        <Button variant="outlined" disabled={refreshing} onClick={reload}>{t("refresh")}</Button>
+      </>}
+      mobileRefresh={{ label: t("refresh"), onClick: reload, disabled: refreshing }}
+      mobileActions={[{ label: t(source ? "filtered" : "filter"),
+        onClick: () => setFilterOpen(true) }]} />
     <DraftFilters key={filterOpen ? source : "closed"} sources={sources} source={source}
       open={filterOpen} onClose={() => setFilterOpen(false)} />
     <div className={styles.stack}>

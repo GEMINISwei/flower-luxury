@@ -67,9 +67,10 @@
   transition: background var(--dur-fast) var(--ease-standard);
 }
 
-.item:hover {
+.item:hover:not(:disabled) {
   background: var(--color-surface-hover);
 }
+.item:disabled { opacity: var(--opacity-disabled); cursor: default; }
 
 .sheetList {
   display: flex;
@@ -90,7 +91,7 @@
   color: var(--color-danger-fg);
 }
 
-.itemError:hover {
+.itemError:hover:not(:disabled) {
   background: color-mix(in srgb, var(--color-danger-fg) 8%, transparent);
 }
 

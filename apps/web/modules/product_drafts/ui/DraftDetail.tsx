@@ -32,6 +32,14 @@ export default function DraftDetail({ initial, brands, sources, vendors }: {
   const disabled = pending || editor.stale
   return <FormPageShell title={t("detail")} subtitle={source?.name ?? draft.source_key}
     backHref="/product-drafts" backLabel={t("back")}
+    mobileRefresh={{ label: t("reload"), onClick: editor.reload, disabled: pending }}
+    mobileActions={[
+      { label: t("save"), disabled, onClick: () => editor.save() },
+      { label: t("approve"), disabled, onClick: () => {
+        if (editor.validate(true)) setDialog("approve")
+      } },
+      { label: t("discard"), disabled, color: "error", onClick: () => setDialog("discard") },
+    ]}
     actions={<div className={styles.headerActions}>
       <Button variant="outlined" disabled={pending} onClick={editor.reload}>{t("reload")}</Button>
       <Button variant="outlined" disabled={disabled} onClick={() => editor.save()}>{t("save")}</Button>
