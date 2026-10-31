@@ -21,3 +21,5 @@ users：關聯表與篩選（`model.py`）、依授權模型拆檔（`service.py
 | [背景工作](background-jobs.md) | PostgreSQL 佇列、line-collector、任務重試與中斷復原 |
 | [語系（i18n）](i18n.md) | 加使用者看得到的字串、後端訊息，或加第三種語言 |
 | [更換視覺／導入 Design System](design-system.md) | 要改專案的外觀、導入設計系統 |
+| [AI agent skills](agent-skills.md) | 新增 Claude 與 Codex 共用的 skill |
+| [AI agent hooks](agent-hooks.md) | 新增或設定 Claude 與 Codex 共用的 hook |
