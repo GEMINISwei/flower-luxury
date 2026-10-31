@@ -152,8 +152,7 @@ describe("shared list patterns", () => {
       <PageHeader
         title="項目"
         subtitle="管理項目"
-        actions={<button type="button">新增</button>}
-        mobileActions={[{ label: "新增", onClick: action }]}
+        actions={[{ label: "新增", icon: <span aria-hidden>+</span>, onClick: action }]}
       />,
     )
     expect(screen.getByRole("heading", { name: "項目" })).toBeInTheDocument()

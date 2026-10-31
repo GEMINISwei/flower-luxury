@@ -27,3 +27,14 @@ test("帳號或密碼錯誤時留在登入頁並顯示錯誤訊息", async ({ pa
   await expect(page.getByText("帳號或密碼錯誤")).toBeVisible()
   await expect(page).toHaveURL(/\/login/)
 })
+
+test("登入與註冊畫面只保留必要表單文字", async ({ page }) => {
+  await page.goto("/login")
+  await expect(page.getByText("管理二手精品庫存、商品資訊與流向，讓每件精品都被妥善記錄。"))
+    .toHaveCount(0)
+  await expect(page.getByRole("button", { name: "登入", exact: true })).toBeVisible()
+  await page.goto("/signup")
+  await expect(page.getByRole("heading", { name: "註冊店長帳號", exact: true })).toHaveCount(0)
+  await expect(page.getByText("請向店長取得註冊碼。員工帳號由店長建立。")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "註冊店長", exact: true })).toBeVisible()
+})
