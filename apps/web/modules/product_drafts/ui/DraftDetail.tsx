@@ -1,10 +1,10 @@
 "use client"
 import { useState } from "react"
-import Link from "next/link"
-import { Button, ConfirmDialog, Container, Flex, PageHeader } from "@/shared/ui"
+import { Button, ConfirmDialog, FormPageShell } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import { discardDraft } from "../actions"
+import { draftTextMessages } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { DraftInfo, SourceInfo } from "../types"
 import DraftFields from "./DraftFields"
@@ -27,15 +27,20 @@ export default function DraftDetail({ initial, brands, sources }: {
     else editor.run(() => discardDraft(draft.id, draft.version))
   }
   const disabled = pending || editor.stale
-  return <Container size="lg" padded>
-    <PageHeader title={t("detail")} subtitle={source?.name ?? draft.source_key}
-      actions={<Link href="/product-drafts">{t("back")}</Link>} />
+  return <FormPageShell title={t("detail")} subtitle={source?.name ?? draft.source_key}
+    backHref="/product-drafts" backLabel={t("back")}
+    actions={<div className={styles.headerActions}>
+      <Button variant="outlined" disabled={pending} onClick={editor.reload}>{t("reload")}</Button>
+      <Button variant="outlined" disabled={disabled} onClick={() => editor.save()}>{t("save")}</Button>
+      <Button disabled={disabled} onClick={() => {
+        if (editor.validate(true)) setDialog("approve")
+      }}>{t("approve")}</Button>
+      <Button variant="outlined" disabled={disabled} className={styles.dangerAction}
+        onClick={() => setDialog("discard")}>{t("discard")}</Button>
+    </div>}>
     <div className={styles.stack}>
       <div className={styles.feedback}>
-        <div className={styles.reloadBar}>
-          <p className={styles.hint}>{t("reloadHint")}</p>
-          <Button variant="outlined" disabled={pending} onClick={editor.reload}>{t("reload")}</Button>
-        </div>
+        <p className={styles.hint}>{t("reloadHint")}</p>
         {editor.error && <p role="alert">{editor.error}</p>}
         {editor.status && <p role="status">{editor.status}</p>}
         {editor.dirty && <p className={styles.hint}>{t("unsaved")}</p>}
@@ -47,9 +52,8 @@ export default function DraftDetail({ initial, brands, sources }: {
       </div>
       <div className={styles.detailGrid}>
         <div className={styles.sourceColumn}>
-          <DraftPhotos draft={draft} disabled={disabled}
-            mutate={editor.run} onError={editor.setError} />
-          <div className={styles.panel}><MessageList messages={draft.messages}
+          <DraftPhotos draft={draft} disabled={disabled} mutate={editor.run} />
+          <div className={styles.panel}><MessageList messages={draftTextMessages(draft.messages)}
             onCopy={(success) => {
               editor.setStatus(success ? t("copied") : "")
               editor.setError(success ? "" : t("copyFailed"))
@@ -57,14 +61,6 @@ export default function DraftDetail({ initial, brands, sources }: {
         </div>
         <div className={styles.editorColumn}>
           <DraftFields values={values} brands={brands} disabled={pending} onChange={editor.set} />
-          <Flex gap={3} className={styles.actions}>
-            <Button variant="outlined" disabled={disabled} onClick={() => editor.save()}>{t("save")}</Button>
-            <Button disabled={disabled} onClick={() => {
-              if (editor.validate(true)) setDialog("approve")
-            }}>{t("approve")}</Button>
-            <Button variant="outlined" disabled={disabled} className={styles.dangerAction}
-              onClick={() => setDialog("discard")}>{t("discard")}</Button>
-          </Flex>
         </div>
       </div>
     </div>
@@ -73,5 +69,5 @@ export default function DraftDetail({ initial, brands, sources }: {
       onClose={() => setDialog(null)} onConfirm={confirm}>
       <p>{t(dialog === "approve" ? "approveHint" : "discardHint")}</p>
     </ConfirmDialog>
-  </Container>
+  </FormPageShell>
 }
