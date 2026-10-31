@@ -38,10 +38,9 @@ export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
       isEmpty={!items.length} emptyText={t("empty")}>
       {items.map((group) => <TableRow key={group.id}>
         <td data-label={t("name")} className={styles.name}>{group.name ?? group.group_id}</td>
-        <td data-label={t("bot")}>{t(group.joined ? "joined" : "left")}</td>
-        <td data-label={t("status")}><StatusBadge label={t(group.enabled ? "enabled" : "disabled")}
-          variant={group.enabled ? "success" : "muted"} />
-          <GroupBatchState group={group} /></td>
+        <td data-label={t("bot")}><StatusBadge label={t(groupCapabilities(group).bot.label)}
+          variant={groupCapabilities(group).bot.variant} /></td>
+        <td data-label={t("status")}><GroupBatchState group={group} /></td>
         <td data-label={t("actions")}>
           <Button variant="outlined" disabled={isPending || !groupCapabilities(group).canToggle}
             onClick={() => { setSelected(group); setStopping(false); setError("") }}>

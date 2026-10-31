@@ -243,5 +243,6 @@ async def test_disabled_group_commands_do_not_change_state_or_enqueue_replies(
     assert (await group_info()) == before
     assert list(await active_session().scalars(select(drafts.BatchTable.id))) == batches_before
     assert list(await active_session().scalars(select(JobTable.id))) == jobs_before
-    assert list(await active_session().scalars(select(model.EventReceiptTable.id))) == receipts_before
+    assert list(await active_session().scalars(
+        select(model.EventReceiptTable.id))) == receipts_before
     assert await active_session().scalar(select(model.ReplyTable.id)) is None
