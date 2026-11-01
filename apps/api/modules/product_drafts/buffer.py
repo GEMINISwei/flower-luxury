@@ -20,6 +20,7 @@ async def _schedule(stream: model.StreamTable) -> None:
         await enqueue_job("product_drafts.buffer", {"source_key": stream.source_key},
                           available_at=deadline)
     stream.buffer_until = deadline
+    await model.mark_source_processing(stream.source_key, True)
     await active_session().flush()
 
 
@@ -129,3 +130,5 @@ async def process_buffer(job: Job) -> None:
             await _apply(event, ambiguous=event.occurred_at in ambiguous)
         stream.buffer_until = None
         await active_session().flush()
+        await model.mark_source_processing(source_key, False)
+        await model.refresh_source_confirmation(source_key)

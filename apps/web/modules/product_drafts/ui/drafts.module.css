@@ -66,6 +66,7 @@
   background: var(--color-surface-input); color: var(--color-text-body); padding: var(--space-3); }
 .notes textarea:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .wrap { overflow-wrap: anywhere; }
+.issueText { white-space: pre-wrap; overflow-wrap: anywhere; }
 .feedback { display: grid; gap: var(--space-3); }
 .feedback [role="alert"] { color: var(--color-danger-fg); }
 .feedback dl { display: grid; gap: var(--space-2); }

@@ -42,9 +42,9 @@ async def test_next_review_uses_oldest_in_scope_and_skips_unfinished_or_resolved
     first = await model.get_draft_row(str(ids[0]))
     assert first is not None
     first.processing = True
-    second = await model.get_draft_row(str(ids[1]))
-    assert second is not None
-    second.needs_confirmation = True
+    unresolved = await model.get_draft_row(str(ids[1]))
+    assert unresolved is not None
+    unresolved.needs_confirmation = True
     assert (await service.next_review()).id == str(ids[2])
     assert (await service.next_review(source_key="source-4")).id == str(ids[3])
     assert (await service.next_review(source_key="source-1")).id is None

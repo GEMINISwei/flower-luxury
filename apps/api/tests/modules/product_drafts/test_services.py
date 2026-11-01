@@ -79,6 +79,8 @@ def state(monkeypatch, tmp_path):
     token = _current_session.set(session)  # type: ignore[arg-type]
     monkeypatch.setattr(storage, "UPLOADS_DIR", tmp_path)
     monkeypatch.setattr(model, "stream_for", AsyncMock(return_value=stream))
+    monkeypatch.setattr(model, "mark_source_processing", AsyncMock())
+    monkeypatch.setattr(model, "refresh_source_confirmation", AsyncMock())
     monkeypatch.setattr(model, "current_draft", AsyncMock(side_effect=lambda key: next(
         (row for row in rows[DraftTable].values()
          if row.source_key == key and row.collecting), None,

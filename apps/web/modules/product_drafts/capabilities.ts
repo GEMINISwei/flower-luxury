@@ -1,5 +1,21 @@
 import type { DraftFields, DraftValues, MessageInfo } from "./types"
 
+export function draftStage(draft: {
+  collecting: boolean; processing?: boolean; needs_confirmation?: boolean
+}) {
+  if (draft.needs_confirmation) return "needsConfirmation"
+  if (draft.collecting) return "collecting"
+  if (draft.processing) return "processing"
+  return "waiting"
+}
+
+export function draftQueueHref(id?: string, source?: string, created?: string) {
+  const query = new URLSearchParams()
+  if (source) query.set("source_key", source)
+  if (created) query.set("created", created)
+  return `/product-drafts${id ? `/${id}` : ""}${query.size ? `?${query}` : ""}`
+}
+
 export function draftTextMessages(messages: MessageInfo[]): MessageInfo[] {
   return messages.filter((message) => message.kind === "text")
 }

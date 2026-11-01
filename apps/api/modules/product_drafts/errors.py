@@ -2,6 +2,10 @@ from shared.http.errors import BaseError, LangText
 
 
 class DraftError(BaseError):
+    NOT_READY = LangText(zh="商品仍在收集、處理中或有待確認訊息，暫時無法審核建檔。",
+                         en="Collection, processing or message review must finish before approval.")
+    INVALID_TARGET = LangText(zh="請選擇可整理的目標商品。",
+                              en="Choose an editable target draft.")
     PREFILL_UNAVAILABLE = LangText(
         zh="AI 預填暫時無法使用，請確認金鑰或稍後重試。",
         en="AI prefill is unavailable. Check the API key or retry later.")

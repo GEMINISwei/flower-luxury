@@ -10,7 +10,15 @@ from . import model
 from .errors import DraftError
 from .prefill_config import get_env
 from .rules import check_version
-from .schema import DraftFields, DraftInfo, DraftList, DraftPhotoInfo, DraftUpdate, MessageInfo
+from .schema import (
+    DraftFields,
+    DraftInfo,
+    DraftList,
+    DraftPhotoInfo,
+    DraftUpdate,
+    MessageInfo,
+    NextReviewInfo,
+)
 
 
 def _message_info(row: model.MessageTable) -> MessageInfo:
@@ -49,8 +57,15 @@ async def get_draft(id: str | None) -> DraftInfo:
                         "manual_fields": row.manual_fields or [], "quotes": row.quotes or [],
                         "prefill_revision": row.prefill_revision or 0,
                         "prefill_configured": get_env().prefill_configured,
-                        "prefill_status": row.prefill_status or "idle"},
+                        "prefill_status": row.prefill_status or "idle",
+                        "processing": bool(row.processing),
+                        "needs_confirmation": bool(row.needs_confirmation)},
                      messages=messages, photos=photos)
+
+
+async def next_review(source_key: str | None = None) -> NextReviewInfo:
+    row = await model.next_review_row(source_key)
+    return NextReviewInfo(id=str(row.id) if row else None)
 
 
 async def get_draft_list(

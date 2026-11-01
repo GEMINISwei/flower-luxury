@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/shared/api/request.server"
 import type { DraftFields } from "./types"
+import { draftQueueHref } from "./capabilities"
 
 const refresh = { path: "/product-drafts" }
 export async function reloadDraft(id: string) {
@@ -13,14 +14,24 @@ export async function saveDraft(id: string, version: number, fields: DraftFields
   return apiPatch({ url: "/product-drafts/{id}", params: { id },
     data: { version, fields, manual_fields }, refresh })
 }
-export async function approveDraft(id: string, version: number) {
+export async function approveDraft(id: string, version: number, source?: string) {
   const result = await apiPost({ url: "/product-drafts/{id}/approve", params: { id },
     data: { version } })
   if (result.status === "success") {
     revalidatePath("/product-drafts"); revalidatePath("/products")
-    redirect(`/products/${result.data.product_id}`)
+    const next = await apiGet({ url: "/product-drafts/next-review",
+      query: source ? { source_key: source } : {} })
+    const target = next.status === "success" ? next.data.id ?? undefined : undefined
+    const href = draftQueueHref(target, source, result.data.product_id)
+    redirect(next.status === "success" && !target ? `${href}&completed=1` : href)
   }
   return result
+}
+
+export async function resolveDraftIssue(id: string,
+  data: { action: "attach" | "discard"; target_draft_id?: string; target_version?: number }) {
+  return apiPost({ url: "/product-drafts/issues/{id}/resolve", params: { id }, data,
+    refresh })
 }
 export async function discardDraft(id: string, version: number) {
   const result = await apiDelete({ url: "/product-drafts/{id}", params: { id }, query: { version } })

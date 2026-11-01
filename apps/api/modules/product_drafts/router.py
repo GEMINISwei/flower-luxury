@@ -9,11 +9,12 @@ from shared.auth.dependency import check_user_permission
 from shared.http.errors import LangException
 from shared.http.schema import PaginationParams, UuidText
 
-from . import draft_quotes, messages, photos, review, service
+from . import draft_quotes, issues, messages, photos, review, service
 from .errors import DraftError
 from .quote_schema import DraftQuoteUpdate
 from .schema import (
     ApprovalInfo,
+    BufferedIssueList,
     DiscardInfo,
     DraftInfo,
     DraftList,
@@ -21,11 +22,32 @@ from .schema import (
     MainPhoto,
     MessageList,
     MessageMove,
+    NextReviewInfo,
     PhotoOrder,
+    ResolveIssue,
     VersionRequest,
 )
 
 router = APIRouter(prefix="/product-drafts", tags=["product-drafts"])
+
+
+@router.get("/next-review")
+async def next_review_route(source_key: str | None = None,
+                            _: CurrentUser = Depends(check_user_permission())) -> NextReviewInfo:
+    return await service.next_review(source_key)
+
+
+@router.get("/issues")
+async def list_issues_route(pagination: Annotated[PaginationParams, Depends()],
+                            source_key: str | None = None,
+                            _: CurrentUser = Depends(check_user_permission())) -> BufferedIssueList:
+    return await issues.get_issues(**pagination.model_dump(), source_key=source_key)
+
+
+@router.post("/issues/{id}/resolve")
+async def resolve_issue_route(id: UuidText, form: ResolveIssue,
+                              actor: CurrentUser = Depends(check_user_permission())) -> DiscardInfo:
+    return await issues.resolve_issue(id, form, actor)
 
 
 @router.post("/{id}/quotes")
@@ -74,9 +96,11 @@ async def get_drafts_route(
 @router.get("/messages")
 async def get_unassigned_route(
     pagination: Annotated[PaginationParams, Depends()], source_key: str | None = None,
+    issues_only: bool = False,
     _: CurrentUser = Depends(check_user_permission()),
 ) -> MessageList:
-    return await messages.get_unassigned_messages(**pagination.model_dump(), source_key=source_key)
+    return await messages.get_unassigned_messages(**pagination.model_dump(), source_key=source_key,
+                                                  issues_only=issues_only)
 
 
 @router.delete("/messages/{id}")

@@ -43,6 +43,8 @@ async def approve_draft(id: str, form: VersionRequest, actor: CurrentUser) -> Ap
         if draft is None:
             return _approval(ensure_found(await model.approval_for(id), DraftError.NOT_FOUND))
         check_version(draft.version, form.version)
+        if draft.collecting or draft.processing or draft.needs_confirmation:
+            raise LangException(409, DraftError.NOT_READY)
         try:
             fields = ProductCreate.model_validate(draft.fields)
         except ValidationError as error:

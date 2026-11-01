@@ -10,7 +10,8 @@ import { draftMessages } from "./i18n"
 import DraftsView from "./ui/DraftsView"
 
 export type DraftsPageProps = { searchParams: Promise<{
-  cursor?: string; direction?: string; seq?: string; source_key?: string
+  cursor?: string; direction?: string; seq?: string; source_key?: string; created?: string;
+  completed?: string
 }> }
 export async function generateMetadata() {
   return { title: (await getT(draftMessages))("title") }
@@ -30,5 +31,6 @@ export default async function DraftsPage({ searchParams }: DraftsPageProps) {
   return <DraftsView drafts={drafts}
     sources={sources.status === "success" ? sources.data.list_data : []}
     source={params.source_key ?? ""} seq={pagination.seq} limit={20}
+    created={params.created} completed={params.completed === "1"}
     sourceError={sources.status === "success" ? "" : t("failed")} />
 }
