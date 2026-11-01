@@ -95,7 +95,7 @@ async def get_product_list(
     status: str | None = None, color: str | None = None, year: int | None = None,
 ) -> ProductList:
     return ProductList.model_validate(await ProductTable.get_page(
-        limit=limit, cursor=cursor, direction=direction,
+        limit=limit, cursor=cursor, direction=direction, descending=True,
         where=product_filters(keyword, brand_id=parse_uuid(brand_id) if brand_id else None,
                               category=category, status=status, color=color, year=year),
     ))

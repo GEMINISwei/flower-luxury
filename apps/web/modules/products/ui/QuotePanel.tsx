@@ -10,6 +10,7 @@ import type { ProductInfo, QuoteInfo } from "../types"
 import { quoteMessages } from "../i18n"
 import { productCapabilities } from "../capabilities"
 import { availableQuoteVendors, quoteCapabilities } from "../quote-capabilities"
+import { formatQuoteNumbers } from "../quote-format"
 import { deleteQuote } from "../actions"
 import QuoteDialog from "./QuoteDialog"
 import SaleDialog from "./SaleDialog"
@@ -45,14 +46,15 @@ export default function QuotePanel({ product, quotes, vendors, currentQuoteId }:
     {canEdit && !vendors.length && <p>{t("vendorsHint")}</p>}
     {quotes.map((quote) => {
       const caps = quoteCapabilities(product.status, quote.has_sales)
+      const numbers = formatQuoteNumbers(quote.original_amount, quote.exchange_rate)
       return <section key={quote.id} className={styles.quote} aria-label={quote.vendor_name}
         data-current={quote.id === currentQuoteId}>
         <div className={styles.quoteHeading}><h3>{quote.vendor_name}</h3>
           {quote.id === currentQuoteId && <StatusBadge label={t("currentQuote")} variant="success" />}
         </div>
         <dl className={styles.facts}>
-          <div><dt>{t("amount")}</dt><dd>{quote.original_amount}</dd></div>
-          <div><dt>{t("rate")}</dt><dd>{quote.exchange_rate}</dd></div>
+          <div><dt>{t("amount")}</dt><dd>{numbers.amount}</dd></div>
+          <div><dt>{t("rate")}</dt><dd>{numbers.rate}</dd></div>
           <div><dt>{t("twd")}</dt><dd>TWD {quote.amount_twd.toLocaleString()}</dd></div>
           {quote.note && <div><dt>{t("note")}</dt><dd>{quote.note}</dd></div>}
         </dl>

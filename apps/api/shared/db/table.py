@@ -290,6 +290,7 @@ class BaseTable(DeclarativeBase):
         cursor: str | None = None,
         direction: Literal["next", "prev"] = "next",
         sort_field: str = "created_at",
+        descending: bool = False,
         where: Sequence[Condition] = (),
         session: AsyncSession | None = None,
     ) -> PagedResult:
@@ -299,6 +300,7 @@ class BaseTable(DeclarativeBase):
 
         排序鍵是 `(sort_field, id)`。**tie-breaker 一定要有**: `created_at` 相同的兩筆
         若沒有第二個鍵, PostgreSQL 不保證兩次查詢給出同樣的順序, 翻頁就會跳過或重複。
+        `descending` 同時反轉兩個排序鍵; 往前翻頁時再反轉查詢, 回傳仍維持列表順序.
 
         游標的值取自 **ORM 實例** (`getattr(row, sort_field)` 與 `row.id`), 不是
         `to_detail()` 產生的 dict —— 後者可以任意改寫 `id` (例如換成關聯對象的 id),
@@ -307,11 +309,12 @@ class BaseTable(DeclarativeBase):
         db = resolve_session(session)
         sort_column = getattr(cls, sort_field)
         going_backward = direction == "prev"
+        query_descending = descending != going_backward
 
         conditions = list(where)
         if cursor is not None:
             sort_value, row_id = _decode_cursor(cursor)
-            if going_backward:
+            if query_descending:
                 keyset = or_(
                     sort_column < sort_value,
                     and_(sort_column == sort_value, cls.id < row_id),
@@ -325,7 +328,7 @@ class BaseTable(DeclarativeBase):
 
         ordering = (
             (sort_column.desc(), cls.id.desc())
-            if going_backward
+            if query_descending
             else (sort_column.asc(), cls.id.asc())
         )
         statement = (
