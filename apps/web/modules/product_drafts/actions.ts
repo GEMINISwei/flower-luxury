@@ -5,6 +5,10 @@ import { apiDelete, apiGet, apiPatch, apiPost } from "@/shared/api/request.serve
 import type { DraftFields } from "./types"
 
 const refresh = { path: "/product-drafts" }
+export async function selectDraftSale(id: string, version: number, quote_id: string | null) {
+  return apiPatch({ url: "/product-drafts/{id}/sale-selection", params: { id },
+    data: { version, quote_id } })
+}
 export async function reloadDraft(id: string) {
   return apiGet({ url: "/product-drafts/{id}", params: { id } })
 }

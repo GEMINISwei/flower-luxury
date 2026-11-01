@@ -383,6 +383,17 @@
             "title": "Received At",
             "type": "string"
           },
+          "selected_quote_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Quote Id"
+          },
           "source_key": {
             "title": "Source Key",
             "type": "string"
@@ -2439,6 +2450,33 @@
           "count"
         ],
         "title": "SaleList",
+        "type": "object"
+      },
+      "SaleSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "quote_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote Id"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "quote_id"
+        ],
+        "title": "SaleSelection",
         "type": "object"
       },
       "SignupRequest": {
@@ -4603,6 +4641,58 @@
           }
         },
         "summary": "Update Quote Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/{id}/sale-selection": {
+      "patch": {
+        "operationId": "select_sale_route_api_product_drafts__id__sale_selection_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleSelection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Select Sale Route",
         "tags": [
           "product-drafts"
         ]

@@ -12,6 +12,7 @@ import type { DraftInfo, SourceInfo } from "../types"
 import DraftFields from "./DraftFields"
 import DraftPhotos from "./DraftPhotos"
 import DraftQuotes from "./DraftQuotes"
+import DraftSaleSummary from "./DraftSaleSummary"
 import PrefillStatus from "./PrefillStatus"
 import MessageList from "./MessageList"
 import useDraftEditor from "./useDraftEditor"
@@ -74,6 +75,8 @@ export default function DraftDetail({ initial, brands, sources, vendors }: {
       isPending={pending} confirmText={t(dialog === "approve" ? "approve" : "discard")}
       onClose={() => setDialog(null)} onConfirm={confirm}>
       <p>{t(dialog === "approve" ? "approveHint" : "discardHint")}</p>
+      {dialog === "approve" && <DraftSaleSummary draft={draft} vendors={vendors}
+        cost={values.cost_price} />}
     </ConfirmDialog>
   </FormPageShell>
 }

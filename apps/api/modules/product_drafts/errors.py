@@ -2,6 +2,8 @@ from shared.http.errors import BaseError, LangText
 
 
 class DraftError(BaseError):
+    INVALID_SALE_QUOTE = LangText(zh="選定的成交報價已不存在，請重新選擇。",
+                                  en="The selected sale quote is unavailable. Select it again.")
     PREFILL_UNAVAILABLE = LangText(
         zh="AI 預填暫時無法使用，請確認金鑰或稍後重試。",
         en="AI prefill is unavailable. Check the API key or retry later.")

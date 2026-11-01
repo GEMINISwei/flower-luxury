@@ -29,6 +29,10 @@ class VersionRequest(BaseModel):
     version: int = Field(ge=1)
 
 
+class SaleSelection(VersionRequest):
+    quote_id: UuidText | None
+
+
 class DraftUpdate(VersionRequest):
     fields: DraftFields
     manual_fields: list[Literal["name", "brand_id", "category", "model_name", "serial_number",
@@ -137,6 +141,7 @@ class DraftInfo(DraftSummary):
     photos: list[DraftPhotoInfo]
     manual_fields: list[str] = Field(default_factory=list)
     quotes: list[DraftQuoteInfo] = Field(default_factory=list)
+    selected_quote_id: str | None = None
     prefill_revision: int = 0
     prefill_configured: bool = False
     prefill_status: Literal["idle", "disabled", "queued", "ready", "failed"] = "idle"

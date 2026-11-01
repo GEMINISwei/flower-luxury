@@ -421,6 +421,23 @@ export interface paths {
         patch: operations["update_quote_route_api_product_drafts__id__quotes__quote_id__patch"];
         trace?: never;
     };
+    "/api/product-drafts/{id}/sale-selection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Select Sale Route */
+        patch: operations["select_sale_route_api_product_drafts__id__sale_selection_patch"];
+        trace?: never;
+    };
     "/api/products/": {
         parameters: {
             query?: never;
@@ -1104,6 +1121,8 @@ export interface components {
              * Format: date-time
              */
             received_at: string;
+            /** Selected Quote Id */
+            selected_quote_id?: string | null;
             /** Source Key */
             source_key: string;
             /** Updated At */
@@ -1756,6 +1775,13 @@ export interface components {
             count: number;
             /** List Data */
             list_data: components["schemas"]["SaleInfo"][];
+        };
+        /** SaleSelection */
+        SaleSelection: {
+            /** Quote Id */
+            quote_id: string | null;
+            /** Version */
+            version: number;
         };
         /** SignupRequest */
         SignupRequest: {
@@ -2908,6 +2934,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DraftQuoteUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    select_sale_route_api_product_drafts__id__sale_selection_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaleSelection"];
             };
         };
         responses: {
