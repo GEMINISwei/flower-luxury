@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/shared/api/request.server"
 import type { DraftFields } from "./types"
-import { draftQueueHref } from "./capabilities"
+import { reviewContinuation } from "./continuation.server"
 
 const refresh = { path: "/product-drafts" }
 export async function selectDraftSale(id: string, version: number, quote_id: string | null) {
@@ -23,11 +23,7 @@ export async function approveDraft(id: string, version: number, source?: string)
     data: { version } })
   if (result.status === "success") {
     revalidatePath("/product-drafts"); revalidatePath("/products")
-    const next = await apiGet({ url: "/product-drafts/next-review",
-      query: source ? { source_key: source } : {} })
-    const target = next.status === "success" ? next.data.id ?? undefined : undefined
-    const href = draftQueueHref(target, source, result.data.product_id)
-    redirect(next.status === "success" && !target ? `${href}&completed=1` : href)
+    redirect(await reviewContinuation(source, result.data.product_id))
   }
   return result
 }

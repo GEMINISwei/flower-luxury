@@ -12,6 +12,7 @@ import { draftMessages } from "./i18n"
 import { DRAFTS_ROUTE } from "./manifest"
 import DraftDetail from "./ui/DraftDetail"
 import { draftQueueHref, draftStage } from "./capabilities"
+import { reviewContinuation } from "./continuation.server"
 
 export type DraftDetailPageProps = { params: Promise<{ id: string }>;
   searchParams: Promise<{ source_key?: string; created?: string }> }
@@ -28,7 +29,10 @@ export default async function DraftDetailPage({ params, searchParams }: DraftDet
     apiGet({ url: "/line/sources" }),
     getVendorOptions(),
   ])
-  if (draft.code === 404 || draft.code === 422) notFound()
+  if (draft.code === 404 || draft.code === 422) {
+    if (query.created) redirect(await reviewContinuation(query.source_key, query.created, id))
+    notFound()
+  }
   const t = await getT(draftMessages)
   if (draft.status !== "success" || brands.status !== "success" || sources.status !== "success"
       || vendors.status !== "success") {

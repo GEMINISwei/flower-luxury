@@ -333,6 +333,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/product-drafts/processing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Processing Route */
+        get: operations["processing_route_api_product_drafts_processing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/product-drafts/{id}": {
         parameters: {
             query?: never;
@@ -1262,6 +1279,11 @@ export interface components {
             status: "pending" | "ready" | "failed";
             /** Url */
             url?: string | null;
+        };
+        /** DraftProcessingInfo */
+        DraftProcessingInfo: {
+            /** Processing */
+            processing: boolean;
         };
         /** DraftQuoteInfo */
         DraftQuoteInfo: {
@@ -2787,6 +2809,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    processing_route_api_product_drafts_processing_get: {
+        parameters: {
+            query?: {
+                source_key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftProcessingInfo"];
                 };
             };
             /** @description Validation Error */

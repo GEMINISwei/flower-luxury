@@ -286,6 +286,13 @@ async def next_review_row(source_key: str | None) -> DraftTable | None:
         DraftTable.received_at, DraftTable.id).limit(1))
 
 
+async def source_processing(source_key: str | None) -> bool:
+    statement = select(StreamTable.id).where(StreamTable.buffer_until.is_not(None))
+    if source_key:
+        statement = statement.where(StreamTable.source_key == source_key)
+    return await active_session().scalar(statement.limit(1)) is not None
+
+
 async def mark_source_processing(source_key: str, processing: bool) -> None:
     await active_session().execute(update(DraftTable).where(
         DraftTable.source_key == source_key, DraftTable.processing != processing,
@@ -341,7 +348,7 @@ async def expire_receipt_row(id: str) -> None:
 async def message_by_external_id(source_key: str, external_id: str) -> MessageTable | None:
     return await active_session().scalar(select(MessageTable).where(
         MessageTable.source_key == source_key, MessageTable.external_id == external_id,
-    ))
+    ).options(selectinload(MessageTable.buffered_event)))
 
 
 def message_fingerprint(source_key: str, external_id: str) -> str:

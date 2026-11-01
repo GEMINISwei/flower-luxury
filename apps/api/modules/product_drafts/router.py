@@ -18,6 +18,7 @@ from .schema import (
     DiscardInfo,
     DraftInfo,
     DraftList,
+    DraftProcessingInfo,
     DraftUpdate,
     MainPhoto,
     MessageList,
@@ -36,6 +37,14 @@ router = APIRouter(prefix="/product-drafts", tags=["product-drafts"])
 async def select_sale_route(id: UuidText, form: SaleSelection,
                             actor: CurrentUser = Depends(check_user_permission())) -> DraftInfo:
     return await draft_quotes.select_sale(id, form, actor)
+
+
+@router.get("/processing")
+async def processing_route(
+    source_key: str | None = None, _: CurrentUser = Depends(check_user_permission()),
+) -> DraftProcessingInfo:
+    return await service.processing_state(source_key)
+
 
 @router.get("/next-review")
 async def next_review_route(source_key: str | None = None,

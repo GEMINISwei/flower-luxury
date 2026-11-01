@@ -673,6 +673,19 @@
         "title": "DraftPhotoInfo",
         "type": "object"
       },
+      "DraftProcessingInfo": {
+        "properties": {
+          "processing": {
+            "title": "Processing",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "processing"
+        ],
+        "title": "DraftProcessingInfo",
+        "type": "object"
+      },
       "DraftQuoteInfo": {
         "properties": {
           "exchange_rate": {
@@ -4405,6 +4418,55 @@
           }
         },
         "summary": "Get Draft Photo Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/processing": {
+      "get": {
+        "operationId": "processing_route_api_product_drafts_processing_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "source_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftProcessingInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Processing Route",
         "tags": [
           "product-drafts"
         ]

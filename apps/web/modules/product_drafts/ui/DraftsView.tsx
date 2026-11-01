@@ -17,10 +17,11 @@ import DraftQueueNotice from "./DraftQueueNotice"
 
 type ListResult<T> = { items: T[]; meta: ApiListMeta; errorMessage: string }
 export default function DraftsView({ drafts, sources, source, seq, limit, sourceError,
-  created, completed }: {
+  created, completed, processing }: {
   drafts: ListResult<DraftSummary>; sources: SourceInfo[]; source: string;
   seq: number; limit: number; sourceError: string
   created?: string; completed?: boolean
+  processing: boolean
 }) {
   const t = useT(draftMessages)
   const router = useRouter()
@@ -43,6 +44,7 @@ export default function DraftsView({ drafts, sources, source, seq, limit, source
       open={filterOpen} onClose={() => setFilterOpen(false)} />
     <div className={styles.stack}>
       <DraftQueueNotice created={created} completed={completed} />
+      {processing && <p role="status">{t("queueProcessing")}</p>}
       {error && <ErrorState>{error}<Button variant="outlined"
         onClick={() => router.refresh()}>{t("retry")}</Button></ErrorState>}
       <ListTableCard headers={[t("received"), t("status"), t("sourceColumn"), t("actions")]}

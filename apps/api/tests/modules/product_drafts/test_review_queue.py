@@ -101,3 +101,33 @@ async def test_resolve_buffer_issues_moves_text_and_discard_releases_review(db, 
     after = await service.get_draft(before.id)
     assert not after.needs_confirmation
     assert any(message.text == "待確認原文" for message in after.messages)
+
+
+@pytest.mark.integration
+async def test_withdrawing_all_buffer_issues_releases_source_without_another_message(
+    db, monkeypatch,
+):
+    from uuid import uuid4
+
+    from modules.product_drafts import buffer, messages
+    from shared.jobs.contracts import Job
+
+    target = await collection.ingest_message(incoming(second=1))
+    assert target.draft_id
+    row = await model.get_draft_row(target.draft_id)
+    assert row is not None
+    row.collecting = False
+    now = [BASE]
+    monkeypatch.setattr(buffer, "utc_now", lambda: now[0])
+    await buffer.queue_control("group-a", "start", BASE + timedelta(seconds=2))
+    await buffer.queue_message(incoming(second=3, external_id="withdraw-image"))
+    await buffer.queue_message(incoming("text", second=3, text="稍後撤回",
+                                        external_id="withdraw-text"))
+    now[0] += timedelta(minutes=3)
+    await buffer.process_buffer(Job(id=uuid4(), task_name="product_drafts.buffer",
+                                   payload={"source_key": "group-a"}, attempts=1))
+    assert (await service.get_draft(target.draft_id)).needs_confirmation
+    await messages.withdraw_message("group-a", "withdraw-text")
+    assert (await service.get_draft(target.draft_id)).needs_confirmation
+    await messages.withdraw_message("group-a", "withdraw-image")
+    assert not (await service.get_draft(target.draft_id)).needs_confirmation

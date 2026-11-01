@@ -18,6 +18,8 @@ async def get_issues(limit: int, cursor: str | None = None,
     items = []
     for row in page["list_data"]:
         message = await model.get_message_row(str(row["message_id"])) if row["message_id"] else None
+        if row["message_id"] and message is None:
+            continue
         photo = await model.photo_for_message(str(message.id)) if message else None
         items.append(BufferedIssueInfo(id=str(row["id"]), source_key=row["source_key"],
             occurred_at=row["occurred_at"], kind=message.kind if message else row["kind"],

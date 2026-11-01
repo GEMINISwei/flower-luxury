@@ -157,6 +157,10 @@ class NextReviewInfo(BaseModel):
     id: str | None
 
 
+class DraftProcessingInfo(BaseModel):
+    processing: bool
+
+
 class BufferedIssueInfo(BaseModel):
     id: str
     source_key: str

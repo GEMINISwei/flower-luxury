@@ -87,6 +87,7 @@ async def withdraw_message(source_key: str, external_id: str,
                 return WithdrawalResult(product_id=receipt.approved_product_id)
             approval = await model.approval_for(draft_id) if draft_id else None
             return WithdrawalResult(product_id=str(approval.product_id) if approval else None)
+        buffered = message.buffered_event is not None
         draft = await model.get_draft_row(str(message.draft_id)) if message.draft_id else None
         photo = await model.photo_for_message(str(message.id))
         if photo:
@@ -98,6 +99,8 @@ async def withdraw_message(source_key: str, external_id: str,
         if draft:
             _bump(draft)
         await active_session().flush()
+        if buffered:
+            await model.refresh_source_confirmation(source_key)
         return WithdrawalResult(removed=True)
 
 
