@@ -78,7 +78,7 @@ test("照片失敗保留商品並可移除後補傳而不重複建檔", async ({
   await expect(page.getByRole("link").filter({ hasText: "Phase4 Retry" })).toHaveCount(1)
 })
 
-test("商品照片依顯示尺寸載入且點擊開啟原始解析度全圖", async ({ page }) => {
+test("商品照片依顯示尺寸載入且點擊開啟限制尺寸大圖並保留原圖下載", async ({ page }) => {
   const name = "Sized Preview Bag"
   await prepareProduct(page, name)
   const encoded = await page.evaluate(() => {
@@ -111,12 +111,16 @@ test("商品照片依顯示尺寸載入且點擊開啟原始解析度全圖", as
   const opening = page.waitForEvent("popup")
   await gallery.getByRole("link", { name: /預覽商品照片/ }).click()
   const full = await opening
-  await expect(full.getByRole("img")).toHaveJSProperty("naturalWidth", 3000)
-  await expect(full.getByRole("img")).toHaveJSProperty("naturalHeight", 1800)
+  await expect(full.getByRole("img")).toHaveJSProperty("naturalWidth", 2048)
+  await expect(full.getByRole("img")).toHaveJSProperty("naturalHeight", 1229)
   const fullUrl = full.url()
   expect(new URL(fullUrl).search).toBe("")
   expect((await page.request.get(fullUrl)).headers()["content-type"]).toBe("image/webp")
   await full.close()
+  const download = await gallery.getByRole("link", { name: "下載原圖", exact: true }).getAttribute("href")
+  const original = await page.request.get(download!)
+  expect(original.status()).toBe(200)
+  expect(await original.body()).toEqual(Buffer.from(encoded, "base64"))
   await gallery.getByRole("button", { name: "關閉", exact: true }).click()
   const thumbnail = page.waitForResponse((response) => response.url().includes("/file?size=128"))
   await page.goto(`/products?keyword=${encodeURIComponent(name)}`)

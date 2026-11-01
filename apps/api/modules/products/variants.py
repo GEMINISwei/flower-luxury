@@ -1,11 +1,10 @@
 import uuid
-from functools import lru_cache
 from pathlib import Path
-from threading import Lock
+from threading import BoundedSemaphore, Lock
 
 from pydantic import BaseModel
 
-from .images import PREVIEW_SIZES, PhotoSize, PreparedPhoto, prepare_photo
+from .images import PREVIEW_SIZES, PhotoSize, PreparedPhoto, render_photo_variant
 from .schema import PhotoFile
 
 
@@ -35,10 +34,10 @@ def write_photo_variants(display: Path, prepared: PreparedPhoto, created: list[P
         path.write_bytes(data)
 
 
-@lru_cache(maxsize=128)
-def _generation_lock(_display: Path) -> Lock:
-    # 同一照片可能同時出現在主圖與訊息區, 避免首次讀取重複轉檔.
-    return Lock()
+# 固定鎖不會在大量照片併發時被 LRU 淘汰, 讓同一張圖始終使用同一把鎖.
+_GENERATION_LOCKS = tuple(Lock() for _ in range(128))
+# 正式 API 只有 512 MB, 原圖匯入後的第一頁不能同時解碼整頁高解析度照片.
+_REPAIR_SLOTS = BoundedSemaphore(2)
 
 
 def _write_atomic(path: Path, data: bytes) -> None:
@@ -53,17 +52,11 @@ def _write_atomic(path: Path, data: bytes) -> None:
 
 def resolve_photo_variant(display: Path, original: Path | None, size: PhotoSize) -> PhotoFile:
     has_original = original is not None and original.is_file()
-    if size == "full" and not has_original:
-        return PhotoFile(path=display)
-    target = _variant_path(display, size)
-    with _generation_lock(display):
+    target = display if size == "full" and not has_original else _variant_path(display, size)
+    with _GENERATION_LOCKS[hash(display) % len(_GENERATION_LOCKS)]:
         if not target.is_file():
             source = original if has_original and original is not None else display
-            prepared = prepare_photo(source.read_bytes(), None)
-            files = [(_variant_path(display, "full"), prepared.display)]
-            files.extend((_variant_path(display, str(edge)), data)
-                         for edge, data in prepared.previews.items())
-            for path, data in files:
-                if not path.is_file():
-                    _write_atomic(path, data)
+            with _REPAIR_SLOTS:
+                rendered = render_photo_variant(source.read_bytes(), size)
+                _write_atomic(target, rendered.content)
     return PhotoFile(path=target)

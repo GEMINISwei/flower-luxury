@@ -7,20 +7,24 @@ from PIL import Image
 from modules.products.images import prepare_photo
 
 
-def test_photo_variants_preserve_full_resolution_and_lossless_previews():
+def test_photo_variants_preserve_original_with_bounded_compressed_display():
     source = Image.new("RGB", (3000, 1500), (23, 100, 201))
     buffer = BytesIO()
     source.save(buffer, "PNG")
     prepared = prepare_photo(buffer.getvalue(), "large.png")
     assert prepared.original == buffer.getvalue()
     with Image.open(BytesIO(prepared.display)) as full:
-        assert full.size == (3000, 1500)
-        assert full.convert("RGBA").getpixel((1500, 750)) == (23, 100, 201, 255)
+        assert full.size == (2048, 1024)
+        color = cast(tuple[int, ...], full.convert("RGBA").getpixel((1024, 512)))
+        assert all(abs(actual - wanted) <= 6
+                   for actual, wanted in zip(color, (23, 100, 201, 255), strict=True))
     for size in (128, 320, 640):
         with Image.open(BytesIO(prepared.previews[size])) as image:
             assert image.format == "WEBP" and image.size == (size, size)
             assert image.getchannel("A").getbbox() == (0, size // 4, size, size * 3 // 4)
-            assert image.convert("RGBA").getpixel((size // 2, size // 2)) == (23, 100, 201, 255)
+            color = cast(tuple[int, ...], image.convert("RGBA").getpixel((size // 2, size // 2)))
+            assert all(abs(actual - wanted) <= 6
+                       for actual, wanted in zip(color, (23, 100, 201, 255), strict=True))
             assert not image.getexif()
 
 
@@ -33,11 +37,17 @@ def test_photo_variants_respect_orientation_and_transparency():
     prepared = prepare_photo(buffer.getvalue(), "portrait.png")
     with Image.open(BytesIO(prepared.display)) as full:
         assert full.size == (320, 640) and not full.getexif()
-        assert full.convert("RGBA").getpixel((160, 320)) == (23, 100, 201, 128)
+        color = cast(tuple[int, ...], full.convert("RGBA").getpixel((160, 320)))
+        assert color[3] == 128
+        assert all(abs(actual - wanted) <= 6
+                   for actual, wanted in zip(color[:3], (23, 100, 201), strict=True))
     for size in (128, 320, 640):
         with Image.open(BytesIO(prepared.previews[size])) as image:
             assert image.getchannel("A").getbbox() == (size // 4, 0, size * 3 // 4, size)
-            assert image.convert("RGBA").getpixel((size // 2, size // 2)) == (23, 100, 201, 128)
+            color = cast(tuple[int, ...], image.convert("RGBA").getpixel((size // 2, size // 2)))
+            assert color[3] == 128
+            assert all(abs(actual - wanted) <= 6
+                       for actual, wanted in zip(color[:3], (23, 100, 201), strict=True))
             assert cast(tuple[int, ...], image.convert("RGBA").getpixel((0, 0)))[3] == 0
 
 

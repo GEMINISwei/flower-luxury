@@ -1,5 +1,6 @@
 from io import BytesIO
 from pathlib import Path
+from typing import cast
 
 import pytest
 from fastapi import UploadFile
@@ -64,8 +65,10 @@ async def test_draft_legacy_photo_generates_variants_from_original(db, tmp_path)
         stored = await photos.read_photo(str(row.id), size=size)
         with Image.open(stored.path) as image:
             assert image.size == ((8, 4) if size == "full" else (int(size), int(size)))
-            center = image.convert("RGBA").getpixel((image.width // 2, image.height // 2))
-            assert center == (255, 0, 0, 255)
+            center = cast(tuple[int, ...], image.convert("RGBA").getpixel(
+                (image.width // 2, image.height // 2)))
+            assert all(abs(actual - wanted) <= 6
+                       for actual, wanted in zip(center, (255, 0, 0, 255), strict=True))
 
 
 async def test_draft_variant_write_failure_preserves_existing_photos(db, tmp_path, monkeypatch):

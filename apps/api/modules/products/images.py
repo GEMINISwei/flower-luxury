@@ -13,6 +13,7 @@ from .errors import PhotoError
 register_heif_opener()
 MAX_BATCH_BYTES = 15 * 1024 * 1024
 PREVIEW_SIZES = (128, 320, 640)
+DISPLAY_MAX_EDGE = 2048
 type PhotoSize = Literal["128", "320", "640", "full"]
 FORMATS = {"JPEG": ("jpg", "image/jpeg"), "PNG": ("png", "image/png"),
            "WEBP": ("webp", "image/webp"), "HEIF": ("heic", "image/heic")}
@@ -27,14 +28,18 @@ class PreparedPhoto(BaseModel):
     previews: dict[int, bytes] = Field(default_factory=dict)
 
 
+class RenderedPhoto(BaseModel):
+    content: bytes
+
+
 def validate_batch_size(sizes: list[int], *, status_code: int = 422) -> None:
     if not sizes or any(size <= 0 for size in sizes) or sum(sizes) > MAX_BATCH_BYTES:
         raise LangException(status_code, PhotoError.TOO_LARGE)
 
 
-def _webp(image: Image.Image, *, method: int = 4) -> bytes:
+def _webp(image: Image.Image) -> bytes:
     output = BytesIO()
-    image.save(output, "WEBP", lossless=True, exact=True, method=method)
+    image.save(output, "WEBP", quality=85, exact=True, method=4)
     return output.getvalue()
 
 
@@ -50,7 +55,7 @@ def _preview(image: Image.Image, size: int) -> bytes:
     return _webp(canvas)
 
 
-def prepare_photo(data: bytes, filename: str | None) -> PreparedPhoto:
+def _decode(data: bytes) -> tuple[Image.Image, str, str]:
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("error", Image.DecompressionBombWarning)
@@ -59,12 +64,35 @@ def prepare_photo(data: bytes, filename: str | None) -> PreparedPhoto:
                     raise ValueError("unsupported format")
                 extension, media_type = FORMATS[str(source.format)]
                 image = ImageOps.exif_transpose(source).convert("RGBA")
-                # 全圖只在點擊時下載, 優先縮短高解析度照片的無損編碼時間.
-                display = _webp(image, method=0)
-                previews = {size: _preview(image, size) for size in PREVIEW_SIZES}
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError,
             Image.DecompressionBombWarning) as error:
         raise LangException(422, PhotoError.INVALID) from error
+    return image, extension, media_type
+
+
+def _render(image: Image.Image, size: PhotoSize) -> bytes:
+    if size != "full":
+        return _preview(image, int(size))
+    ratio = min(1, DISPLAY_MAX_EDGE / max(image.size))
+    if ratio == 1:
+        return _webp(image)
+    dimensions = tuple(max(1, round(edge * ratio)) for edge in image.size)
+    fitted = Image.merge("RGBA", tuple(channel.resize(dimensions, Image.Resampling.LANCZOS)
+                                      for channel in image.split()))
+    return _webp(fitted)
+
+
+def render_photo_variant(data: bytes, size: PhotoSize) -> RenderedPhoto:
+    image, _, _ = _decode(data)
+    with image:
+        return RenderedPhoto(content=_render(image, size))
+
+
+def prepare_photo(data: bytes, filename: str | None) -> PreparedPhoto:
+    image, extension, media_type = _decode(data)
+    with image:
+        display = _render(image, "full")
+        previews = {size: _preview(image, size) for size in PREVIEW_SIZES}
     name = (filename or f"photo.{extension}").replace("\\", "/").rsplit("/", 1)[-1]
     name = "".join(char for char in name if ord(char) >= 32 and ord(char) != 127)
     return PreparedPhoto(original=data, display=display, previews=previews, extension=extension,

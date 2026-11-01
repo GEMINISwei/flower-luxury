@@ -82,6 +82,8 @@
   已放棄或刪除的圖片不再寫檔。
 - 每張圖片以內容驗證，單張最多 15 MiB，沿用既有 JPEG、PNG、WebP、HEIC 與顯示圖處理規則。
   原圖完整保存於 `/app/uploads/product_drafts/`，顯示圖另存，資料庫只保存相對路徑。
+- 顯示圖沿用[商品照片](product-photos.md)的 2048 px 大圖與 128／320／640 預覽規則。
+  缺少衍生圖時從原圖只補產請求的尺寸；只有原圖也可瀏覽，補產不變更暫存版本。
 - 照片與原圖讀取需登入且禁止快取。dev／prod nginx 只公開照片的 `file`／`download` 讀取路徑，
   其餘讀取與寫入由 Server Component／Server Action 經內網呼叫。
 - 後端仍保留補圖能力，每次合計最多 15 MiB，以內容驗證，記錄操作者並增加暫存版本；
@@ -98,10 +100,13 @@
 - 匯入失敗回滾正式商品並清掉本次寫入的半成品，暫存可繼續修改後重試。
 - 放棄採硬刪除，原文與照片資料立即不可讀；實體檔案交由同一交易排入的清理工作刪除。
   worker 停止時清理會延後，恢復後可重跑；資料庫回滾時不排入清理，也不刪除原檔。
+  放棄會等待進行中的圖片補產結束，再清除原圖及全部衍生圖；放棄後的讀取不會重新補產。
 - 放棄不保留商品內容或刪除歷程。30 天防重送摘要、來源收集游標、批次與商品時間分界及不含內容的待辦工作獨立保存；
   既有備份依備份保存策略淘汰，系統不代替 LINE 刪除聊天訊息。
 
 ## 程式與測試
+
+- 原圖補產與放棄清理競爭：[`test_photo_repair.py`](../../apps/api/tests/modules/product_drafts/test_photo_repair.py)
 
 - 指令批次與時間歸屬：[`batches.py`](../../apps/api/modules/product_drafts/batches.py)
 - 收件公開入口：[`public.py`](../../apps/api/modules/product_drafts/public.py)
