@@ -7,17 +7,19 @@ import { deleteDraftPhoto } from "../actions"
 import { draftMessages } from "../i18n"
 import type { DraftInfo } from "../types"
 import DraftGallery from "./DraftGallery"
+import DraftUpload from "./DraftUpload"
 import styles from "./drafts.module.css"
 
 type Mutation = (run: () => Promise<ApiResponse<DraftInfo>>) => void
-export default function DraftPhotos({ draft, disabled, mutate }: {
-  draft: DraftInfo; disabled: boolean; mutate: Mutation
+export default function DraftPhotos({ draft, disabled, mutate, onError }: {
+  draft: DraftInfo; disabled: boolean; mutate: Mutation; onError: (message: string) => void
 }) {
   const t = useT(draftMessages)
   const [removing, setRemoving] = useState<string | null>(null)
   return <section className={styles.panel} aria-label={t("photos")}>
     <div className={styles.sectionHeader}><h2>{t("photos")}</h2>
-      <span className={styles.count}>{draft.photos.length}</span></div>
+      <span className={styles.count}>{draft.photos.length}</span>
+      <DraftUpload draft={draft} disabled={disabled} mutate={mutate} onError={onError} /></div>
     <DraftGallery draft={draft} disabled={disabled} mutate={mutate} onRemove={setRemoving} />
     <ConfirmDialog title={t("deletePhoto")} open={Boolean(removing)} isPending={disabled}
       confirmText={t("delete")} onClose={() => setRemoving(null)} onConfirm={() => {
