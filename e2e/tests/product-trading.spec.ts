@@ -102,6 +102,7 @@ test("詢價逐筆修改匯率且成交退回再成交保留快照", async ({ pa
   dialog = page.getByRole("dialog", { name: "確認成交", exact: true })
   await dialog.getByRole("button", { name: "確認成交", exact: true }).click()
   await expect(dialog).toBeHidden()
+  await expect(page.getByText("目前成交詢價", { exact: true })).toHaveCount(1)
   await expect(page.getByRole("region", { name: "目前成交", exact: true })).toHaveCount(0)
   const current = page.getByRole("region", { name: "Phase5 second vendor", exact: true })
   const other = page.getByRole("region", { name: "Phase5 CNY", exact: true })
@@ -109,7 +110,6 @@ test("詢價逐筆修改匯率且成交退回再成交保留快照", async ({ pa
   expect(await current.evaluate(border)).toBeGreaterThan(await other.evaluate(border))
   expect(await current.evaluate((element) => getComputedStyle(element).backgroundColor))
     .not.toBe(await other.evaluate((element) => getComputedStyle(element).backgroundColor))
-  await expect(page.getByText("目前成交詢價", { exact: true })).toHaveCount(1)
   await expect(page.getByRole("region", { name: "Phase5 second vendor", exact: true })
     .getByText("目前成交詢價", { exact: true })).toBeVisible()
   for (const width of [320, 390, 1280]) {
