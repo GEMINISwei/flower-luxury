@@ -4,7 +4,7 @@ type SaleQuote = { id: string; original_amount: string | number; exchange_rate: 
 
 function scaledDecimal(value: string | number, places: number) {
   const [whole, fraction = ""] = String(value).split(".")
-  return BigInt(whole + fraction.padEnd(places, "0"))
+  return BigInt(whole + fraction.slice(0, places).padEnd(places, "0"))
 }
 
 export function draftSaleSummary<T extends SaleQuote>(quotes: T[], selected: string | null,
