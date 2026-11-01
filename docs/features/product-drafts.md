@@ -86,6 +86,14 @@
 - 不需要的異常或無法排序的指令可以確認後忽略，原文與照片按既有清理規則移除。
 - 同一來源的異常全部處理後解除待確認狀態；歷史批次異常時間與原因仍保留。
 
+## 暫存成交選擇
+
+- 廠商報價可人工選一筆作為成交，也可取消；選擇與暫存版本一起保存，AI 不會自動決定成交廠商。
+- 刪除選定報價同步取消選擇；修改報價維持其選擇，審核以當下保存的金額與匯率為準。
+- 審核確認顯示廠商、原報價、逐筆匯率、臺幣、目前成本與利潤，虧損時明確提示。
+- 有選成交時，商品、照片、所有報價、成交快照與歷程同一交易建立，直接為已出售；成交時間取商品建立時間，兩者完全相同。
+- 任一步驟失敗全部回滾，暫存與選擇保留。未選成交沿用原初始狀態；售出後沿用鎖定與填原因退回規則。
+
 ## 整理與照片
 
 - 所有登入使用者共用暫存與審核能力，不另外限制店長。
@@ -128,6 +136,7 @@
 - 指令批次與時間歸屬：[`batches.py`](../../apps/api/modules/product_drafts/batches.py)
 - 收件公開入口：[`public.py`](../../apps/api/modules/product_drafts/public.py)
 - 狀態保護、排序與人工確認：[`test_review_queue.py`](../../apps/api/tests/modules/product_drafts/test_review_queue.py)
+- 暫存成交選擇與原子建檔：[`test_sale_selection.py`](../../apps/api/tests/modules/product_drafts/test_sale_selection.py)
 - 審核與刪除：[`review.py`](../../apps/api/modules/product_drafts/review.py)
 - 後端交易、併發與檔案清理：[`test_integration.py`](../../apps/api/tests/modules/product_drafts/test_integration.py)
 - 無資料庫的服務行為：[`test_services.py`](../../apps/api/tests/modules/product_drafts/test_services.py)
