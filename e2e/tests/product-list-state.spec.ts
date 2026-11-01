@@ -96,6 +96,7 @@ test("手機從續載商品詳情返回時恢復條件與位置，支援上一�
   await expect.poll(async () => Math.abs(await row
     .evaluate((element) => element.getBoundingClientRect().top) - offset)).toBeLessThan(5)
   await restored.click()
+  await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
   await page.reload()
   await page.getByRole("link", { name: "返回商品列表", exact: true }).click()
   await expect(page).toHaveURL(/keyword=Remember/)
