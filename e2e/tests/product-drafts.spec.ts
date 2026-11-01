@@ -602,6 +602,27 @@ workspaceTest("AI 報價顯示於暫存且不提供重新預填", async ({ page 
   await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("人工修正")
 })
 
+workspaceTest("暫存可選成交報價並在建檔時確認虧損與直接售出", async ({ page }) => {
+  const data = fixture({ name: `Sale ${randomUUID().slice(0, 8)}`, ai: "true" })
+  await open(page, data.id)
+  await page.getByRole("button", { name: "選為成交", exact: true }).click()
+  await expect(page.getByRole("button", { name: "取消成交選擇", exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole("button", { name: "取消成交選擇", exact: true })).toBeVisible()
+  await fillRequired(page, data.name, data.brand)
+  await page.getByLabel("成本（新臺幣）", { exact: true }).fill("500")
+  await page.getByRole("button", { name: "審核建檔", exact: true }).click()
+  const dialog = page.getByRole("dialog", { name: "審核建檔", exact: true })
+  await expect(dialog).toContainText(`${data.name} buyer`)
+  await expect(dialog).toContainText("450")
+  await expect(dialog).toContainText("虧損")
+  await expect(dialog).toContainText("50")
+  await dialog.getByRole("button", { name: "審核建檔", exact: true }).click()
+  await page.getByRole("link", { name: "查看已建檔商品", exact: true }).click()
+  await expect(page.getByRole("main")).toContainText("已出售")
+  await expect(page.getByRole("main")).toContainText(`${data.name} buyer`)
+})
+
 workspaceTest("手機與窄桌面頁首的標題和操作按鈕保持可見且不互相遮擋", async ({ page }) => {
   test.setTimeout(90_000)
   const data = seed()
