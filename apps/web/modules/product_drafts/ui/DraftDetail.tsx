@@ -6,7 +6,7 @@ import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
 import { discardDraft } from "../actions"
-import { draftQueueHref, draftTextMessages } from "../capabilities"
+import { draftQueueHref, draftStage, draftTextMessages } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { DraftInfo, SourceInfo } from "../types"
 import DraftFields from "./DraftFields"
@@ -33,7 +33,8 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
     if (dialog === "approve") editor.save(true)
     else editor.run(() => discardDraft(draft.id, draft.version))
   }
-  const disabled = pending || editor.stale
+  const stage = draftStage(draft)
+  const disabled = pending || editor.stale || stage !== "waiting"
   return <FormPageShell title={t("detail")} subtitle={source?.name ?? draft.source_key}
     backHref={draftQueueHref(undefined, scope)} backLabel={t("back")}
     actions={[
@@ -48,6 +49,7 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
     <div className={styles.stack}>
       <DraftQueueNotice created={created} />
       <div className={styles.feedback}>
+        {stage !== "waiting" && <p role="status">{t(stage)} — {t("blockedHint")}</p>}
         <p className={styles.hint}>{t("reloadHint")}</p>
         {editor.error && <p role="alert">{editor.error}</p>}
         {editor.status && <p role="status">{editor.status}</p>}
@@ -69,7 +71,8 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
         </div>
         <div className={styles.editorColumn}>
           <PrefillStatus draft={draft} />
-          <DraftFields values={values} brands={brands} disabled={pending} onChange={editor.set} />
+          <DraftFields values={values} brands={brands} disabled={pending || stage !== "waiting"}
+            onChange={editor.set} />
           <DraftQuotes draft={draft} vendors={vendors} disabled={disabled} mutate={editor.run} />
         </div>
       </div>
