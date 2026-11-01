@@ -10,3 +10,7 @@ def is_healthy(path: Path = HEARTBEAT_PATH, *, now: float | None = None) -> bool
     except OSError:
         return False
     return 0 <= age <= 30
+
+
+if __name__ == "__main__":
+    raise SystemExit(0 if is_healthy() else 1)
