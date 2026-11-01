@@ -117,10 +117,15 @@ async def read_photo(id: str, *, original: bool = False, size: PhotoSize = "full
         raise LangException(409, DraftError.PHOTO_NOT_READY)
     key = ensure_found(row.original_key if original else row.display_key, DraftError.NOT_FOUND)
     path = storage._path(key)
-    ensure_found(await run_in_threadpool(path.is_file), DraftError.NOT_FOUND)
-    if not original:
+    if original:
+        exists = await run_in_threadpool(path.is_file)
+        ensure_found(exists or None, DraftError.NOT_FOUND)
+    else:
         source = storage._path(row.original_key) if row.original_key else None
-        path = (await run_in_threadpool(resolve_photo_variant, path, source, size)).path
+        try:
+            path = (await run_in_threadpool(resolve_photo_variant, path, source, size)).path
+        except FileNotFoundError as error:
+            raise LangException(404, DraftError.NOT_FOUND) from error
     media_type = (row.media_type or "image/png") if original else "image/webp"
     return StoredFile(path=path, media_type=media_type, filename=row.filename or "photo.webp")
 

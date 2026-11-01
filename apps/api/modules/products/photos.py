@@ -9,7 +9,7 @@ from starlette.concurrency import run_in_threadpool
 from shared.auth.contracts import CurrentUser
 from shared.db.session import active_session
 from shared.db.transaction import transaction
-from shared.http.errors import ensure_found
+from shared.http.errors import LangException, ensure_found
 from shared.time import utc_now
 
 from .errors import ProductError
@@ -158,10 +158,11 @@ async def delete_photo(id: str, photo_id: str, actor: CurrentUser) -> PhotoList:
 async def photo_path(photo_id: str, *, size: PhotoSize = "full") -> PhotoFile:
     row = await readable_photo(photo_id)
     path = _storage_path(row.storage_key)
-    exists = await run_in_threadpool(path.is_file)
-    ensure_found(exists or None, ProductError.PHOTO_NOT_FOUND)
     original = _storage_path(row.original_storage_key) if row.original_storage_key else None
-    return await run_in_threadpool(resolve_photo_variant, path, original, size)
+    try:
+        return await run_in_threadpool(resolve_photo_variant, path, original, size)
+    except FileNotFoundError as error:
+        raise LangException(404, ProductError.PHOTO_NOT_FOUND) from error
 
 
 async def original_file(photo_id: str) -> OriginalPhotoFile:

@@ -157,9 +157,11 @@ async def owned_photo(id: str, photo_id: str) -> ProductPhotoTable:
     return ensure_found(row, ProductError.PHOTO_NOT_FOUND)
 
 async def readable_photo(photo_id: str) -> ProductPhotoTable:
+    # 補產完成前阻止照片刪除, 避免清檔後又寫回沒有紀錄的衍生圖.
     return ensure_found(await active_session().scalar(select(ProductPhotoTable).join(
         ProductTable, ProductPhotoTable.product_id == ProductTable.id,
-    ).where(ProductPhotoTable.id == parse_uuid(photo_id), ProductTable.deleted_at.is_(None))),
+    ).where(ProductPhotoTable.id == parse_uuid(photo_id), ProductTable.deleted_at.is_(None))
+        .with_for_update(read=True, of=ProductPhotoTable)),
         ProductError.PHOTO_NOT_FOUND)
 
 

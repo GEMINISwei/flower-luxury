@@ -203,9 +203,10 @@ async def get_message_row(id: str | None, *, lock: bool = False) -> MessageTable
 
 
 async def get_photo_row(id: str) -> PhotoTable | None:
+    # 放棄暫存的 cascade delete 必須等讀取補產結束, 背景清檔才不會漏掉新檔.
     return await active_session().scalar(select(PhotoTable).where(
         PhotoTable.id == parse_uuid(id),
-    ).execution_options(populate_existing=True))
+    ).with_for_update(read=True).execution_options(populate_existing=True))
 
 
 async def photo_for_message(id: str | None) -> PhotoTable | None:
