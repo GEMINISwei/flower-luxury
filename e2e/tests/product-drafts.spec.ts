@@ -128,15 +128,6 @@ async function fillRequired(page: Page, name: string, brand: string) {
   await page.getByLabel("成本（新臺幣）", { exact: true }).fill("30000")
 }
 
-workspaceTest("緩衝收件時顯示處理中且尚未開放新商品審核", async ({ page }) => {
-  const data = fixture({ name: `Buffer ${randomUUID().slice(0, 8)}`, buffer: "true" })
-  await page.context().addCookies(managerState!.cookies)
-  await page.goto("/admin/line-groups")
-  const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
-  await expect(row).toContainText("處理中")
-  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
-  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
-})
 
 test.beforeAll(async ({ browser }) => {
   const page = await browser.newPage()
@@ -809,3 +800,14 @@ workspaceTest("AI 助手以卡片右上角新增條件且隱藏冗餘標籤", as
     await expect(card.getByRole("textbox", { name: /^補充條件 \d+$/ }).last()).toBeVisible()
   }
 })
+
+workspaceTest("緩衝收件時顯示處理中且尚未開放新商品審核", async ({ page }) => {
+  const data = fixture({ name: `Buffer ${randomUUID().slice(0, 8)}`, buffer: "true" })
+  await page.context().addCookies(managerState!.cookies)
+  await page.goto("/admin/line-groups")
+  const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
+  await expect(row).toContainText("處理中")
+  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
+})
+
