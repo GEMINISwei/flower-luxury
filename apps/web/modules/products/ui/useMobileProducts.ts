@@ -6,15 +6,23 @@ import type { ProductInfo } from "../types"
 import { appendProducts, canLoadMoreProducts } from "../capabilities"
 import { loadProductPage } from "../actions"
 
-export function useMobileProducts({ products, meta, filters, sentinel, errorFallback }: {
+export function useMobileProducts({
+  products, meta, filters, sentinel, errorFallback, restore, enabled = true,
+}: {
   products: ProductInfo[]; meta: ApiListMeta; filters: Record<string, string>;
   sentinel: RefObject<HTMLDivElement | null>; errorFallback: string
+  restore?: { id: string; count: number } | null
+  enabled?: boolean
 }) {
   const [page, setPage] = useState({ products, meta, errorMessage: "" })
   const [loading, setLoading] = useState(false)
+  const restoring = Boolean(restore && page.products.length < restore.count
+    && !page.products.some((product) => product.id === restore.id) && page.meta.hasNext
+    && page.meta.nextCursor)
   useEffect(() => {
     const target = sentinel.current
-    if (!target || !page.meta.hasNext || !page.meta.nextCursor || page.errorMessage) return
+    if (!enabled || !target || !page.meta.hasNext || !page.meta.nextCursor
+        || page.errorMessage) return
     const media = window.matchMedia("(max-width: 720px)")
     let active = true
     let pending = false
@@ -27,12 +35,17 @@ export function useMobileProducts({ products, meta, filters, sentinel, errorFall
         setPage((current) => result.errorMessage
           ? { ...current, errorMessage: result.errorMessage }
           : { products: appendProducts(current.products, result.items),
-            meta: result.meta, errorMessage: "" })
+            meta: result.meta.nextCursor === current.meta.nextCursor
+              ? { ...result.meta, hasNext: false } : result.meta, errorMessage: "" })
       } catch {
         if (active) setPage((current) => ({ ...current, errorMessage: errorFallback }))
       } finally {
         if (active) setLoading(false)
       }
+    }
+    if (restoring && media.matches) {
+      void loadNext()
+      return () => { active = false }
     }
     const observer = new IntersectionObserver((entries) => {
       if (canLoadMoreProducts({ mobile: media.matches,
@@ -41,6 +54,7 @@ export function useMobileProducts({ products, meta, filters, sentinel, errorFall
     }, { rootMargin: "0px", threshold: 1 })
     observer.observe(target)
     return () => { active = false; observer.disconnect() }
-  }, [page.meta, page.errorMessage, filters, sentinel, errorFallback])
-  return { ...page, loading, retry: () => setPage((current) => ({ ...current, errorMessage: "" })) }
+  }, [page.meta, page.errorMessage, filters, sentinel, errorFallback, restoring, enabled])
+  return { ...page, loading, restoring,
+    retry: () => setPage((current) => ({ ...current, errorMessage: "" })) }
 }

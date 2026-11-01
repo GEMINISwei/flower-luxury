@@ -6,12 +6,13 @@ import type { BrandInfo } from "@/modules/brands/public.client"
 import { CATEGORIES } from "../constants"
 import { productMessages } from "../i18n"
 
-export default function ProductFilters({ brands, filters, open, onClose }: {
+export default function ProductFilters({ brands, filters, open, onClose, onApply }: {
   brands: BrandInfo[]; filters: Record<string, string>; open: boolean; onClose: () => void
+  onApply: (values: Record<string, string>) => void
 }) {
   const t = useT(productMessages)
   return <FilterDialog title={t("search")} open={open} onClose={onClose}
-    initialValues={filters} fields={[
+    initialValues={filters} onApply={onApply} fields={[
       { name: "keyword", label: t("keyword"), type: "text" },
       { name: "brand_id", label: t("brand_id"), type: "select",
         options: [{ value: "", label: t("all") },
