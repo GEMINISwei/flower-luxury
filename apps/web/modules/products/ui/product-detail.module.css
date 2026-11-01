@@ -4,17 +4,6 @@
   min-width: 0;
 }
 
-.historyLink {
-  justify-self: start;
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--control-height-lg);
-  color: var(--color-primary);
-  font-weight: var(--fw-semibold);
-  text-decoration: none;
-}
-.historyLink:hover { text-decoration: underline; }
-
 .imagePanel {
   display: grid;
   gap: var(--space-5);

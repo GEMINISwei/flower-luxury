@@ -737,24 +737,28 @@ workspaceTest("手機頁首直接開啟新增與篩選", async ({ page }) => {
   await expect(page.getByRole("dialog", { name: "新增員工", exact: true })).toBeVisible()
 })
 
-workspaceTest("商品列表提供三個圖示入口且暫存不在導覽列", async ({ page }) => {
+workspaceTest("商品列表頁首整合篩選與暫存且窄螢幕不溢出", async ({ page }) => {
   for (const width of [320, 390, 720, 1280]) {
     await page.setViewportSize({ width, height: 844 })
     await page.goto("/products")
     await expectSingleRowHeader(page)
     const header = page.locator("header")
     await expect(header.getByRole("button")).toHaveCount(3)
-    for (const name of ["重新整理", "商品暫存", "新增商品"]) {
+    for (const name of ["重新整理", "新增商品", "操作選單"]) {
       await expect(header.getByRole("button", { name, exact: true })).toBeVisible()
     }
-    await expect(header.getByRole("button", { name: "操作選單" })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "篩選", exact: true })).toHaveCount(0)
+    await expect(header.getByRole("button", { name: "商品暫存", exact: true })).toHaveCount(0)
     for (const nav of await page.getByRole("navigation").all()) {
       await expect(nav.getByRole("link", { name: "商品暫存", exact: true })).toHaveCount(0)
     }
-    await page.getByRole("button", { name: "篩選", exact: true }).click()
+    await header.getByRole("button", { name: "操作選單", exact: true }).click()
+    await page.getByRole("menuitem", { name: "篩選", exact: true }).click()
+    await expect(page.getByRole("dialog", { name: "操作選單", exact: true })).toBeHidden()
     await expect(page.getByRole("dialog")).toBeVisible()
     await page.getByRole("dialog").getByRole("button", { name: "關閉", exact: true }).click()
-    await header.getByRole("button", { name: "商品暫存", exact: true }).click()
+    await header.getByRole("button", { name: "操作選單", exact: true }).click()
+    await page.getByRole("menuitem", { name: "商品暫存", exact: true }).click()
     await expect(page).toHaveURL("/product-drafts")
   }
 })
