@@ -1240,6 +1240,11 @@ export interface components {
             /** Name */
             name: string | null;
             /**
+             * Processing
+             * @default false
+             */
+            processing: boolean;
+            /**
              * Reply Failed
              * @default false
              */

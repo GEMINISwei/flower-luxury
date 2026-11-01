@@ -6,6 +6,7 @@ from sqlalchemy import ForeignKey, Index, String, delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Mapped, mapped_column
 
+from modules.product_drafts.public import message_draft_id
 from shared.db.session import active_session
 from shared.db.table import BaseTable, PagedResult, parse_uuid
 from shared.time import utc_now
@@ -87,9 +88,12 @@ async def receipt_exists(digest: str) -> bool:
 
 
 async def message_link(digest: str) -> MessageLinkTable | None:
-    return await active_session().scalar(select(MessageLinkTable).where(
+    row = await active_session().scalar(select(MessageLinkTable).where(
         MessageLinkTable.fingerprint == digest,
     ).execution_options(populate_existing=True))
+    if row and row.message_id:
+        row.draft_id = await message_draft_id(str(row.message_id))
+    return row
 
 
 async def download_target(id: str) -> DownloadTarget | None:

@@ -33,6 +33,8 @@ async def record_issue(source_key: str, occurred_at: datetime, reason: str) -> N
 
 async def get_collection_state(source_key: str) -> BatchState:
     batch = await model.latest_batch(source_key)
+    stream = await active_session().scalar(select(model.StreamTable).where(
+        model.StreamTable.source_key == source_key))
     issues = list(await active_session().scalars(select(model.BatchIssueTable).where(
         model.BatchIssueTable.source_key == source_key,
     ).order_by(model.BatchIssueTable.created_at.desc(), model.BatchIssueTable.id.desc()).limit(5)))
@@ -40,10 +42,47 @@ async def get_collection_state(source_key: str) -> BatchState:
         model.BatchIssueTable).where(model.BatchIssueTable.source_key == source_key))
     return BatchState(
         collecting=bool(batch and batch.ended_at is None),
+        processing=bool(getattr(stream, "buffer_until", None)),
         batch_started_at=batch.started_at if batch else None,
         batch_ended_at=batch.ended_at if batch else None, issue_count=count or 0,
         issues=[BatchIssueInfo(occurred_at=row.occurred_at,
                               reason=resolve_text(ISSUE_TEXTS[row.reason])) for row in issues])
+
+
+async def attach_buffered_message(form: IncomingMessage,
+                                  message: model.MessageTable) -> IngestResult:
+    stream = await model.stream_for(form.source_key)
+    batch = await model.batch_at(form.source_key, form.occurred_at)
+    if batch is None:
+        return IngestResult()
+    if form.occurred_at in {batch.started_at, batch.ended_at}:
+        await record_issue(form.source_key, form.occurred_at, "ambiguous")
+        return IngestResult()
+    window = await _resolve_window(batch, form)
+    batch.latest_at = max(batch.latest_at, form.occurred_at)
+    stream.last_occurred_at = max(stream.last_occurred_at or form.occurred_at, form.occurred_at)
+    if window is None:
+        return IngestResult()
+    draft = await model.get_draft_row(window.draft_key)
+    if draft is None:
+        await record_issue(form.source_key, form.occurred_at, "removed")
+        return IngestResult()
+    message.draft_id = draft.id
+    if form.kind == "text":
+        window.first_text_at = min(window.first_text_at or form.occurred_at, form.occurred_at)
+    else:
+        window.last_image_at = max(window.last_image_at, form.occurred_at)
+        photo = await model.photo_for_message(str(message.id))
+        if photo:
+            photo.draft_id = draft.id
+            photo.sort_order = max((row.sort_order for row in
+                                   await model.photos_for(str(draft.id))), default=0) + 1
+            if draft.main_photo_id is None:
+                draft.main_photo_id = photo.id
+    draft.has_text = draft.has_text or form.kind == "text"
+    _bump(draft)
+    await active_session().flush()
+    return IngestResult(message_id=str(message.id), draft_id=str(draft.id))
 
 
 async def _close_draft(draft_key: str) -> None:
