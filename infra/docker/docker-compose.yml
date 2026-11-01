@@ -76,7 +76,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "python", "-m", "app.collector", "--healthcheck"]
+      test: ["CMD", "python", "-m", "shared.jobs.health", "--healthcheck"]
       interval: 10s
       timeout: 5s
       start_period: 10s

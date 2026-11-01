@@ -446,7 +446,7 @@ workspaceTest("手機版暫存工作區不橫向溢出且可切換照片", async
   expect((await messages.boundingBox())!.width).toBeLessThan(390)
 })
 
-workspaceTest("暫存原始訊息只顯示時間與文字且不提供補上傳", async ({ page }) => {
+workspaceTest("暫存原始訊息只顯示時間與文字且可人工補圖並保留欄位", async ({ page }) => {
   const data = seed()
   await open(page, data.id)
   const messages = page.getByRole("region", { name: "訊息內容", exact: true })
@@ -460,14 +460,38 @@ workspaceTest("暫存原始訊息只顯示時間與文字且不提供補上傳",
     expect(await article.evaluate((element) => element.querySelector("time")?.dateTime))
       .toMatch(/^\d{4}-\d{2}-\d{2}T/)
   }
-  await expect(page.getByLabel("補上傳照片")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "上傳照片", exact: true })).toBeVisible()
   await expect(page.getByTestId("draft-photo")).toHaveCount(1)
+  await page.getByLabel("名稱", { exact: true }).fill("尚未儲存的商品名稱")
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAABAAAAAICAIAAAB/FOjAAAAAFklEQVR4nGP8z0AaYCJRPcOoBgYiAACTUAEPHJZO1QAAAABJRU5ErkJggg==", "base64")
+  await page.getByLabel("上傳照片", { exact: true }).setInputFiles({
+    name: "manual.png", mimeType: "image/png", buffer: png,
+  })
+  await expect(page.getByTestId("draft-photo")).toHaveCount(2)
+  await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("尚未儲存的商品名稱")
+  await expect(page.getByRole("region", { name: "訊息內容", exact: true }).getByRole("article"))
+    .toHaveCount(2)
+  await page.reload()
+  await expect(page.getByTestId("draft-photo")).toHaveCount(2)
   await open(page, data.second)
   await expect(page.getByRole("region", { name: "訊息內容", exact: true }).getByRole("article"))
     .toHaveCount(0)
   await expect(page.getByRole("region", { name: "照片整理", exact: true }))
     .toContainText("下載失敗")
-  await expect(page.getByRole("main")).not.toContainText("補上傳")
+  await expect(page.getByRole("button", { name: "上傳照片", exact: true })).toBeVisible()
+})
+
+workspaceTest("暫存補圖超過十五MiB或格式不符時不送出並保留原照片", async ({ page }) => {
+  const data = seed()
+  await open(page, data.id)
+  const upload = page.getByLabel("上傳照片", { exact: true })
+  await upload.setInputFiles({ name: "large.png", mimeType: "image/png",
+    buffer: Buffer.alloc(15 * 1024 * 1024 + 1) })
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("15 MiB")
+  await expect(page.getByTestId("draft-photo")).toHaveCount(1)
+  await upload.setInputFiles({ name: "invalid.txt", mimeType: "text/plain", buffer: Buffer.from("x") })
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("JPEG")
+  await expect(page.getByTestId("draft-photo")).toHaveCount(1)
 })
 
 workspaceTest("暫存返回位於內容頂端且操作集中於頁首", async ({ page }) => {

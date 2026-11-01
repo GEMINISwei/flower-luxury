@@ -1,11 +1,22 @@
 "use server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { apiDelete, apiGet, apiPatch, apiPost } from "@/shared/api/request.server"
+import { apiDelete, apiGet, apiPatch, apiPost, apiUpload } from "@/shared/api/request.server"
+import { getLocale } from "@/shared/i18n/locale.server"
+import { validatePhotoBatch } from "@/modules/products/public.client"
 import type { DraftFields } from "./types"
 import { reviewContinuation } from "./continuation.server"
 
 const refresh = { path: "/product-drafts" }
+export async function uploadDraftPhotos(id: string, version: number, data: FormData) {
+  const files = data.getAll("files").filter((file): file is File => file instanceof File)
+  const error = validatePhotoBatch(files, await getLocale())
+  if (error) return { status: "failure" as const, code: 422, data: { detail: error }, message: error }
+  const body = new FormData()
+  body.append("version", String(version))
+  files.forEach((file) => body.append("files", file))
+  return apiUpload({ url: "/product-drafts/{id}/photos", params: { id }, data: body })
+}
 export async function reloadDraft(id: string) {
   return apiGet({ url: "/product-drafts/{id}", params: { id } })
 }
