@@ -64,6 +64,7 @@ seed 失敗時結構已經升上去了，服務一樣不切換，修好之後重
 〈[單一行程，不能直接加副本](#單一行程不能直接加副本)〉與 [ADR 0004](decisions/0004-downtime-deploys.md)。
 
 prod overlay 比 dev 多了 **log 上限**與**記憶體上限**（api、web、line-collector 各 512M，postgres 1G）。
+line-collector 另限半核心 CPU，worker 與容器內健康檢查共用配額。
 
 ### 背景收集程序
 
@@ -75,6 +76,9 @@ LINE 金鑰都留空時停用 LINE 接線；啟用步驟見 [LINE 商品收集](
 
 用 `make services` 查看健康狀態，`make services logs line-collector` 追蹤紀錄。
 每五秒成功連線資料庫後更新 heartbeat，超過 30 秒未更新則 unhealthy；程序錯誤退出後由容器重新啟動。
+Docker 每十秒執行獨立的 `shared.jobs.health` 入口，只讀心跳檔案，不載入資料庫、功能模組或圖片處理套件。
+正式環境的半核心 CPU／512M 為資源預算；部署後需確認連續大圖的單張處理仍能在 60 秒任務期限內完成，
+並比較閒置 CPU、記憶體峰值、排隊與重試量及網站回應時間。
 handler 在 SIGTERM 時取消並回滾，未能清理完而被強制停止的工作會於持有期限到期後恢復。
 
 `make start` 在 migration 前停止原本執行中的收集程序。migration 失敗且資料庫版本未變時恢復原容器；
