@@ -161,6 +161,17 @@ test("group_settings_respect_permissions", async ({ page }) => {
   await expect(page).toHaveURL("/products")
 })
 
+
+workspaceTest("緩衝收件時顯示處理中且尚未開放新商品審核", async ({ page }) => {
+  const data = fixture({ name: `Buffer ${randomUUID().slice(0, 8)}`, buffer: "true" })
+  await page.context().addCookies(managerState!.cookies)
+  await page.goto("/admin/line-groups")
+  const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
+  await expect(row).toContainText("處理中")
+  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
+})
+
 test("left_group_cannot_be_enabled and withdrawal_notice_links_to_product", async ({ page }) => {
   const data = seed()
   await login(page, admin)
@@ -800,14 +811,3 @@ workspaceTest("AI 助手以卡片右上角新增條件且隱藏冗餘標籤", as
     await expect(card.getByRole("textbox", { name: /^補充條件 \d+$/ }).last()).toBeVisible()
   }
 })
-
-workspaceTest("緩衝收件時顯示處理中且尚未開放新商品審核", async ({ page }) => {
-  const data = fixture({ name: `Buffer ${randomUUID().slice(0, 8)}`, buffer: "true" })
-  await page.context().addCookies(managerState!.cookies)
-  await page.goto("/admin/line-groups")
-  const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
-  await expect(row).toContainText("處理中")
-  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
-  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
-})
-
