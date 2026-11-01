@@ -78,7 +78,7 @@ def test_invalid_uuid_in_cursor_raises_400():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_get_page_descending_walk_returns_newest_first(paged_rows):
-    seen = []
+    seen: list[str] = []
     cursor = None
     for _ in range(5):
         page = await paged_rows.get_page(limit=2, cursor=cursor, descending=True)

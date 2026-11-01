@@ -35,11 +35,14 @@ async function addQuote(page: Page, vendor: string, amount: string, rate = "1") 
   await expect(dialog).toBeHidden()
 }
 
-test("詢價逐筆修改匯率且成交退回再成交保留快照", async ({ page }) => {
+test("詢價顯示整數報價及兩位匯率，修改成交退回再成交保留快照", async ({ page }) => {
   await prepareTrade(page, "Phase5 CNY")
   const detail = page.url()
   await page.goto(detail)
   await addQuote(page, "Phase5 CNY", "100", "4.5")
+  const quote = page.getByRole("region", { name: "Phase5 CNY", exact: true })
+  await expect(quote.getByText("100", { exact: true })).toBeVisible()
+  await expect(quote.getByText("4.50", { exact: true })).toBeVisible()
   await page.goto("/vendors")
   const row = page.getByRole("row").filter({ hasText: "Phase5 CNY" })
   await expect(row.getByRole("button", { name: "停用", exact: true })).toHaveCount(0)
@@ -71,6 +74,8 @@ test("詢價逐筆修改匯率且成交退回再成交保留快照", async ({ pa
   await expect(page.getByText("TWD 1,000", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "確認成交", exact: true }).click()
   dialog = page.getByRole("dialog", { name: "確認成交", exact: true })
+  await expect(dialog.getByText("200", { exact: true })).toBeVisible()
+  await expect(dialog.getByText("5.00", { exact: true })).toBeVisible()
   await expect(dialog).toContainText("此筆成交將虧損 2,000 TWD。")
   await dialog.getByRole("button", { name: "取消", exact: true }).click()
   await expect(page.getByRole("button", { name: "編輯商品", exact: true })).toBeVisible()
@@ -138,6 +143,10 @@ test("詢價逐筆修改匯率且成交退回再成交保留快照", async ({ pa
   await expect(page.getByText("已退回", { exact: true })).toBeVisible()
   await expect(page.getByText("-2,000", { exact: true })).toBeVisible()
   await expect(page.getByText("990", { exact: true })).toBeVisible()
+  await expect(page.getByText("200", { exact: true })).toBeVisible()
+  await expect(page.getByText("1,000", { exact: true }).first()).toBeVisible()
+  await expect(page.getByText("5.00", { exact: true })).toBeVisible()
+  await expect(page.getByText("1.00", { exact: true })).toBeVisible()
 })
 
 test("詢價驗證匯率且未成交詢價可取消刪除", async ({ page }) => {

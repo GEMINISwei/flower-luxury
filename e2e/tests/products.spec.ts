@@ -26,8 +26,7 @@ async function createProduct(page: Page, name: string, brand: string) {
   await expect(page.getByRole("heading", { name, exact: true })).toBeVisible()
 }
 
-test("商品列表在桌面與手機依建立時間由新到舊且空年份顯示短橫線", async ({ page }) => {
-  await login(page, admin)
+async function checkNewestProductsAndEmptyYear(page: Page) {
   await createBrand(page, "Newest First Brand")
   for (const name of ["Newest First Old", "Newest First New"]) {
     await page.goto("/products/new")
@@ -47,12 +46,12 @@ test("商品列表在桌面與手機依建立時間由新到舊且空年份顯�
     await expect(links.first()).toContainText("Newest First New")
     await expect(links.last()).toContainText("Newest First Old")
     const row = page.getByRole("row").filter({ hasText: "Newest First New" })
-    await expect(row.getByRole("cell", { name: "-", exact: true })).toBeVisible()
-    await expect(row.getByRole("cell", { name: "—", exact: true })).toHaveCount(0)
+    await expect(row.getByRole("cell", { name: /^(年份 )?-$/ })).toBeVisible()
+    await expect(row.getByRole("cell", { name: /^(年份 )?—$/ })).toHaveCount(0)
   }
-})
+}
 
-test("商品核心可建檔編輯篩選並刪除後回列表", async ({ page }) => {
+test("商品可建檔編輯篩選刪除且列表由新到舊並以短橫線顯示空值", async ({ page }) => {
   await login(page, admin)
   await createBrand(page, "Phase3 Brand")
   await createProduct(page, "Phase3 Bag", "Phase3 Brand")
@@ -95,6 +94,7 @@ test("商品核心可建檔編輯篩選並刪除後回列表", async ({ page }) 
   await expect(page.getByRole("heading", { name: "找不到頁面", exact: true })).toBeVisible()
   await page.goto(`${detailUrl}/history`)
   await expect(page.getByRole("heading", { name: "找不到頁面", exact: true })).toBeVisible()
+  await checkNewestProductsAndEmptyYear(page)
 })
 
 test("員工共用商品且停用品牌仍可保留於原商品", async ({ page }) => {
