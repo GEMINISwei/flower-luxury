@@ -1,6 +1,7 @@
 import asyncio
 from datetime import timedelta
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
+from uuid import uuid4
 
 import pytest
 from pydantic import SecretStr
@@ -29,7 +30,16 @@ SETTINGS = LineSettings(
 
 async def receive(*events):
     content = body(events)
-    return await service.receive_webhook(content, signature(content), SETTINGS)
+    result = await service.receive_webhook(content, signature(content), SETTINGS)
+    from modules.product_drafts import buffer
+    from shared.jobs.contracts import Job
+
+    # 既有測試驗證緩衝完成後的收件行為, 緩衝窗口另由 test_buffer 驗證.
+    with patch.object(buffer, "utc_now", return_value=BASE + timedelta(minutes=10)):
+        for source in {item.source.get("groupId") for item in events} - {None}:
+            await buffer.process_buffer(Job(id=uuid4(), task_name="product_drafts.buffer",
+                payload={"source_key": f"line:{source}"}, attempts=1))
+    return result
 
 
 async def enable_group():
@@ -45,10 +55,12 @@ async def enable_group():
 @pytest.fixture(autouse=True)
 def settings(monkeypatch, tmp_path):
     from modules.line_collection import jobs
+    from modules.product_drafts import buffer
     from modules.products import photos as product_photos
 
     monkeypatch.setattr(jobs, "get_settings", lambda: SETTINGS)
     monkeypatch.setattr(service, "utc_now", lambda: BASE + timedelta(milliseconds=500))
+    monkeypatch.setattr(buffer, "utc_now", lambda: BASE + timedelta(milliseconds=500))
     monkeypatch.setattr(jobs, "utc_now", lambda: BASE + timedelta(milliseconds=500))
     monkeypatch.setattr(storage, "UPLOADS_DIR", tmp_path / "drafts")
     monkeypatch.setattr(product_photos, "UPLOADS_DIR", tmp_path / "products")

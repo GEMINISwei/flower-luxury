@@ -60,6 +60,16 @@ async def run():
             left.review_product_id = str(uuid.uuid4())
             source = "line:" + key
             base = utc_now() - timedelta(minutes=1)
+            if arg.get("buffer"):
+                from modules.product_drafts import buffer
+                group.enabled = True
+                await buffer.queue_control(source, "start", base)
+                await buffer.queue_message(IncomingMessage(source_key=source,
+                    external_id=uuid.uuid4().hex, kind="image",
+                    occurred_at=base + timedelta(seconds=1)))
+                print(json.dumps({"id": "", "second": "", "source": source,
+                    "group": str(group.id), "name": arg["name"], "brand": "", "review": ""}))
+                return
             async def message(kind, second, text=None):
                 return await collection.ingest_message(IncomingMessage(source_key=source,
                     external_id=uuid.uuid4().hex, kind=kind, text=text,
@@ -118,6 +128,7 @@ async function fillRequired(page: Page, name: string, brand: string) {
   await page.getByLabel("成本（新臺幣）", { exact: true }).fill("30000")
 }
 
+
 test.beforeAll(async ({ browser }) => {
   const page = await browser.newPage()
   await login(page, admin)
@@ -148,6 +159,17 @@ test("group_settings_respect_permissions", async ({ page }) => {
   await login(page, staff)
   await page.goto("/admin/line-groups")
   await expect(page).toHaveURL("/products")
+})
+
+
+workspaceTest("緩衝收件時顯示處理中且尚未開放新商品審核", async ({ page }) => {
+  const data = fixture({ name: `Buffer ${randomUUID().slice(0, 8)}`, buffer: "true" })
+  await page.context().addCookies(managerState!.cookies)
+  await page.goto("/admin/line-groups")
+  const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
+  await expect(row).toContainText("處理中")
+  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
 })
 
 test("left_group_cannot_be_enabled and withdrawal_notice_links_to_product", async ({ page }) => {

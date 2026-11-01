@@ -64,6 +64,7 @@ class GroupInfo(BaseModel):
     created_at: UtcDateTime
     review_product_id: str | None
     collecting: bool = False
+    processing: bool = False
     batch_started_at: UtcDateTime | None = None
     batch_ended_at: UtcDateTime | None = None
     issue_count: int = 0
