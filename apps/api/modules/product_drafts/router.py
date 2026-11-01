@@ -18,6 +18,7 @@ from .schema import (
     DiscardInfo,
     DraftInfo,
     DraftList,
+    DraftProcessingInfo,
     DraftUpdate,
     MainPhoto,
     MessageList,
@@ -29,6 +30,13 @@ from .schema import (
 )
 
 router = APIRouter(prefix="/product-drafts", tags=["product-drafts"])
+
+
+@router.get("/processing")
+async def processing_route(
+    source_key: str | None = None, _: CurrentUser = Depends(check_user_permission()),
+) -> DraftProcessingInfo:
+    return await service.processing_state(source_key)
 
 
 @router.get("/next-review")

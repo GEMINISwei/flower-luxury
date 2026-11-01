@@ -3,6 +3,7 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 export const draftMessages = defineMessages({
   zh: {
     processing: "處理中", needsConfirmation: "待確認",
+    queueProcessing: "處理中：正在接收或整理 LINE 訊息，完成分組後會顯示商品暫存。",
     blockedHint: "收集、處理與訊息確認完成後才能進入審核。",
     reviewIssues: "處理待確認訊息", createdNotice: "上一筆商品已建檔。",
     viewCreated: "查看已建檔商品", queueDone: "商品已建檔，目前沒有待審核商品；收集中或處理中的商品請稍後再查看。",
@@ -38,6 +39,7 @@ export const draftMessages = defineMessages({
   },
   en: {
     processing: "Processing", needsConfirmation: "Needs confirmation",
+    queueProcessing: "Processing LINE messages. Drafts will appear when grouping is complete.",
     blockedHint: "Finish collection, processing and message review before opening this draft.",
     reviewIssues: "Review unresolved messages", createdNotice: "The previous product was created.",
     viewCreated: "View created product",

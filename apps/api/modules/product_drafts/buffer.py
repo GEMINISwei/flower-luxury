@@ -19,8 +19,8 @@ async def _schedule(stream: model.StreamTable) -> None:
     if stream.buffer_until is None:
         await enqueue_job("product_drafts.buffer", {"source_key": stream.source_key},
                           available_at=deadline)
+        await model.mark_source_processing(stream.source_key, True)
     stream.buffer_until = deadline
-    await model.mark_source_processing(stream.source_key, True)
     await active_session().flush()
 
 

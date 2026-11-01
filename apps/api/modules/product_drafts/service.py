@@ -15,6 +15,7 @@ from .schema import (
     DraftInfo,
     DraftList,
     DraftPhotoInfo,
+    DraftProcessingInfo,
     DraftUpdate,
     MessageInfo,
     NextReviewInfo,
@@ -66,6 +67,10 @@ async def get_draft(id: str | None) -> DraftInfo:
 async def next_review(source_key: str | None = None) -> NextReviewInfo:
     row = await model.next_review_row(source_key)
     return NextReviewInfo(id=str(row.id) if row else None)
+
+
+async def processing_state(source_key: str | None = None) -> DraftProcessingInfo:
+    return DraftProcessingInfo(processing=await model.source_processing(source_key))
 
 
 async def get_draft_list(

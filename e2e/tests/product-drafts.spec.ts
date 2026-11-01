@@ -821,6 +821,22 @@ workspaceTest("審核後自動開啟同群組下一筆並在沒有下一筆時�
   await expect(page.getByRole("status")).toContainText("目前沒有待審核商品")
 })
 
+workspaceTest("下一筆暫存已被他人移除時重新尋找同群組待審核商品", async ({ page }) => {
+  const data = seed()
+  await page.goto(`/product-drafts/${randomUUID()}?source_key=${encodeURIComponent(data.source)}`
+    + `&created=${randomUUID()}`)
+  await expect(page).toHaveURL(new RegExp(`/product-drafts/${data.id}\\?`))
+  await expect(page).toHaveURL(new RegExp(`source_key=${encodeURIComponent(data.source)}`))
+  await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
+})
+
+workspaceTest("尚未產生暫存商品列時列表仍顯示處理中", async ({ page }) => {
+  const data = fixture({ name: `Queued ${randomUUID().slice(0, 8)}`, buffer: "true" })
+  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+  await expect(page.getByRole("status")).toContainText("處理中")
+  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
+})
+
 workspaceTest("手機頁首直接開啟新增與篩選", async ({ page }) => {
   await page.context().addCookies(managerState!.cookies)
   await page.setViewportSize({ width: 320, height: 844 })

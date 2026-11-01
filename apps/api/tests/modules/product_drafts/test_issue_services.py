@@ -95,3 +95,13 @@ async def test_issue_listing_preserves_text_image_and_control_information(contex
     assert result.list_data[0].text == "原文\n完整保留"
     assert result.list_data[1].photo is not None and result.list_data[1].photo.url
     assert result.list_data[2].kind == "end" and result.list_data[2].text is None
+
+
+async def test_issue_listing_skips_message_withdrawn_during_read(context, monkeypatch):
+    page = {"list_data": [{"id": uuid4(), "source_key": "group-a", "occurred_at": BASE,
+                           "message_id": uuid4(), "kind": "message"}],
+            "total_count": 1, "has_next": False, "has_previous": False}
+    monkeypatch.setattr(model, "buffered_issue_page", AsyncMock(return_value=page))
+    monkeypatch.setattr(model, "get_message_row", AsyncMock(return_value=None))
+    result = await issues.get_issues(20, source_key="group-a")
+    assert result.list_data == []
