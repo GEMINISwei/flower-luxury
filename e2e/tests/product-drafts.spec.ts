@@ -128,9 +128,9 @@ async function fillRequired(page: Page, name: string, brand: string) {
   await page.getByLabel("成本（新臺幣）", { exact: true }).fill("30000")
 }
 
-test("緩衝收件時顯示處理中且尚未開放新商品審核", async ({ page }) => {
+workspaceTest("緩衝收件時顯示處理中且尚未開放新商品審核", async ({ page }) => {
   const data = fixture({ name: `Buffer ${randomUUID().slice(0, 8)}`, buffer: "true" })
-  await login(page, admin)
+  await page.context().addCookies(managerState!.cookies)
   await page.goto("/admin/line-groups")
   const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
   await expect(row).toContainText("處理中")

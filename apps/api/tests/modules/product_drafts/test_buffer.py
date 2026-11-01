@@ -115,6 +115,7 @@ async def test_buffer_late_boundary_message_is_retained_without_rewriting_drafts
     await process()
     assert (await service.get_draft_list(20)).total_count == 1
     item = await active_session().scalar(select(model.BufferedEventTable))
+    assert item is not None
     assert item.status == "issue" and str(item.message_id) == late.message_id
 
 

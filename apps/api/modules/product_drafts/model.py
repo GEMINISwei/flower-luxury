@@ -22,6 +22,8 @@ from shared.db.session import active_session
 from shared.db.table import BaseTable, Condition, PagedResult, parse_uuid
 from shared.time import utc_now
 
+from .buffer_model import BufferedEventTable as BufferedEventTable
+
 
 class StreamTable(BaseTable):
     __tablename__ = "product_draft_streams"
@@ -29,6 +31,7 @@ class StreamTable(BaseTable):
     last_occurred_at: Mapped[datetime | None]
     next_sequence: Mapped[int] = mapped_column(default=0)
     last_control_at: Mapped[datetime | None]
+    buffer_until: Mapped[datetime | None]
 
 
 class DraftTable(BaseTable):
@@ -229,6 +232,23 @@ async def messages_for(id: str) -> list[MessageTable]:
     return list(await active_session().scalars(select(MessageTable).where(
         MessageTable.draft_id == parse_uuid(id or ""),
     ).order_by(*order, MessageTable.id)))
+
+
+async def message_draft_id(id: str) -> str | None:
+    row = await get_message_row(id)
+    return str(row.draft_id) if row and row.draft_id else None
+
+
+async def pending_events(source_key: str) -> list[BufferedEventTable]:
+    return list(await active_session().scalars(select(BufferedEventTable).where(
+        BufferedEventTable.source_key == source_key, BufferedEventTable.status == "pending",
+    ).order_by(BufferedEventTable.occurred_at, BufferedEventTable.id)))
+
+
+async def issue_at(source_key: str, occurred_at: datetime) -> bool:
+    return await active_session().scalar(select(BatchIssueTable.id).where(
+        BatchIssueTable.source_key == source_key, BatchIssueTable.occurred_at == occurred_at,
+    ).limit(1)) is not None
 
 
 async def receipt_for(fingerprint: str) -> ReceiptTable | None:
