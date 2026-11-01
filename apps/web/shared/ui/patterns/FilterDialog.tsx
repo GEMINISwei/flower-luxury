@@ -31,6 +31,7 @@ type FilterDialogProps = {
   fields: FilterField[]
   initialValues: Record<string, string>
   resetText?: string
+  onApply?: (values: Record<string, string>) => void
 }
 
 export default function FilterDialog({
@@ -40,6 +41,7 @@ export default function FilterDialog({
   fields,
   initialValues,
   resetText,
+  onApply,
 }: FilterDialogProps) {
   const t = useT(uiMessages)
   const router = useRouter()
@@ -67,6 +69,7 @@ export default function FilterDialog({
     }
 
     const query = params.toString()
+    onApply?.(Object.fromEntries(params))
     router.push(query ? `${pathname}?${query}` : pathname)
     onClose()
   }

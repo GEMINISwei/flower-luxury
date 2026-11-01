@@ -32,3 +32,10 @@ a:hover { color: var(--color-primary-hover); }
 
 ::placeholder { color: var(--color-text-muted); }
 :focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* iPhone Safari 會放大字級過小的輸入欄位, 包含登入與彈窗中的欄位. */
+@media (max-width: 720px), (hover: none) and (pointer: coarse) {
+  html body :is(input, select, textarea) {
+    font-size: max(var(--fs-input-mobile), 1em);
+  }
+}

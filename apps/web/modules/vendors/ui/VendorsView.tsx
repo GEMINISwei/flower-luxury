@@ -28,7 +28,6 @@ export default function VendorsView({ vendors, errorMessage }: {
       onSuccess: () => { setRemoving(null); router.refresh() }, onError: setError,
     })
   }
-  const removalAction = removing ? vendorRemovalAction(removing) : "delete"
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
       actions={[{ label: t("create"), icon: <Plus size={ICON_SIZE.md} />,
@@ -55,9 +54,9 @@ export default function VendorsView({ vendors, errorMessage }: {
     </ListTableCard></div>
     {editor && <VendorDialog key={editor === "new" ? "new" : editor.id}
       vendor={editor === "new" ? undefined : editor} onClose={() => setEditor(null)} />}
-    <ConfirmDialog title={t(removalAction ?? "delete")} open={Boolean(removing)} isPending={isPending}
-      confirmText={t(removalAction ?? "delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
-      <p>{removing?.name}</p><p>{t(removalAction === "deactivate" ? "confirmDeactivate" : "confirmDelete")}</p>
+    <ConfirmDialog title={t("delete")} open={Boolean(removing)} isPending={isPending}
+      confirmText={t("delete")} onClose={() => setRemoving(null)} onConfirm={remove}>
+      <p>{removing?.name}</p><p>{t("confirmDelete")}</p>
       {error && <p role="alert">{error}</p>}
     </ConfirmDialog>
   </Container>

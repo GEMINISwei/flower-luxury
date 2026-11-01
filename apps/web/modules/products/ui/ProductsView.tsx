@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { ChevronRight, ClipboardList, ImageOff, Plus, SlidersHorizontal, RefreshCw } from "lucide-react"
 import { Button, Container, ErrorState, ICON_SIZE, PageHeader, Pagination,
-  StatusBadge, usePaginationResetHref } from "@/shared/ui"
+  RouteLoading, StatusBadge, usePaginationResetHref } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { ApiListMeta } from "@/shared/api/response"
@@ -16,6 +16,7 @@ import type { ProductInfo } from "../types"
 import { productMessages } from "../i18n"
 import ProductFilters from "./ProductFilters"
 import { useMobileProducts } from "./useMobileProducts"
+import { useProductListState, useProductPosition } from "./useProductListState"
 import styles from "./product-list.module.css"
 
 export default function ProductsView({ products, brands, filters, meta, seq, errorMessage }: {
@@ -28,7 +29,11 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
   const resetHref = usePaginationResetHref()
   const [filterOpen, setFilterOpen] = useState(false)
   const sentinel = useRef<HTMLDivElement>(null)
-  const mobile = useMobileProducts({ products, meta, filters, sentinel, errorFallback: t("failed") })
+  const state = useProductListState(filters)
+  const mobile = useMobileProducts({ products, meta, filters, sentinel,
+    errorFallback: t("failed"), restore: state.point, enabled: state.ready })
+  useProductPosition(state.point, mobile.restoring)
+  if (!state.ready) return <RouteLoading />
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
       actions={[
@@ -42,7 +47,8 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
           onClick: () => router.push("/products/new") },
       ]} />
     <ProductFilters key={filterOpen ? JSON.stringify(filters) : "closed"}
-      brands={brands} filters={filters} open={filterOpen} onClose={() => setFilterOpen(false)} />
+      brands={brands} filters={filters} open={filterOpen} onClose={() => setFilterOpen(false)}
+      onApply={state.applyFilters} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
     <div className={styles.tableCard}>
       <table className={styles.table}>
@@ -51,10 +57,11 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
           <th>{t("createdDate")}</th><th>{t("status")}</th>
           <th className={styles.amount}>{t("purchasePrice")}</th><th aria-label={t("detail")} />
         </tr></thead>
-        <tbody>{mobile.products.map((product, index) => <tr key={product.id}
+        <tbody>{mobile.products.map((product, index) => <tr key={product.id} id={`product-${product.id}`}
           className={index >= products.length ? styles.appended : undefined}>
           <td className={styles.primary}>
-            <Link href={`/products/${product.id}`} className={styles.product}>
+            <Link href={`/products/${product.id}`} className={styles.product}
+              onClick={() => state.remember(product.id, mobile.products.length)}>
               <span className={styles.thumbnail}>
                 {product.main_photo_id
                   ? <Image unoptimized width={64} height={64}
@@ -73,6 +80,7 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
           <td className={styles.amount} data-label={t("purchasePrice")}>
             NT$ {product.cost_price.toLocaleString()}</td>
           <td className={styles.disclosure}><Link href={`/products/${product.id}`}
+            onClick={() => state.remember(product.id, mobile.products.length)}
             aria-label={`${t("detail")} · ${product.name}`}>
             <ChevronRight size={ICON_SIZE.sm} aria-hidden /></Link></td>
         </tr>)}</tbody>

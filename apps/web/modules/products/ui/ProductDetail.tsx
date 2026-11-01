@@ -17,6 +17,7 @@ import PhotoPanel from "./PhotoPanel"
 import QuotePanel from "./QuotePanel"
 import ReturnStatusDialog from "./ReturnStatusDialog"
 import DeleteProductDialog from "./DeleteProductDialog"
+import { useProductReturnHref } from "./useProductListState"
 import styles from "./product-detail.module.css"
 
 export default function ProductDetail({
@@ -27,6 +28,7 @@ export default function ProductDetail({
 }) {
   const t = useT(productMessages)
   const router = useRouter()
+  const backHref = useProductReturnHref(product.id)
   const [action, setAction] = useState<"edit" | "delete" | "return" | "photos" | null>(null)
   const caps = productCapabilities(product.status)
   const { currentQuoteId } = productSaleState(product.status, sales)
@@ -38,7 +40,7 @@ export default function ProductDetail({
       ? formatDateTime(product.updated_at, "Asia/Taipei").slice(0, 10) : null],
   ]
   return <FormPageShell title={t("detail")} subtitle={product.sku}
-    backHref="/products" backLabel={t("back")} actions={[
+    backHref={backHref} backLabel={t("back")} actions={[
       caps.canEdit && { label: t("edit"), icon: <Pencil size={ICON_SIZE.md} />,
         primary: true, onClick: () => setAction("edit") },
       caps.canDelete && { label: t("deleteProduct"), icon: <Trash2 size={ICON_SIZE.md} />,

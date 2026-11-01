@@ -77,6 +77,7 @@
   --fs-base: 0.9375rem;
   --fs-sm: 0.8125rem;
   --fs-xs: 0.75rem;
+  --fs-input-mobile: 16px;
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
