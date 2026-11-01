@@ -111,6 +111,9 @@ def state(monkeypatch, tmp_path):
 async def ready():
     event = await collection.ingest_message(incoming())
     await photos.complete_photo(event.message_id, image_bytes(), "photo.png")
+    row = await model.get_draft_row(event.draft_id)
+    assert row is not None
+    row.collecting = False
     return await service.get_draft(event.draft_id)
 
 

@@ -35,7 +35,7 @@ from PIL import Image
 from app.server import app
 from modules.brands.public import BrandTable
 from modules.line_collection.model import discover_group
-from modules.product_drafts import batches, collection, photos, service
+from modules.product_drafts import batches, collection, model as draft_model, photos, service
 from modules.product_drafts.schema import IncomingMessage, DraftUpdate, DraftFields
 from shared.db.session import configure_session_factory, create_engine, session_scope
 from shared.time import utc_now
@@ -79,6 +79,32 @@ async def run():
                     await message("text", index + 4, f"補充訊息 {index + 1}\n" + "商品細節\n" * 8)
             second = await message("image", 40)
             await photos.mark_photo_failed(second.message_id)
+            last = await draft_model.get_draft_row(second.draft_id)
+            last.collecting = False
+            if arg.get("collecting"):
+                first_row = await draft_model.get_draft_row(first.draft_id)
+                first_row.collecting = True
+            if arg.get("processing"):
+                first_row = await draft_model.get_draft_row(first.draft_id)
+                first_row.processing = True
+            if arg.get("single"):
+                from modules.product_drafts import review
+                from modules.product_drafts.schema import VersionRequest
+                last_info = await service.get_draft(second.draft_id)
+                await review.discard_draft(last_info.id, VersionRequest(version=last_info.version), actor)
+            if arg.get("issue"):
+                from unittest.mock import patch
+                from modules.product_drafts import buffer
+                from shared.jobs.contracts import Job
+                await buffer.queue_control(source, "start", base + timedelta(seconds=41))
+                for kind in ("image", "text"):
+                    await buffer.queue_message(IncomingMessage(source_key=source,
+                        external_id=uuid.uuid4().hex, kind=kind,
+                        text="同時到達待確認文字" if kind == "text" else None,
+                        occurred_at=base + timedelta(seconds=42)))
+                with patch.object(buffer, "utc_now", return_value=utc_now() + timedelta(minutes=4)):
+                    await buffer.process_buffer(Job(id=uuid.uuid4(), task_name="product_drafts.buffer",
+                        payload={"source_key": source}, attempts=1))
             if arg.get("batch"):
                 group.enabled = True
                 await batches.control_collection(source, "start", base + timedelta(seconds=45))
@@ -168,8 +194,8 @@ test("暫存列表只顯示收件時間狀態來源與審核", async ({ page }) 
   await expect(page.getByText("未命名商品", { exact: true })).toHaveCount(0)
   await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(2)
   await expect(page.getByRole("link", { name: "審核", exact: true }).first())
-    .toHaveAttribute("href", `/product-drafts/${data.second}`)
-  await page.getByRole("link", { name: "審核", exact: true }).last().click()
+    .toHaveAttribute("href", `/product-drafts/${data.id}?source_key=${encodeURIComponent(data.source)}`)
+  await page.getByRole("link", { name: "審核", exact: true }).first().click()
   await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
 })
 
@@ -304,6 +330,8 @@ test("draft_can_be_reviewed_individually", async ({ page }) => {
   await fillRequired(page, data.name, data.brand)
   await page.getByRole("button", { name: "審核建檔", exact: true }).click()
   await page.getByRole("dialog").getByRole("button", { name: "審核建檔", exact: true }).click()
+  await expect(page.getByRole("link", { name: "查看已建檔商品", exact: true })).toBeVisible()
+  await page.getByRole("link", { name: "查看已建檔商品", exact: true }).click()
   await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
   await expect(page.getByRole("heading", { name: data.name, exact: true })).toBeVisible()
 })
@@ -564,6 +592,7 @@ workspaceTest("暫存詢價可手動管理並於審核轉入正式商品", async
   await page.getByRole("button", { name: "審核建檔", exact: true }).click()
   dialog = page.getByRole("dialog")
   await dialog.getByRole("button", { name: "審核建檔", exact: true }).click()
+  await page.getByRole("link", { name: "查看已建檔商品", exact: true }).click()
   await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
   await expect(page.getByText("TWD 3,600", { exact: true }).first()).toBeVisible()
 })
@@ -712,7 +741,7 @@ workspaceTest("手機暫存以重整圖示與操作面板完成整理流程", as
   const approve = page.getByRole("dialog", { name: "審核建檔", exact: true })
   await expect(page.getByRole("dialog", { name: "操作選單", exact: true })).toHaveCount(0)
   await approve.getByRole("button", { name: "審核建檔", exact: true }).click()
-  await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
+  await expect(page.getByRole("link", { name: "查看已建檔商品", exact: true })).toBeVisible()
   await open(page, data.second)
   await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
   await page.getByRole("menuitem", { name: "放棄暫存", exact: true }).click()
@@ -722,6 +751,52 @@ workspaceTest("手機暫存以重整圖示與操作面板完成整理流程", as
   await page.getByRole("menuitem", { name: "放棄暫存", exact: true }).click()
   await page.getByRole("dialog").getByRole("button", { name: "放棄暫存", exact: true }).click()
   await expect(page).toHaveURL("/product-drafts")
+})
+
+workspaceTest("收集中與處理中停用審核且直接網址不顯示整理表單", async ({ page }) => {
+  for (const flag of ["collecting", "processing"]) {
+    const data = fixture({ name: `Blocked ${randomUUID().slice(0, 8)}`, [flag]: "true" })
+    await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+    await expect(page.getByRole("button", { name: "審核", exact: true })).toBeDisabled()
+    await open(page, data.id)
+    await expect(page.getByLabel("名稱", { exact: true })).toHaveCount(0)
+    await expect(page.getByRole("main")).toContainText(flag === "collecting" ? "收集中" : "處理中")
+  }
+})
+
+workspaceTest("待確認原文可加入商品且忽略剩餘異常後恢復審核", async ({ page }) => {
+  const data = fixture({ name: `Issue ${randomUUID().slice(0, 8)}`, issue: "true" })
+  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+  await page.getByRole("link", { name: "處理待確認訊息", exact: true }).first().click()
+  const text = page.getByRole("article").filter({ hasText: "同時到達待確認文字" })
+  await text.getByLabel("目標商品", { exact: true }).selectOption(data.id)
+  await text.getByRole("button", { name: "加入商品", exact: true }).click()
+  await expect(text).toHaveCount(0)
+  const image = page.getByRole("article").filter({ hasText: "圖片訊息" })
+  await image.getByRole("button", { name: "忽略訊息", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "忽略訊息", exact: true }).click()
+  await expect(image).toHaveCount(0)
+  await open(page, data.id)
+  await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "同時到達待確認文字", exact: true })).toBeVisible()
+})
+
+workspaceTest("審核後自動開啟同群組下一筆並在沒有下一筆時返回列表", async ({ page }) => {
+  const data = seed()
+  await page.goto(`/product-drafts/${data.id}?source_key=${encodeURIComponent(data.source)}`)
+  await fillRequired(page, data.name, data.brand)
+  await page.getByRole("button", { name: "審核建檔", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "審核建檔", exact: true }).click()
+  await expect(page).toHaveURL(new RegExp(`/product-drafts/${data.second}\\?`))
+  await expect(page).toHaveURL(new RegExp(`source_key=${encodeURIComponent(data.source)}`))
+  await expect(page.getByRole("link", { name: "查看已建檔商品", exact: true })).toBeVisible()
+  const last = fixture({ name: `Last ${randomUUID().slice(0, 8)}`, single: "true" })
+  await page.goto(`/product-drafts/${last.id}?source_key=${encodeURIComponent(last.source)}`)
+  await fillRequired(page, last.name, last.brand)
+  await page.getByRole("button", { name: "審核建檔", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "審核建檔", exact: true }).click()
+  await expect(page).toHaveURL(/\/product-drafts\?source_key=/)
+  await expect(page.getByRole("status")).toContainText("目前沒有待審核商品")
 })
 
 workspaceTest("手機頁首直接開啟新增與篩選", async ({ page }) => {

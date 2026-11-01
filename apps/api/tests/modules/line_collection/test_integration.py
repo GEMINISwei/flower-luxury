@@ -218,7 +218,10 @@ async def test_unsend_after_moving_and_approval_requires_manual_review(db):
             name="商品", brand_id=str(brand["id"]), category="包包", cost_price=3000,
         ),
     ), ACTOR)
+    await receive(event("text", text="/end", event_id="end-before-review",
+                        message_id="end-before-review", second=4))
+    target = await get_draft(target.id)
     result = await review.approve_draft(target.id, VersionRequest(version=target.version), ACTOR)
-    await receive(event(event_type="unsend", event_id="unsend", second=4))
+    await receive(event(event_type="unsend", event_id="unsend", second=5))
     group = await model.group_for("group-a")
     assert group is not None and group.review_product_id == result.product_id
