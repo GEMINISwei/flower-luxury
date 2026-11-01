@@ -1,9 +1,10 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, test, type BrowserContext, type Page } from "@playwright/test"
 import { admin, login } from "./support"
 
 test.describe.configure({ mode: "serial" })
 const prefix = "Remember Item"
 const brand = "Remember Brand"
+let sessionCookies: Awaited<ReturnType<BrowserContext["cookies"]>> = []
 
 async function openFilters(page: Page) {
   await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
@@ -34,6 +35,7 @@ async function seedProducts(page: Page) {
 test("商品篩選在重整與同裝置重新開啟後保留且可清除", async ({ page, browser }) => {
   test.setTimeout(180_000)
   await login(page, admin)
+  sessionCookies = await page.context().cookies()
   await seedProducts(page)
   await page.goto("/products")
   let dialog = await openFilters(page)
@@ -73,7 +75,7 @@ test("商品篩選在重整與同裝置重新開啟後保留且可清除", async
 
 test("手機從續載商品詳情返回時恢復條件與位置，支援上一頁及詳情重整", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await login(page, admin)
+  await page.context().addCookies(sessionCookies)
   await page.goto(`/products?keyword=${encodeURIComponent(prefix)}`)
   const links = page.getByRole("link").filter({ hasText: prefix })
   await expect(links).toHaveCount(20)
@@ -81,28 +83,28 @@ test("手機從續載商品詳情返回時恢復條件與位置，支援上一�
   await page.getByRole("main").evaluate(() => window.scrollTo(0, document.body.scrollHeight))
   await expect(links).toHaveCount(23)
   const target = links.last()
-  const name = await target.innerText()
+  const detailHref = await target.getAttribute("href")
+  const restored = links.and(page.locator(`[href="${detailHref}"]`))
+  const row = page.getByRole("row").filter({ has: restored })
   await target.scrollIntoViewIfNeeded()
-  const offset = await target.locator("xpath=ancestor::tr").evaluate((row) =>
-    row.getBoundingClientRect().top)
+  const offset = await row.evaluate((element) => element.getBoundingClientRect().top)
   await target.click()
   await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
   await page.goBack()
   await expect(links).toHaveCount(23)
-  const restored = page.getByRole("link").filter({ hasText: name })
   await expect(restored).toBeInViewport()
-  await expect.poll(async () => Math.abs(await restored.locator("xpath=ancestor::tr")
-    .evaluate((row) => row.getBoundingClientRect().top) - offset)).toBeLessThan(5)
+  await expect.poll(async () => Math.abs(await row
+    .evaluate((element) => element.getBoundingClientRect().top) - offset)).toBeLessThan(5)
   await restored.click()
   await page.reload()
   await page.getByRole("link", { name: "返回商品列表", exact: true }).click()
   await expect(page).toHaveURL(/keyword=Remember/)
   await expect(links).toHaveCount(23)
-  await expect(page.getByRole("link").filter({ hasText: name })).toBeInViewport()
+  await expect(restored).toBeInViewport()
 })
 
 test("桌面商品詳情返回時保留篩選及原分頁", async ({ page }) => {
-  await login(page, admin)
+  await page.context().addCookies(sessionCookies)
   await page.goto(`/products?keyword=${encodeURIComponent(prefix)}`)
   await page.getByRole("link", { name: /下一頁/ }).click()
   await expect(page).toHaveURL(/seq=2/)
@@ -120,7 +122,7 @@ test("手機表單輸入文字至少十六像素且允許手動縮放", async ({
   await expect(account).toBeVisible()
   expect(await account.evaluate((input) => parseFloat(getComputedStyle(input).fontSize)))
     .toBeGreaterThanOrEqual(16)
-  await login(page, admin)
+  await page.context().addCookies(sessionCookies)
   await page.goto("/products/new")
   for (const control of [page.getByLabel(/^名稱\*?$/),
     page.getByRole("combobox", { name: /^品牌\*?$/ }),
