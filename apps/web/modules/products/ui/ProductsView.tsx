@@ -5,7 +5,7 @@ import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { ChevronRight, ClipboardList, ImageOff, Plus, SlidersHorizontal, RefreshCw } from "lucide-react"
-import { Button, Container, ErrorState, ICON_SIZE, IconButton, PageHeader, Pagination,
+import { Button, Container, ErrorState, ICON_SIZE, PageHeader, Pagination,
   StatusBadge, usePaginationResetHref } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
@@ -34,15 +34,13 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
       actions={[
         { label: t("reload"), icon: <RefreshCw size={ICON_SIZE.md} />, refresh: true,
           onClick: () => { if (meta.hasPrevious) router.push(resetHref); else router.refresh() } },
+        { label: t("filterTitle"), icon: <SlidersHorizontal size={ICON_SIZE.md} />,
+          onClick: () => setFilterOpen(true) },
         { label: DRAFTS_ROUTE.label[locale], icon: <ClipboardList size={ICON_SIZE.md} />,
           onClick: () => router.push(DRAFTS_ROUTE.path) },
         { label: t("create"), icon: <Plus size={ICON_SIZE.md} />, primary: true,
           onClick: () => router.push("/products/new") },
       ]} />
-    <div className={styles.toolbar}>
-      <IconButton label={t("filterTitle")} icon={<SlidersHorizontal size={ICON_SIZE.md} />}
-        onClick={() => setFilterOpen(true)} />
-    </div>
     <ProductFilters key={filterOpen ? JSON.stringify(filters) : "closed"}
       brands={brands} filters={filters} open={filterOpen} onClose={() => setFilterOpen(false)} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}

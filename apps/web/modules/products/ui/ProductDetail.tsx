@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { Pencil, Trash2, Undo2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { History, Pencil, Trash2, Undo2 } from "lucide-react"
 import { FormPageShell, ICON_SIZE, Modal, Surface } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
@@ -26,9 +26,10 @@ export default function ProductDetail({
   vendors: VendorInfo[]; quotes: QuoteInfo[]; sales: SaleInfo[]
 }) {
   const t = useT(productMessages)
+  const router = useRouter()
   const [action, setAction] = useState<"edit" | "delete" | "return" | "photos" | null>(null)
   const caps = productCapabilities(product.status)
-  const { currentSale, currentQuoteId } = productSaleState(product.status, sales)
+  const { currentQuoteId } = productSaleState(product.status, sales)
   const basic = [
     [t("model_name"), product.model_name], [t("serial_number"), product.serial_number],
     [t("year"), product.year], [t("color"), product.color],
@@ -44,6 +45,8 @@ export default function ProductDetail({
         color: "error", onClick: () => setAction("delete") },
       caps.canReturn && { label: t("return"), icon: <Undo2 size={ICON_SIZE.md} />,
         primary: true, onClick: () => setAction("return") },
+      { label: t("viewHistory"), icon: <History size={ICON_SIZE.md} />,
+        onClick: () => router.push(`/products/${product.id}/history`) },
     ]}>
     <div className={styles.stack}>
       <section className={styles.summary}>
@@ -60,10 +63,8 @@ export default function ProductDetail({
           </dl>
         </Surface>
       </section>
-      <Link href={`/products/${product.id}/history`} className={styles.historyLink}>
-        {t("viewHistory")}</Link>
       <QuotePanel product={product} quotes={quotes} vendors={vendors}
-        currentSale={currentSale} currentQuoteId={currentQuoteId} />
+        currentQuoteId={currentQuoteId} />
     </div>
     {action === "photos" && <PhotoPanel id={product.id} name={product.name}
       photos={photos} status={product.status} onClose={() => setAction(null)} />}

@@ -1,4 +1,3 @@
-.toolbar { display: flex; justify-content: flex-end; margin-bottom: var(--space-4); }
 .tableCard { overflow-x: auto; overflow-y: hidden; border: var(--border-width-hairline) solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--color-surface-card); box-shadow: var(--shadow-xs); }
 .table { width: 100%; border-collapse: collapse; }
 .table thead { background: var(--color-surface-sunken); }
