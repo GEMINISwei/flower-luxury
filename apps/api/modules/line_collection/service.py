@@ -62,6 +62,10 @@ async def stop_group(id: str) -> GroupInfo:
 
 
 COMMAND_TEXTS = {
+    "queued_start": LangText(zh="已收到開始收集指令，訊息將依原始時間整理。",
+                             en="Start received. Messages will be grouped by original time."),
+    "queued_end": LangText(zh="已收到結束收集指令，等待訊息收齊後整理。",
+                           en="End received. Messages will be grouped after the waiting period."),
     "started": LangText(zh="已開始收集。請先傳商品圖片，再傳說明。",
                         en="Collection started. Send product images before descriptions."),
     "already_collecting": LangText(zh="目前已在收集中，維持原批次。",

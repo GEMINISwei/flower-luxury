@@ -197,6 +197,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/product-drafts/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Issues Route */
+        get: operations["list_issues_route_api_product_drafts_issues_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/issues/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve Issue Route */
+        post: operations["resolve_issue_route_api_product_drafts_issues__id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/product-drafts/messages": {
         parameters: {
             query?: never;
@@ -242,6 +276,23 @@ export interface paths {
         put?: never;
         /** Move Message Route */
         post: operations["move_message_route_api_product_drafts_messages__id__move_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/next-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Next Review Route */
+        get: operations["next_review_route_api_product_drafts_next_review_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1053,6 +1104,41 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** BufferedIssueInfo */
+        BufferedIssueInfo: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "text" | "image" | "start" | "end";
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            photo?: components["schemas"]["DraftPhotoInfo"] | null;
+            /** Source Key */
+            source_key: string;
+            /** Text */
+            text?: string | null;
+        };
+        /** BufferedIssueList */
+        BufferedIssueList: {
+            /** Has Next */
+            has_next: boolean;
+            /** Has Previous */
+            has_previous: boolean;
+            /** List Data */
+            list_data: components["schemas"]["BufferedIssueInfo"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Prev Cursor */
+            prev_cursor?: string | null;
+            /** Total Count */
+            total_count: number;
+        };
         /** DiscardInfo */
         DiscardInfo: {
             /** Id */
@@ -1096,6 +1182,11 @@ export interface components {
             manual_fields?: string[];
             /** Messages */
             messages: components["schemas"]["MessageInfo"][];
+            /**
+             * Needs Confirmation
+             * @default false
+             */
+            needs_confirmation: boolean;
             /** Photos */
             photos: components["schemas"]["DraftPhotoInfo"][];
             /**
@@ -1114,6 +1205,11 @@ export interface components {
              * @enum {string}
              */
             prefill_status: "idle" | "disabled" | "queued" | "ready" | "failed";
+            /**
+             * Processing
+             * @default false
+             */
+            processing: boolean;
             /** Quotes */
             quotes?: components["schemas"]["DraftQuoteInfo"][];
             /**
@@ -1206,6 +1302,16 @@ export interface components {
             /** Main Photo Id */
             main_photo_id?: string | null;
             /**
+             * Needs Confirmation
+             * @default false
+             */
+            needs_confirmation: boolean;
+            /**
+             * Processing
+             * @default false
+             */
+            processing: boolean;
+            /**
              * Received At
              * Format: date-time
              */
@@ -1258,6 +1364,11 @@ export interface components {
             joined: boolean;
             /** Name */
             name: string | null;
+            /**
+             * Processing
+             * @default false
+             */
+            processing: boolean;
             /**
              * Reply Failed
              * @default false
@@ -1383,6 +1494,11 @@ export interface components {
             target_draft_id: string;
             /** Target Version */
             target_version: number;
+        };
+        /** NextReviewInfo */
+        NextReviewInfo: {
+            /** Id */
+            id: string | null;
         };
         /**
          * PasswordChange
@@ -1657,6 +1773,18 @@ export interface components {
         RegistrationSettingsUpdate: {
             /** Registration Key */
             registration_key: string;
+        };
+        /** ResolveIssue */
+        ResolveIssue: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "attach" | "discard";
+            /** Target Draft Id */
+            target_draft_id?: string | null;
+            /** Target Version */
+            target_version?: number | null;
         };
         /** RoleCreate */
         RoleCreate: {
@@ -2407,10 +2535,80 @@ export interface operations {
             };
         };
     };
+    list_issues_route_api_product_drafts_issues_get: {
+        parameters: {
+            query: {
+                source_key?: string | null;
+                cursor?: string | null;
+                direction?: "next" | "prev";
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BufferedIssueList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_issue_route_api_product_drafts_issues__id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveIssue"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscardInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_unassigned_route_api_product_drafts_messages_get: {
         parameters: {
             query: {
                 source_key?: string | null;
+                issues_only?: boolean;
                 cursor?: string | null;
                 direction?: "next" | "prev";
                 limit: number;
@@ -2494,6 +2692,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    next_review_route_api_product_drafts_next_review_get: {
+        parameters: {
+            query?: {
+                source_key?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NextReviewInfo"];
                 };
             };
             /** @description Validation Error */

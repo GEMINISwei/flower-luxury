@@ -177,6 +177,115 @@
         "title": "BrandUpdate",
         "type": "object"
       },
+      "BufferedIssueInfo": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "text",
+              "image",
+              "start",
+              "end"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "photo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DraftPhotoInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "required": [
+          "id",
+          "source_key",
+          "occurred_at",
+          "kind"
+        ],
+        "title": "BufferedIssueInfo",
+        "type": "object"
+      },
+      "BufferedIssueList": {
+        "properties": {
+          "has_next": {
+            "title": "Has Next",
+            "type": "boolean"
+          },
+          "has_previous": {
+            "title": "Has Previous",
+            "type": "boolean"
+          },
+          "list_data": {
+            "items": {
+              "$ref": "#/components/schemas/BufferedIssueInfo"
+            },
+            "title": "List Data",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "prev_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Cursor"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "list_data",
+          "has_next",
+          "has_previous",
+          "total_count"
+        ],
+        "title": "BufferedIssueList",
+        "type": "object"
+      },
       "DiscardInfo": {
         "properties": {
           "id": {
@@ -342,6 +451,11 @@
             "title": "Messages",
             "type": "array"
           },
+          "needs_confirmation": {
+            "default": false,
+            "title": "Needs Confirmation",
+            "type": "boolean"
+          },
           "photos": {
             "items": {
               "$ref": "#/components/schemas/DraftPhotoInfo"
@@ -370,6 +484,11 @@
             ],
             "title": "Prefill Status",
             "type": "string"
+          },
+          "processing": {
+            "default": false,
+            "title": "Processing",
+            "type": "boolean"
           },
           "quotes": {
             "items": {
@@ -659,6 +778,16 @@
             ],
             "title": "Main Photo Id"
           },
+          "needs_confirmation": {
+            "default": false,
+            "title": "Needs Confirmation",
+            "type": "boolean"
+          },
+          "processing": {
+            "default": false,
+            "title": "Processing",
+            "type": "boolean"
+          },
           "received_at": {
             "format": "date-time",
             "title": "Received At",
@@ -808,6 +937,11 @@
               }
             ],
             "title": "Name"
+          },
+          "processing": {
+            "default": false,
+            "title": "Processing",
+            "type": "boolean"
           },
           "reply_failed": {
             "default": false,
@@ -1196,6 +1330,26 @@
           "target_version"
         ],
         "title": "MessageMove",
+        "type": "object"
+      },
+      "NextReviewInfo": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "NextReviewInfo",
         "type": "object"
       },
       "PasswordChange": {
@@ -2109,6 +2263,46 @@
           "registration_key"
         ],
         "title": "RegistrationSettingsUpdate",
+        "type": "object"
+      },
+      "ResolveIssue": {
+        "properties": {
+          "action": {
+            "enum": [
+              "attach",
+              "discard"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "target_draft_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Draft Id"
+          },
+          "target_version": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Version"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "ResolveIssue",
         "type": "object"
       },
       "RoleCreate": {
@@ -3735,6 +3929,148 @@
         ]
       }
     },
+    "/api/product-drafts/issues": {
+      "get": {
+        "operationId": "list_issues_route_api_product_drafts_issues_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "source_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "default": "next",
+              "enum": [
+                "next",
+                "prev"
+              ],
+              "title": "Direction",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BufferedIssueList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Issues Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/issues/{id}/resolve": {
+      "post": {
+        "operationId": "resolve_issue_route_api_product_drafts_issues__id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveIssue"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscardInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve Issue Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
     "/api/product-drafts/messages": {
       "get": {
         "operationId": "get_unassigned_route_api_product_drafts_messages_get",
@@ -3753,6 +4089,16 @@
                 }
               ],
               "title": "Source Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "issues_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Issues Only",
+              "type": "boolean"
             }
           },
           {
@@ -3914,6 +4260,55 @@
           }
         },
         "summary": "Move Message Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/next-review": {
+      "get": {
+        "operationId": "next_review_route_api_product_drafts_next_review_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "source_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NextReviewInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Next Review Route",
         "tags": [
           "product-drafts"
         ]

@@ -6,7 +6,7 @@ import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
 import { discardDraft } from "../actions"
-import { draftTextMessages } from "../capabilities"
+import { draftQueueHref, draftTextMessages } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { DraftInfo, SourceInfo } from "../types"
 import DraftFields from "./DraftFields"
@@ -16,13 +16,15 @@ import DraftSaleSummary from "./DraftSaleSummary"
 import PrefillStatus from "./PrefillStatus"
 import MessageList from "./MessageList"
 import useDraftEditor from "./useDraftEditor"
+import DraftQueueNotice from "./DraftQueueNotice"
 import styles from "./drafts.module.css"
 
-export default function DraftDetail({ initial, brands, sources, vendors }: {
-  initial: DraftInfo; brands: BrandInfo[]; sources: SourceInfo[]; vendors: VendorInfo[]
+export default function DraftDetail({ initial, brands, sources, vendors, scope, created }: {
+  initial: DraftInfo; brands: BrandInfo[]; sources: SourceInfo[]; vendors: VendorInfo[];
+  scope?: string; created?: string
 }) {
   const t = useT(draftMessages)
-  const editor = useDraftEditor(initial)
+  const editor = useDraftEditor(initial, scope)
   const { draft, values, pending } = editor
   const [dialog, setDialog] = useState<"approve" | "discard" | null>(null)
   const source = sources.find((item) => item.source_key === draft.source_key)
@@ -33,7 +35,7 @@ export default function DraftDetail({ initial, brands, sources, vendors }: {
   }
   const disabled = pending || editor.stale
   return <FormPageShell title={t("detail")} subtitle={source?.name ?? draft.source_key}
-    backHref="/product-drafts" backLabel={t("back")}
+    backHref={draftQueueHref(undefined, scope)} backLabel={t("back")}
     actions={[
       { label: t("reload"), icon: <RefreshCw size={ICON_SIZE.md} />, refresh: true,
         disabled: pending, onClick: editor.reload },
@@ -44,6 +46,7 @@ export default function DraftDetail({ initial, brands, sources, vendors }: {
         onClick: () => setDialog("discard") },
     ]}>
     <div className={styles.stack}>
+      <DraftQueueNotice created={created} />
       <div className={styles.feedback}>
         <p className={styles.hint}>{t("reloadHint")}</p>
         {editor.error && <p role="alert">{editor.error}</p>}

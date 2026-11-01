@@ -7,6 +7,13 @@ it("left_group_cannot_be_enabled", () => {
   expect(groupCapabilities({ joined: true, enabled: true }).nextEnabled).toBe(false)
 })
 
+it("緩衝收件與整理期間顯示處理中", () => {
+  expect(groupCapabilities({ joined: true, enabled: true, processing: true }).collection)
+    .toEqual({ label: "processing", variant: "warning" })
+  expect(groupCapabilities({ joined: true, enabled: false, processing: true }).collection)
+    .toEqual({ label: "disabled", variant: "muted" })
+})
+
 
 it("群組狀態依加入啟用與收集情況提供標籤與樣式", () => {
   const disabled = groupCapabilities({ joined: false, enabled: false, collecting: false })

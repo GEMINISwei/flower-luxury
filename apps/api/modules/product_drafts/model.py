@@ -14,13 +14,16 @@ from sqlalchemy import (
     func,
     select,
     text,
+    update,
 )
 from sqlalchemy.dialects.postgresql import JSONB, insert
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
 from shared.db.session import active_session
 from shared.db.table import BaseTable, Condition, PagedResult, parse_uuid
 from shared.time import utc_now
+
+from .buffer_model import BufferedEventTable as BufferedEventTable
 
 
 class StreamTable(BaseTable):
@@ -29,6 +32,7 @@ class StreamTable(BaseTable):
     last_occurred_at: Mapped[datetime | None]
     next_sequence: Mapped[int] = mapped_column(default=0)
     last_control_at: Mapped[datetime | None]
+    buffer_until: Mapped[datetime | None]
 
 
 class DraftTable(BaseTable):
@@ -43,6 +47,8 @@ class DraftTable(BaseTable):
     prefill_revision: Mapped[int] = mapped_column(default=0)
     prefill_status: Mapped[str] = mapped_column(String(16), default="idle")
     collecting: Mapped[bool] = mapped_column(default=True)
+    processing: Mapped[bool] = mapped_column(default=False)
+    needs_confirmation: Mapped[bool] = mapped_column(default=False)
     has_text: Mapped[bool] = mapped_column(default=False)
     main_photo_id: Mapped[uuid.UUID | None]
     updated_by: Mapped[str | None]
@@ -111,6 +117,9 @@ class MessageTable(BaseTable):
     sender_name: Mapped[str | None]
     occurred_at: Mapped[datetime]
     sequence: Mapped[int]
+    buffered_event: Mapped[BufferedEventTable | None] = relationship(
+        lazy="raise", uselist=False, cascade="all, delete-orphan", single_parent=True,
+        passive_deletes=True)
     __table_args__ = (
         CheckConstraint("(kind = 'text' AND text IS NOT NULL) OR (kind = 'image' AND text IS NULL)",
                         name="matching_content"),
@@ -192,6 +201,8 @@ async def _row(cls: Any, id: str | None, lock: bool) -> Any:
             return None
         await stream_for(source_key)
     statement = select(cls).where(cls.id == parse_uuid(id or ""))
+    if cls is MessageTable:
+        statement = statement.options(selectinload(MessageTable.buffered_event))
     return await active_session().scalar(statement.execution_options(populate_existing=True))
 
 
@@ -232,6 +243,23 @@ async def messages_for(id: str) -> list[MessageTable]:
     ).order_by(*order, MessageTable.id)))
 
 
+async def message_draft_id(id: str) -> str | None:
+    row = await get_message_row(id)
+    return str(row.draft_id) if row and row.draft_id else None
+
+
+async def pending_events(source_key: str) -> list[BufferedEventTable]:
+    return list(await active_session().scalars(select(BufferedEventTable).where(
+        BufferedEventTable.source_key == source_key, BufferedEventTable.status == "pending",
+    ).order_by(BufferedEventTable.occurred_at, BufferedEventTable.id)))
+
+
+async def issue_at(source_key: str, occurred_at: datetime) -> bool:
+    return await active_session().scalar(select(BatchIssueTable.id).where(
+        BatchIssueTable.source_key == source_key, BatchIssueTable.occurred_at == occurred_at,
+    ).limit(1)) is not None
+
+
 async def receipt_for(fingerprint: str) -> ReceiptTable | None:
     return await active_session().scalar(
         select(ReceiptTable).where(ReceiptTable.fingerprint == fingerprint),
@@ -245,13 +273,55 @@ async def approval_for(id: str | None) -> ApprovalTable | None:
 async def draft_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],
                      source_key: str | None) -> PagedResult:
     where = [DraftTable.source_key == source_key] if source_key else []
-    # 共用分頁預設升冪, 反轉方向與游標後保持暫存列表的最新收件優先.
-    page = await DraftTable.get_page(limit=limit, cursor=cursor,
-        direction="prev" if direction == "next" else "next", sort_field="received_at", where=where)
-    return {"list_data": list(reversed(page["list_data"])),
-            "next_cursor": page.get("prev_cursor"), "prev_cursor": page.get("next_cursor"),
-            "has_next": page["has_previous"], "has_previous": page["has_next"],
-            "total_count": page["total_count"]}
+    return await DraftTable.get_page(limit=limit, cursor=cursor, direction=direction,
+                                     sort_field="received_at", where=where)
+
+
+async def next_review_row(source_key: str | None) -> DraftTable | None:
+    statement = select(DraftTable).where(DraftTable.collecting.is_(False),
+        DraftTable.processing.is_(False), DraftTable.needs_confirmation.is_(False))
+    if source_key:
+        statement = statement.where(DraftTable.source_key == source_key)
+    return await active_session().scalar(statement.order_by(
+        DraftTable.received_at, DraftTable.id).limit(1))
+
+
+async def mark_source_processing(source_key: str, processing: bool) -> None:
+    await active_session().execute(update(DraftTable).where(
+        DraftTable.source_key == source_key, DraftTable.processing != processing,
+    ).values(processing=processing, version=DraftTable.version + 1, updated_at=utc_now()))
+
+
+async def refresh_source_confirmation(source_key: str) -> None:
+    pending = await active_session().scalar(select(BufferedEventTable.id).where(
+        BufferedEventTable.source_key == source_key,
+        BufferedEventTable.status == "issue").limit(1))
+    needed = pending is not None
+    await active_session().execute(update(DraftTable).where(
+        DraftTable.source_key == source_key, DraftTable.needs_confirmation != needed,
+    ).values(needs_confirmation=needed, version=DraftTable.version + 1, updated_at=utc_now()))
+
+
+async def issue_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],
+                     source_key: str | None) -> PagedResult:
+    where: list[Condition] = [MessageTable.draft_id.is_(None), MessageTable.id.in_(
+        select(BufferedEventTable.message_id).where(BufferedEventTable.status == "issue"))]
+    if source_key:
+        where.append(MessageTable.source_key == source_key)
+    return await MessageTable.get_page(limit=limit, cursor=cursor, direction=direction, where=where)
+
+
+async def buffered_issue_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],
+                              source_key: str | None) -> PagedResult:
+    where: list[Condition] = [BufferedEventTable.status == "issue"]
+    if source_key:
+        where.append(BufferedEventTable.source_key == source_key)
+    return await BufferedEventTable.get_page(limit=limit, cursor=cursor, direction=direction,
+                                             sort_field="occurred_at", where=where)
+
+
+async def get_buffered_event(id: str, *, lock: bool = False) -> BufferedEventTable | None:
+    return await _row(BufferedEventTable, id, lock)
 
 
 async def unassigned_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],

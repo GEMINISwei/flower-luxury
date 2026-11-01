@@ -2,6 +2,10 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 
 export const draftMessages = defineMessages({
   zh: {
+    processing: "處理中", needsConfirmation: "待確認",
+    blockedHint: "收集、處理與訊息確認完成後才能進入審核。",
+    reviewIssues: "處理待確認訊息", createdNotice: "上一筆商品已建檔。",
+    viewCreated: "查看已建檔商品", queueDone: "商品已建檔，目前沒有待審核商品；收集中或處理中的商品請稍後再查看。",
     title: "商品暫存", subtitle: "整理 LINE 訊息與照片，逐筆審核建檔", detail: "整理商品暫存",
     drafts: "商品暫存", source: "來源群組", all: "全部群組",
     unnamed: "未命名商品", empty: "尚無商品暫存",
@@ -33,6 +37,11 @@ export const draftMessages = defineMessages({
     unsaved: "欄位尚未儲存。離開此頁會失去變更。",
   },
   en: {
+    processing: "Processing", needsConfirmation: "Needs confirmation",
+    blockedHint: "Finish collection, processing and message review before opening this draft.",
+    reviewIssues: "Review unresolved messages", createdNotice: "The previous product was created.",
+    viewCreated: "View created product",
+    queueDone: "Product created. No drafts await review. Check collecting or processing items later.",
     title: "Product drafts", subtitle: "Organize LINE messages and photos, then review each product",
     detail: "Organize draft", drafts: "Product drafts",
     source: "Source group", all: "All groups", unnamed: "Unnamed product", empty: "No product drafts",
@@ -64,6 +73,26 @@ export const draftMessages = defineMessages({
     deletePhoto: "Delete photo", delete: "Delete", deletePhotoHint: "Delete this photo and its image message?",
     download: "Download original", preview: "Preview photo", noPhotos: "No photos", actionFailed: "Action failed. Please retry.",
     unsaved: "Fields are not saved. Leaving this page will lose your changes.",
+  },
+})
+
+export const issueMessages = defineMessages({
+  zh: {
+    title: "待確認訊息", back: "返回暫存列表", empty: "沒有待確認訊息。",
+    hint: "核對 LINE 原始內容後，將訊息加入正確商品；不需要的訊息可忽略。",
+    target: "目標商品", choose: "請選擇商品", unnamed: "未命名商品", attach: "加入商品",
+    discard: "忽略訊息", confirmDiscard: "忽略會永久刪除這則未歸屬訊息與照片，確定繼續？",
+    image: "圖片訊息", viewPhoto: "查看照片", pending: "圖片下載中", failedPhoto: "圖片下載失敗",
+    failed: "無法完成操作，請重新載入後再試。", reload: "重新載入資料",
+  },
+  en: {
+    title: "Unresolved messages", back: "Back to drafts", empty: "No unresolved messages.",
+    hint: "Check the original LINE content, then attach each message to a draft or discard it.",
+    target: "Target draft", choose: "Choose a draft", unnamed: "Unnamed product", attach: "Attach to draft",
+    discard: "Discard message", confirmDiscard: "Permanently delete this unassigned message and photo?",
+    image: "Image message", viewPhoto: "View photo", pending: "Downloading image",
+    failedPhoto: "Image download failed", failed: "Action failed. Reload and try again.",
+    reload: "Reload data",
   },
 })
 
