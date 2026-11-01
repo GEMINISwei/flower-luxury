@@ -1,7 +1,9 @@
 import re
+from datetime import datetime
+from uuid import UUID
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 from modules.brands import service as brands
 from modules.brands.schema import BrandCreate, BrandUpdate
@@ -70,6 +72,32 @@ async def test_products_filter_page_and_allow_duplicate_serials(db):
     assert filtered.total_count == 1 and filtered.list_data[0].id == second.id
     for keyword in [second.sku, "same"]:
         assert (await service.get_product_list(limit=20, keyword=keyword)).total_count >= 1
+
+
+async def test_get_products_created_at_ties_returns_newest_first_without_gaps(db):
+    first = await product()
+    items = [first]
+    for index in range(3):
+        items.append(await service.create_product(ProductCreate(
+            name=f"手袋 {index}", brand_id=first.brand_id, category="包包", cost_price=0,
+        ), ACTOR))
+    await active_session().execute(update(ProductTable).values(created_at=datetime(2026, 1, 1)))
+    newest = items[-1]
+    await active_session().execute(update(ProductTable).where(
+        ProductTable.id == UUID(newest.id),
+    ).values(created_at=datetime(2026, 1, 2)))
+    expected = [newest.id, *sorted((item.id for item in items[:-1]), reverse=True)]
+    page = await service.get_product_list(limit=2, brand_id=first.brand_id)
+    next_page = await service.get_product_list(
+        limit=2, cursor=page.next_cursor, brand_id=first.brand_id,
+    )
+    assert [item.id for item in page.list_data + next_page.list_data] == expected
+    assert page.total_count == next_page.total_count == 4
+    assert not page.has_previous and not next_page.has_next
+    back = await service.get_product_list(
+        limit=2, cursor=next_page.prev_cursor, direction="prev", brand_id=first.brand_id,
+    )
+    assert [item.id for item in back.list_data] == expected[:2]
 
 
 async def test_inactive_brand_rejects_new_products_but_existing_product_can_keep_it(db):

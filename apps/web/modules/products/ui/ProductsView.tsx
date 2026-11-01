@@ -73,7 +73,7 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
             </Link>
           </td>
           <td className={styles.brand} data-label={t("brand_id")}>{product.brand}</td>
-          <td className={styles.year} data-label={t("year")}>{product.year ?? "—"}</td>
+          <td className={styles.year} data-label={t("year")}>{product.year ?? "-"}</td>
           <td className={styles.date} data-label={t("purchaseDate")}>
             {formatDateTime(product.created_at, "Asia/Taipei").slice(0, 10)}</td>
           <td className={styles.status}><StatusBadge label={t(product.status)} variant="muted" /></td>

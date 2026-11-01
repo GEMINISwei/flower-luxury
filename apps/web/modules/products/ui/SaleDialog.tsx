@@ -8,6 +8,7 @@ import type { ProductInfo, QuoteInfo } from "../types"
 import { quoteMessages } from "../i18n"
 import { confirmSale } from "../actions"
 import { salePreview } from "../quote-capabilities"
+import { formatQuoteNumbers } from "../quote-format"
 import styles from "./catalog.module.css"
 
 export default function SaleDialog({ product, quote, onClose }: {
@@ -18,10 +19,11 @@ export default function SaleDialog({ product, quote, onClose }: {
   const [error, setError] = useState("")
   const { isPending, submit } = useActionSubmit()
   const { profit, loss, isLoss } = salePreview(quote.amount_twd, product.cost_price)
+  const numbers = formatQuoteNumbers(quote.original_amount, quote.exchange_rate)
   const rows = [
     [t("vendor"), quote.vendor_name],
-    [t("amount"), quote.original_amount],
-    [t("rate"), quote.exchange_rate],
+    [t("amount"), numbers.amount],
+    [t("rate"), numbers.rate],
     [t("confirmAmount"), quote.amount_twd.toLocaleString()],
     [t("cost"), product.cost_price.toLocaleString()], [t("profit"), profit.toLocaleString()],
   ]

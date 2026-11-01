@@ -26,7 +26,32 @@ async function createProduct(page: Page, name: string, brand: string) {
   await expect(page.getByRole("heading", { name, exact: true })).toBeVisible()
 }
 
-test("商品核心可建檔編輯篩選並刪除後回列表", async ({ page }) => {
+async function checkNewestProductsAndEmptyYear(page: Page) {
+  await createBrand(page, "Newest First Brand")
+  for (const name of ["Newest First Old", "Newest First New"]) {
+    await page.goto("/products/new")
+    await page.getByLabel(/^名稱\*?$/).fill(name)
+    await page.getByRole("combobox", { name: /^品牌\*?$/ })
+      .selectOption({ label: "Newest First Brand" })
+    await page.getByRole("combobox", { name: /^分類\*?$/ }).selectOption("包包")
+    await page.getByLabel(/^成本（新臺幣）\*?$/).fill("0")
+    await page.getByRole("button", { name: "儲存", exact: true }).click()
+    await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
+  }
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto("/products?keyword=Newest+First")
+    const links = page.getByRole("link").filter({ hasText: /^Newest First/ })
+    await expect(links).toHaveCount(2)
+    await expect(links.first()).toContainText("Newest First New")
+    await expect(links.last()).toContainText("Newest First Old")
+    const row = page.getByRole("row").filter({ hasText: "Newest First New" })
+    await expect(row.getByRole("cell", { name: /^(年份 )?-$/ })).toBeVisible()
+    await expect(row.getByRole("cell", { name: /^(年份 )?—$/ })).toHaveCount(0)
+  }
+}
+
+test("商品可建檔編輯篩選刪除且列表由新到舊並以短橫線顯示空值", async ({ page }) => {
   await login(page, admin)
   await createBrand(page, "Phase3 Brand")
   await createProduct(page, "Phase3 Bag", "Phase3 Brand")
@@ -69,6 +94,7 @@ test("商品核心可建檔編輯篩選並刪除後回列表", async ({ page }) 
   await expect(page.getByRole("heading", { name: "找不到頁面", exact: true })).toBeVisible()
   await page.goto(`${detailUrl}/history`)
   await expect(page.getByRole("heading", { name: "找不到頁面", exact: true })).toBeVisible()
+  await checkNewestProductsAndEmptyYear(page)
 })
 
 test("員工共用商品且停用品牌仍可保留於原商品", async ({ page }) => {

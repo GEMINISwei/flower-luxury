@@ -77,6 +77,50 @@ def test_invalid_uuid_in_cursor_raises_400():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
+async def test_get_page_descending_walk_returns_newest_first(paged_rows):
+    seen: list[str] = []
+    cursor = None
+    for _ in range(5):
+        page = await paged_rows.get_page(limit=2, cursor=cursor, descending=True)
+        seen.extend(row["name"] for row in page["list_data"])
+        assert page["total_count"] == 5
+        if not page["has_next"]:
+            break
+        cursor = page["next_cursor"]
+    assert seen == ["row-4", "row-3", "row-2", "row-1", "row-0"]
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_get_page_descending_previous_returns_original_page(paged_rows):
+    first = await paged_rows.get_page(limit=2, descending=True)
+    second = await paged_rows.get_page(limit=2, cursor=first["next_cursor"], descending=True)
+    back = await paged_rows.get_page(
+        limit=2, cursor=second["prev_cursor"], direction="prev", descending=True,
+    )
+    assert back["list_data"] == first["list_data"]
+    assert back["has_previous"] is False
+    assert back["has_next"] is True
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_get_page_descending_filtered_returns_matching_rows(paged_rows):
+    first = await paged_rows.get_page(
+        limit=2, descending=True, where=[paged_rows.group == "a"],
+    )
+    last = await paged_rows.get_page(
+        limit=2, cursor=first["next_cursor"], descending=True, where=[paged_rows.group == "a"],
+    )
+    assert [row["name"] for row in first["list_data"] + last["list_data"]] == [
+        "row-4", "row-2", "row-0",
+    ]
+    assert last["total_count"] == 3
+    assert last["has_next"] is False
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
 async def test_first_page_reports_next_but_not_previous(paged_rows):
     """第一頁: has_previous 必須是 False, has_next 必須是 True。"""
     result = await paged_rows.get_page(limit=2)
