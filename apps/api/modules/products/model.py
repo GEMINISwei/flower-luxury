@@ -14,6 +14,7 @@ from sqlalchemy import (
     Numeric,
     String,
     exists,
+    func,
     or_,
     select,
     text,
@@ -119,6 +120,19 @@ def product_filters(keyword: str | None, **filters: Any) -> list[Condition]:
             column = getattr(ProductTable, field)
             where.append(ilike_contains(column, value) if field == "color" else column == value)
     return where
+
+
+async def field_suggestions(field: str, keyword: str, limit: int = 10) -> list[str]:
+    column = getattr(ProductTable, field)
+    where = [ProductTable.deleted_at.is_(None), func.trim(column) != ""]
+    if keyword:
+        where.append(ilike_contains(column, keyword))
+    # 同樣次數時以最近用過的值優先, 讓剛建檔的新型號排得上來.
+    last_used = func.max(func.coalesce(ProductTable.updated_at, ProductTable.created_at))
+    rows = await active_session().scalars(
+        select(column).where(*where).group_by(column)
+        .order_by(func.count().desc(), last_used.desc(), column).limit(limit))
+    return list(rows)
 
 
 class ProductPhotoTable(BaseTable):

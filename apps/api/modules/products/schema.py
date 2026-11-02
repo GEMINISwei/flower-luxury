@@ -13,6 +13,7 @@ from shared.http.schema import (
 
 type ProductStatus = Literal["not_acquired", "sold"]
 type ProductCategory = Literal["鞋子", "配飾", "皮件", "包包", "帽子", "衣服", "其他"]
+type SuggestionField = Literal["name", "model_name", "serial_number", "color"]
 
 
 class ProductCreate(BaseModel):
@@ -41,6 +42,12 @@ class ProductInfo(ProductCreate):
 
 class ProductList(PaginatedResponse[ProductInfo]):
     pass
+
+
+class FieldSuggestions(BaseModel):
+    """欄位在既有商品中用過的值, 使用次數多的在前。"""
+
+    values: list[str]
 
 
 class StatusHistoryInfo(BaseModel):

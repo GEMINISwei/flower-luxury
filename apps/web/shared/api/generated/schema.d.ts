@@ -558,6 +558,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/products/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Field Suggestions Route
+         * @description 列出欄位在既有商品中用過、且包含關鍵字的值, 最多 10 筆。
+         */
+        get: operations["get_field_suggestions_route_api_products_suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/products/{id}": {
         parameters: {
             query?: never;
@@ -1314,6 +1334,14 @@ export interface components {
             manual_fields?: ("name" | "brand_id" | "category" | "model_name" | "serial_number" | "color" | "year" | "cost_price" | "internal_note")[];
             /** Version */
             version: number;
+        };
+        /**
+         * FieldSuggestions
+         * @description 欄位在既有商品中用過的值, 使用次數多的在前。
+         */
+        FieldSuggestions: {
+            /** Values */
+            values: string[];
         };
         /** GroupInfo */
         GroupInfo: {
@@ -3327,6 +3355,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_field_suggestions_route_api_products_suggestions_get: {
+        parameters: {
+            query: {
+                field: "name" | "model_name" | "serial_number" | "color";
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldSuggestions"];
                 };
             };
             /** @description Validation Error */

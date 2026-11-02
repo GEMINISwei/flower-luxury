@@ -37,3 +37,17 @@ export function spacing(value: SpaceStep | string | undefined) {
  * 尺寸會隨斷點變的圖示 (側欄與底部導覽) 不要用這個 —— media query 改得動 CSS, 改不動 prop。
  */
 export const ICON_SIZE = { sm: 16, md: 20, lg: 24 } as const
+
+/**
+ * 關閉瀏覽器與密碼管理器自己的輸入紀錄與自動填入, 欄位的建議只由系統提供時用。
+ *
+ * Chrome 與 Safari 對個人資料的自動填入會無視 `autocomplete="off"`, 改看標籤文字
+ * (「名稱」「Name」被當成姓名), 所以輸入框也不要給會被判斷成個人資料的 `name`。
+ * 這幾個屬性集中在這裡, 瀏覽器改版讓某一招失效時只要改一處。
+ */
+export const NO_BROWSER_SUGGESTIONS = {
+  autoComplete: "off",
+  "data-1p-ignore": "true",
+  "data-lpignore": "true",
+  "data-form-type": "other",
+} as const

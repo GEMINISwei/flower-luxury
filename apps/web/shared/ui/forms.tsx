@@ -6,7 +6,7 @@ import type { HTMLInputTypeAttribute, ReactNode } from "react"
 import { useId } from "react"
 import { ChevronDown } from "lucide-react"
 import { useT } from "@/shared/i18n/context"
-import { cls, ICON_SIZE } from "./internals"
+import { cls, ICON_SIZE, NO_BROWSER_SUGGESTIONS } from "./internals"
 import styles from "./styles/primitives.module.css"
 import { uiMessages } from "./i18n"
 
@@ -30,11 +30,13 @@ type TextInputProps = {
   trailing?: ReactNode
   /** lg 給登入這類刻意放大的表單; 預設 md。 */
   size?: "md" | "lg"
+  /** false 時關閉瀏覽器的輸入紀錄與自動填入; 登入這類要讓瀏覽器填的表單維持預設。 */
+  browserSuggestions?: boolean
   onChange?: (value: string) => void
 }
 
 /** 欄位標籤; 必填時補上星號。 */
-function FieldLabel({ label, required }: { label?: string; required?: boolean }) {
+export function FieldLabel({ label, required }: { label?: string; required?: boolean }) {
   if (!label) return null
   return (
     <span className={styles.label}>
@@ -44,7 +46,7 @@ function FieldLabel({ label, required }: { label?: string; required?: boolean })
   )
 }
 
-function FieldError({ id, error }: { id?: string; error?: string }) {
+export function FieldError({ id, error }: { id?: string; error?: string }) {
   if (!error) return null
   return <span id={id} className={styles.fieldError} role="alert">{error}</span>
 }
@@ -75,6 +77,7 @@ export function TextInput({
   icon,
   trailing,
   size = "md",
+  browserSuggestions = true,
   ...props
 }: TextInputProps) {
   // id 一律由 useId 產生, **不要退回用 name**: 同一頁出現兩個同名欄位時 name 會產生
@@ -106,6 +109,7 @@ export function TextInput({
           )}
           onChange={(event) => onChange?.(event.target.value)}
           {...accessibility}
+          {...(browserSuggestions ? {} : NO_BROWSER_SUGGESTIONS)}
           {...inputProps}
         />
       </AdornedInput>

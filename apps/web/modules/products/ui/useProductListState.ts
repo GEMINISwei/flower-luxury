@@ -34,7 +34,12 @@ export function useProductListState(filters: Record<string, string>) {
       id, count, href, offset: row?.getBoundingClientRect().top ?? 0,
     })
   }
-  return { ...state, applyFilters, remember }
+  // 重新整理不回到上次點開的商品; 留著紀錄的話, 新資料一到就會被捲過去.
+  function forget() {
+    saveProductReturnPoint(productStorage("sessionStorage"), null)
+    setState((current) => ({ ...current, point: null }))
+  }
+  return { ...state, applyFilters, remember, forget }
 }
 
 export function useProductPosition(point: ProductReturnPoint | null, restoring: boolean) {

@@ -11,6 +11,7 @@ from shared.http.schema import PaginationParams, UuidText
 from . import photos, service
 from .images import PhotoSize
 from .schema import (
+    FieldSuggestions,
     MainPhotoUpdate,
     PhotoList,
     ProductCategory,
@@ -21,6 +22,7 @@ from .schema import (
     StatusChange,
     StatusHistoryList,
     StatusReturn,
+    SuggestionField,
 )
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -44,6 +46,15 @@ async def create_product_route(
     form_data: ProductCreate, actor: CurrentUser = Depends(check_user_permission()),
 ) -> ProductInfo:
     return await service.create_product(form_data, actor)
+
+
+@router.get("/suggestions")
+async def get_field_suggestions_route(
+    field: SuggestionField, q: Annotated[str, Query(max_length=100)] = "",
+    _: CurrentUser = Depends(check_user_permission()),
+) -> FieldSuggestions:
+    """列出欄位在既有商品中用過、且包含關鍵字的值, 最多 10 筆。"""
+    return await service.get_field_suggestions(field, q)
 
 
 @router.get("/photos/{photo_id}/file")

@@ -1,0 +1,40 @@
+/* 清單疊在輸入框正下方, 不推開後面的欄位。 */
+.control {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.list {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  z-index: var(--z-dropdown);
+  max-height: calc(var(--control-height-md) * 6);
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  border: var(--border-width-hairline) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  box-shadow: var(--shadow-lg);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-body);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.option:hover,
+.active {
+  background: var(--color-surface-hover);
+}

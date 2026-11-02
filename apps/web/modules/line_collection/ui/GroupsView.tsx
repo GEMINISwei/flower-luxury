@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import type { ApiListMeta } from "@/shared/api/response"
 import { useT } from "@/shared/i18n/context"
 import { Button, ConfirmDialog, Container, ErrorState, ListTableCard, PageHeader,
-  ICON_SIZE, Pagination, StatusBadge, TableRow, useActionSubmit } from "@/shared/ui"
+  ICON_SIZE, Pagination, StatusBadge, TableRow, useActionSubmit, useListRefresh } from "@/shared/ui"
 import { groupMessages } from "../i18n"
 import { groupCapabilities } from "../capabilities"
 import { updateGroup } from "../actions"
@@ -18,6 +18,7 @@ export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
 }) {
   const t = useT(groupMessages)
   const router = useRouter()
+  const refresh = useListRefresh()
   const [selected, setSelected] = useState<GroupInfo | null>(null)
   const [error, setError] = useState("")
   const { isPending, submit } = useActionSubmit()
@@ -30,7 +31,7 @@ export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
   return <Container size="lg" padded>
     <PageHeader title={t("title")} subtitle={t("subtitle")}
       actions={[{ label: t("refresh"), icon: <RefreshCw size={ICON_SIZE.md} />,
-        refresh: true, onClick: () => router.refresh() }]} />
+        refresh: true, onClick: refresh }]} />
     {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
     <ListTableCard headers={[t("name"), t("bot"), t("status"), t("actions")]}
       isEmpty={!items.length} emptyText={t("empty")}>
