@@ -85,7 +85,7 @@ services:
       start_period: 60s
       start_interval: 1s
       retries: 3
-    stop_grace_period: 45s
+    stop_grace_period: 90s
     restart: always
 
   postgres:
