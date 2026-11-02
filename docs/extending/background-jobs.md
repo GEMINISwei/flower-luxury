@@ -60,8 +60,9 @@ make services logs line-collector    # 追蹤背景程序紀錄
 `make start` 會一起啟動容器，worker 只執行任務，不跑 migration 或 seed。
 每五秒成功探測 PostgreSQL 後更新 heartbeat，30 秒內未更新視為 unhealthy；程序遇到資料庫錯誤會退出，
 由容器 restart policy 重新啟動。開發環境掛載來源程式，但改過任務程式需重新啟動程序才會載入。
-Docker 每十秒以只依賴標準函式庫的 `python -m shared.jobs.health --healthcheck` 檢查檔案時間，
-不經過 worker 的組裝入口。正式環境的 collector 共用半核心 CPU 與 512M 記憶體配額。
+Docker 在啟動期間每秒、之後每 30 秒用 shell 檢查心跳檔時間，不啟動 Python。
+缺少、過期或未來時間的心跳都判定失敗。正式環境的 collector 共用半核心 CPU 與 512M
+記憶體配額，CPU 排程權重較低，主機忙碌時優先讓給網站服務。
 
 備份、還原及 migration 的停止與恢復規則見[維運文件](../operations.md#背景收集程序)。
 LINE Developers Console、Webhook、邀請 Bot 入群及群組啟用步驟見
