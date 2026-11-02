@@ -29,3 +29,10 @@ def test_task_registry_follows_enabled_modules():
 def test_invalid_task_policy_is_rejected(attempts, timeout):
     with pytest.raises(ValueError):
         TaskSpec("example.process", handle, max_attempts=attempts, timeout_seconds=timeout)
+
+
+@pytest.mark.parametrize("options", [{"queue": ""}, {"interval_seconds": 0},
+                                    {"interval_seconds": float("nan")}])
+def test_invalid_queue_or_schedule_is_rejected(options):
+    with pytest.raises(ValueError):
+        TaskSpec("example.process", handle, **options)
