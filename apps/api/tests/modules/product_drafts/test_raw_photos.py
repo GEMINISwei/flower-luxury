@@ -4,11 +4,15 @@ from uuid import uuid4
 
 import pytest
 from fastapi import UploadFile
+from sqlalchemy import select
 
 from modules.product_drafts import model, photos, raw_photos, rounds, service, storage
 from modules.product_drafts.schema import VersionRequest
+from shared.db.session import active_session
 from shared.http.errors import LangException
 from shared.jobs.contracts import Job
+from shared.jobs.model import JobTable
+from shared.time import utc_now
 from tests.modules.product_drafts.helpers import ACTOR, image_bytes, incoming
 
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
@@ -83,3 +87,28 @@ async def test_manual_upload_before_finalization_only_saves_original(monkeypatch
         [UploadFile(BytesIO(image_bytes()), filename="manual.png")], ACTOR)
     assert result.photos[0].status == "stored" and result.prefill_revision == 0
     render.assert_not_awaited()
+
+
+async def test_migrated_closed_draft_finishes_pending_photo_without_repeating_ai():
+    from modules.product_drafts import collection
+
+    message = await collection.ingest_message(incoming())
+    row = await model.get_draft_row(message.draft_id)
+    assert row is not None
+    row.collecting, row.finalized_at = False, utc_now()
+    row.fields, row.manual_fields = {"name": "升級前人工欄位"}, ["name"]
+    row.prefill_status, row.prefill_revision = "ready", 1
+    await active_session().flush()
+    original = await raw_photos.save_original(message.message_id, image_bytes(), "original.png")
+    assert original.photo is not None and original.photo.status == "stored"
+    jobs = list(await active_session().scalars(select(JobTable).where(
+        JobTable.task_name == "product_drafts.render_photo")))
+    assert len(jobs) == 1
+    await raw_photos.render_photo(Job(id=jobs[0].id, task_name=jobs[0].task_name, attempts=1,
+                                    payload=jobs[0].payload))
+    updated = await service.get_draft(message.draft_id)
+    assert updated.photos[0].status == "ready" and not updated.processing
+    assert updated.fields.name == "升級前人工欄位" and updated.manual_fields == ["name"]
+    assert updated.prefill_status == "ready" and updated.prefill_revision == 1
+    assert not list(await active_session().scalars(select(JobTable).where(
+        JobTable.task_name == "product_drafts.prefill")))
