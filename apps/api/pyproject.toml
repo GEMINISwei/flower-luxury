@@ -127,6 +127,11 @@ warn_redundant_casts = true
 module = ["shared.*", "app.*", "modules.*"]
 disallow_untyped_defs = true
 
+[[tool.mypy.overrides]]
+# asyncpg 沒有隨套件提供型別; 只有通知連線直接使用它, 其他查詢仍走 SQLAlchemy。
+module = ["asyncpg", "asyncpg.*"]
+ignore_missing_imports = true
+
 # 刻意不跑 `ruff format`: 它會在全形括號前補半形空白, 在中文註解裡是退步。
 # 會影響正確性的排版由 `ruff check` 擋, 其餘靠 review (docs/development.md〈程式碼風格〉)。
 

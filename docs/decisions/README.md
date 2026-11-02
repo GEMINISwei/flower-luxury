@@ -35,3 +35,4 @@
 | [0010](0010-make-and-bash-commands.md) | 指令介面用 Makefile 加 bash 腳本 | 採用 |
 | [0011](0011-full-repo-checkout-on-hosts.md) | 部署主機上 git clone 整份 repo | 採用 |
 | [0012](0012-e2e-required-in-ci.md) | Playwright E2E 是 CI 與部署的必要檢查 | 採用 |
+| [0013](0013-durable-worker-ownership.md) | 背景工作以 worker 心跳與每次領取 token 保護執行權 | 採用 |

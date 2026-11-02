@@ -75,7 +75,10 @@ LINE 金鑰都留空時停用 LINE 接線；啟用步驟見 [LINE 商品收集](
 店長在群組設定頁啟用指定群組後，還須於 LINE 群組傳送 `/start` 才收集商品訊息，`/end` 結束整批；也可於後台手動結束。
 
 用 `make services` 查看健康狀態，`make services logs line-collector` 追蹤紀錄。
-每五秒成功連線資料庫後更新 heartbeat，超過 30 秒未更新則 unhealthy；程序錯誤退出後由容器重新啟動。
+每五秒更新資料庫 worker 紀錄與本機 heartbeat，超過 30 秒未更新則 unhealthy；程序錯誤退出後由容器重新啟動。
+失聯 worker 的工作由資料庫心跳機制回收，舊執行者不能提交。SIGTERM 後最多等待 75 秒，
+再取消目前工作並清理；容器關機寬限 90 秒。不同佇列獨立消費，詳細規則見
+[背景工作](extending/background-jobs.md)。
 Docker 每十秒執行獨立的 `shared.jobs.health` 入口，只讀心跳檔案，不載入資料庫、功能模組或圖片處理套件。
 正式環境的半核心 CPU／512M 為資源預算；部署後需確認連續大圖的單張處理仍能在 60 秒任務期限內完成，
 並比較閒置 CPU、記憶體峰值、排隊與重試量及網站回應時間。
