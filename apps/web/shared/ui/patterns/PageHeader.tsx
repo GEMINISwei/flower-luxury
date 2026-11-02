@@ -21,9 +21,11 @@ function headerActions(actions: PageHeaderAction[]) {
 }
 
 // 重新整理後的資料從第一筆開始, 停在原本的捲動位置會看到中段而誤以為沒有更新.
+// 版面可能由 <main> 自己捲動, 視窗與它都要回到頂端.
 function scrollToTopOnRefresh(action: PageHeaderAction): PageHeaderAction {
   if (!action.refresh) return action
   return { ...action, onClick: () => {
+    document.querySelector("main")?.scrollTo({ top: 0 })
     window.scrollTo({ top: 0 })
     action.onClick?.()
   } }
