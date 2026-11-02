@@ -132,6 +132,10 @@ export const prefillMessages = defineMessages({
 
 export const draftQuoteMessages = defineMessages({
   zh: {
+    selectSale: "選為成交", cancelSale: "取消成交選擇", selectedSale: "已選成交",
+    saleHint: "建檔時一併確認成交，商品將直接成為已出售並鎖定；建立時間與成交時間一致。",
+    saleAmount: "成交金額（TWD）", cost: "成本（TWD）", profit: "利潤（TWD）",
+    loss: "此筆成交將虧損 {amount} TWD。",
     title: "廠商詢價", create: "新增詢價", edit: "編輯詢價", delete: "刪除詢價",
     empty: "尚無詢價。可手動新增廠商報價。", hint: "審核建檔時一併帶入廠商報價與逐筆匯率。",
     vendor: "廠商", amount: "報價", rate: "匯率", note: "詢價備註", choose: "請選擇", save: "儲存",
@@ -139,6 +143,10 @@ export const draftQuoteMessages = defineMessages({
     unavailable: "廠商已不存在", failed: "詢價操作失敗，請重試。",
   },
   en: {
+    selectSale: "Select for sale", cancelSale: "Clear sale selection", selectedSale: "Selected sale",
+    saleHint: "Creation also confirms this sale and locks the sold product. Creation and sale times match.",
+    saleAmount: "Sale amount (TWD)", cost: "Cost (TWD)", profit: "Profit (TWD)",
+    loss: "This sale will lose {amount} TWD.",
     title: "Vendor quotes", create: "Add quote", edit: "Edit quote", delete: "Delete quote",
     empty: "No quotes yet. Add a vendor quote manually.", hint: "Vendor quotes and their exchange rates are carried over on approval.",
     vendor: "Vendor", amount: "Quote amount", rate: "Exchange rate", note: "Quote note", choose: "Choose", save: "Save",

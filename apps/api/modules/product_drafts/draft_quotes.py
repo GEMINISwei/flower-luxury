@@ -11,7 +11,7 @@ from . import model
 from .errors import DraftError
 from .quote_schema import DraftQuoteUpdate
 from .rules import check_version
-from .schema import DraftInfo, DraftQuoteInfo, VersionRequest
+from .schema import DraftInfo, DraftQuoteInfo, SaleSelection, VersionRequest
 from .service import _bump, get_draft
 
 
@@ -48,6 +48,20 @@ async def delete_quote(id: str, quote_id: str, form: VersionRequest) -> DraftInf
         if not any(item["id"] == quote_id for item in quotes):
             raise LangException(404, DraftError.NOT_FOUND)
         row.quotes = [item for item in quotes if item["id"] != quote_id]
+        if row.selected_quote_id == quote_id:
+            row.selected_quote_id = None
         _bump(row)
+        await active_session().flush()
+        return await get_draft(id)
+
+
+async def select_sale(id: str, form: SaleSelection, actor: CurrentUser) -> DraftInfo:
+    async with transaction():
+        row = ensure_found(await model.get_draft_row(id, lock=True), DraftError.NOT_FOUND)
+        check_version(row.version, form.version)
+        if form.quote_id and not any(item["id"] == form.quote_id for item in row.quotes or []):
+            raise LangException(409, DraftError.INVALID_SALE_QUOTE)
+        row.selected_quote_id = form.quote_id
+        _bump(row, actor)
         await active_session().flush()
         return await get_draft(id)

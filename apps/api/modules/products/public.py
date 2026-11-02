@@ -8,7 +8,9 @@ from .quote_rules import price_quote as price_quote
 from .quote_schema import QuoteAmount as QuoteAmount
 from .quote_schema import QuoteCreate as QuoteCreate
 from .quote_schema import QuoteRate as QuoteRate
+from .quote_schema import SaleCreate as SaleCreate
 from .quotes import create_quote as create_quote
+from .sales import confirm_imported_sale as confirm_imported_sale
 from .schema import ProductCategory as ProductCategory
 from .schema import ProductCreate as ProductCreate
 from .schema import ProductInfo as ProductInfo

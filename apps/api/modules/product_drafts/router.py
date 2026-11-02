@@ -26,10 +26,17 @@ from .schema import (
     NextReviewInfo,
     PhotoOrder,
     ResolveIssue,
+    SaleSelection,
     VersionRequest,
 )
 
 router = APIRouter(prefix="/product-drafts", tags=["product-drafts"])
+
+
+@router.patch("/{id}/sale-selection")
+async def select_sale_route(id: UuidText, form: SaleSelection,
+                            actor: CurrentUser = Depends(check_user_permission())) -> DraftInfo:
+    return await draft_quotes.select_sale(id, form, actor)
 
 
 @router.get("/processing")

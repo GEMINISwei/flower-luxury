@@ -19,6 +19,15 @@ async def get_sales(id: str) -> SaleList:
 
 
 async def confirm_sale(id: str, form_data: SaleCreate, actor: CurrentUser) -> SaleInfo:
+    return await _confirm_sale(id, form_data, actor, use_creation_time=False)
+
+
+async def confirm_imported_sale(id: str, form_data: SaleCreate, actor: CurrentUser) -> SaleInfo:
+    return await _confirm_sale(id, form_data, actor, use_creation_time=True)
+
+
+async def _confirm_sale(id: str, form_data: SaleCreate, actor: CurrentUser,
+                        *, use_creation_time: bool) -> SaleInfo:
     async with transaction():
         product = await lock_product(id)
         quote = await load_quote(id, form_data.quote_id)
@@ -32,7 +41,8 @@ async def confirm_sale(id: str, form_data: SaleCreate, actor: CurrentUser) -> Sa
             "vendor_id": vendor.id,
             "vendor_name": vendor.name, "cost_price": product.cost_price,
             "profit_amount": quote.amount_twd - product.cost_price,
-            "changed_by": actor["id"], "operator_name": actor["username"], "sold_at": utc_now(),
+            "changed_by": actor["id"], "operator_name": actor["username"],
+            "sold_at": product.created_at if use_creation_time else utc_now(),
         })
         source = product.status
         product.status, product.updated_at, product.updated_by = "sold", utc_now(), actor["id"]

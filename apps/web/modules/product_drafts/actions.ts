@@ -8,6 +8,11 @@ import type { DraftFields } from "./types"
 import { reviewContinuation } from "./continuation.server"
 
 const refresh = { path: "/product-drafts" }
+export async function selectDraftSale(id: string, version: number, quote_id: string | null) {
+  return apiPatch({ url: "/product-drafts/{id}/sale-selection", params: { id },
+    data: { version, quote_id } })
+}
+
 export async function uploadDraftPhotos(id: string, version: number, data: FormData) {
   const files = data.getAll("files").filter((file): file is File => file instanceof File)
   const error = validatePhotoBatch(files, await getLocale())

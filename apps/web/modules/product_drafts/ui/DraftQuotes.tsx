@@ -4,7 +4,7 @@ import { Button, ConfirmDialog } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import type { ApiResponse } from "@/shared/api/contract"
 import type { VendorInfo } from "@/modules/vendors/public.client"
-import { deleteDraftQuote } from "../actions"
+import { deleteDraftQuote, selectDraftSale } from "../actions"
 import { draftQuoteMessages } from "../i18n"
 import type { DraftInfo, DraftQuoteInfo } from "../types"
 import DraftQuoteDialog from "./DraftQuoteDialog"
@@ -26,13 +26,19 @@ export default function DraftQuotes({ draft, vendors, disabled, mutate }: {
     {!draft.quotes?.length && <p className={styles.hint}>{t("empty")}</p>}
     {draft.quotes?.map((quote) => {
       const vendor = vendors.find((item) => item.id === quote.vendor_id)
-      return <article key={quote.id} className={styles.message}>
+      const selected = draft.selected_quote_id === quote.id
+      return <article key={quote.id}
+        className={`${styles.message} ${selected ? styles.selectedQuote : ""}`}>
         <div className={styles.sectionHeader}>
-          <strong className={styles.wrap}>{vendor?.name ?? t("unavailable")}</strong>
+          <strong className={styles.wrap}>{vendor?.name ?? t("unavailable")}
+            {selected && <span> · {t("selectedSale")}</span>}</strong>
           <span>{new Intl.NumberFormat(locale)
             .format(Number(quote.original_amount))} × {quote.exchange_rate}</span></div>
         {quote.note && <p className={styles.wrap}>{quote.note}</p>}
         <div className={styles.sectionHeader}>
+          <Button variant="outlined" disabled={disabled} onClick={() => mutate(() =>
+            selectDraftSale(draft.id, draft.version, selected ? null : quote.id))}>
+            {t(selected ? "cancelSale" : "selectSale")}</Button>
           <Button variant="outlined" disabled={disabled} onClick={() => setEditing(quote)}>{t("edit")}</Button>
           <Button variant="outlined" disabled={disabled} onClick={() => setRemoving(quote)}>{t("delete")}</Button>
         </div>

@@ -2,6 +2,9 @@ from shared.http.errors import BaseError, LangText
 
 
 class DraftError(BaseError):
+    INVALID_SALE_QUOTE = LangText(zh="選定的成交報價已不存在，請重新選擇。",
+                                  en="The selected sale quote is unavailable. Select it again.")
+
     NOT_READY = LangText(zh="商品仍在收集、處理中或有待確認訊息，暫時無法審核建檔。",
                          en="Collection, processing or message review must finish before approval.")
     INVALID_TARGET = LangText(zh="請選擇可整理的目標商品。",

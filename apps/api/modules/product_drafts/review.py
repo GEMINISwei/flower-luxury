@@ -7,6 +7,8 @@ from modules.products.public import (
     ProductCreate,
     ProductInfo,
     QuoteCreate,
+    SaleCreate,
+    confirm_imported_sale,
     create_imported_product,
     create_quote,
 )
@@ -20,6 +22,22 @@ from . import model, storage
 from .errors import DraftError
 from .rules import check_version
 from .schema import ApprovalInfo, DiscardInfo, VersionRequest
+
+
+async def _import_quotes(draft: model.DraftTable, product: ProductInfo, actor: CurrentUser) -> None:
+    selected = None
+    for item in draft.quotes or []:
+        quote = await create_quote(product.id, QuoteCreate.model_validate({
+            key: item.get(key) for key in
+            ("vendor_id", "original_amount", "exchange_rate", "note")
+        }), actor)
+        if item["id"] == draft.selected_quote_id:
+            selected = quote
+    if draft.selected_quote_id:
+        if selected is None:
+            raise LangException(409, DraftError.INVALID_SALE_QUOTE)
+        await confirm_imported_sale(product.id, SaleCreate(quote_id=selected.id,
+            quote_revision=selected.revision, cost_price=product.cost_price), actor)
 
 
 def _approval(row: model.ApprovalTable) -> ApprovalInfo:
@@ -56,11 +74,7 @@ async def approve_draft(id: str, form: VersionRequest, actor: CurrentUser) -> Ap
                            if row.id == draft.main_photo_id), 0)
 
         async def import_quotes(product: ProductInfo) -> None:
-            for quote in draft.quotes or []:
-                await create_quote(product.id, QuoteCreate.model_validate({
-                    key: quote.get(key) for key in
-                    ("vendor_id", "original_amount", "exchange_rate", "note")
-                }), actor)
+            await _import_quotes(draft, product, actor)
 
         product = await create_imported_product(
             fields, _prepared_photos(rows), actor, main_index=main_index,

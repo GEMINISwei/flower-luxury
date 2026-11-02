@@ -1,5 +1,22 @@
 import type { DraftFields, DraftValues, MessageInfo } from "./types"
 
+type SaleQuote = { id: string; original_amount: string | number; exchange_rate: string | number }
+
+function scaledDecimal(value: string | number, places: number) {
+  const [whole, fraction = ""] = String(value).split(".")
+  return BigInt(whole + fraction.slice(0, places).padEnd(places, "0"))
+}
+
+export function draftSaleSummary<T extends SaleQuote>(quotes: T[], selected: string | null,
+  costValue: string) {
+  const quote = quotes.find((item) => item.id === selected)
+  const cost = Number(costValue)
+  if (!quote || !costValue.trim() || !Number.isInteger(cost) || cost < 0) return null
+  const numerator = scaledDecimal(quote.original_amount, 2) * scaledDecimal(quote.exchange_rate, 6)
+  const amountTwd = Number((numerator + BigInt(50_000_000)) / BigInt(100_000_000))
+  return { quote, amountTwd, cost, profit: amountTwd - cost }
+}
+
 export function draftStage(draft: {
   collecting: boolean; processing?: boolean; needs_confirmation?: boolean
 }) {

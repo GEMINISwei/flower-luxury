@@ -43,6 +43,7 @@ class DraftTable(BaseTable):
     fields: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     manual_fields: Mapped[list[str]] = mapped_column(JSONB, default=list)
     quotes: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    selected_quote_id: Mapped[str | None] = mapped_column(String(200))
     prefill_revision: Mapped[int] = mapped_column(default=0)
     prefill_status: Mapped[str] = mapped_column(String(16), default="idle")
     collecting: Mapped[bool] = mapped_column(default=True)
