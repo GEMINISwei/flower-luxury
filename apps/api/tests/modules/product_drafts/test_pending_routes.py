@@ -28,4 +28,5 @@ async def test_complete_and_pending_routes_require_login_and_pass_version(
     result = await client.post(path, json={"version": 1})
     assert result.status_code == 200 and result.json()["version"] == 2
     called = [handler for handler in handlers.values() if handler.await_count]
-    assert len(called) == 1 and called[0].await_args.args[-2].version == 1
+    assert len(called) == 1 and called[0].await_args is not None
+    assert called[0].await_args.args[-2].version == 1

@@ -879,20 +879,20 @@ workspaceTest("暫存列表的收集中商品可按收集完成並開放審核",
 
 workspaceTest("重新整理後回到列表頂部", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 360 })
-  const lists = [["/products", "重新整理"], ["/product-drafts", "重新整理"]]
-  for (const [path, label] of lists) {
+  const main = page.locator("main")
+  async function expectRefreshScrollsToTop() {
+    await main.evaluate((element) => element.scrollTo(0, element.scrollHeight))
+    await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+    await page.locator("header").getByRole("button", { name: "重新整理", exact: true }).click()
+    await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBe(0)
+  }
+  for (const path of ["/products", "/product-drafts"]) {
     await page.goto(path)
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
-    await page.locator("header").getByRole("button", { name: label, exact: true }).click()
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+    await expectRefreshScrollsToTop()
   }
   await page.context().addCookies(managerState!.cookies)
   await page.goto("/admin/line-groups")
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
-  await page.locator("header").getByRole("button", { name: "重新整理", exact: true }).click()
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+  await expectRefreshScrollsToTop()
 })
 
 workspaceTest("手機頁首直接開啟新增與篩選", async ({ page }) => {
