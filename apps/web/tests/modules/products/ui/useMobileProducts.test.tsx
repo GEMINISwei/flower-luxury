@@ -151,3 +151,15 @@ it("恢復續載失敗時保留商品，重試後能回到目標商品", async (
   expect(result.current.products.map((product) => product.id)).toEqual(["one", "two"])
   expect(result.current.restoring).toBe(false)
 })
+
+it("重新整理時收起續載的商品，只留第一頁且不再恢復返回位置", async () => {
+  loadProductPage.mockResolvedValue({ items: [{ ...first, id: "two" }],
+    meta: { ...meta, hasNext: false, nextCursor: null }, errorMessage: "" })
+  const { result } = setup()
+  await intersect()
+  expect(result.current.products).toHaveLength(2)
+  act(() => result.current.reset())
+  expect(result.current.products).toEqual([first])
+  expect(result.current.meta).toEqual(meta)
+  expect(result.current.restoring).toBe(false)
+})

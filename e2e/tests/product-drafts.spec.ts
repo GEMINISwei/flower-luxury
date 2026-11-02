@@ -960,3 +960,28 @@ workspaceTest("AI 助手以卡片右上角新增條件且隱藏冗餘標籤", as
     await expect(card.getByRole("textbox", { name: /^補充條件 \d+$/ }).last()).toBeVisible()
   }
 })
+
+workspaceTest("暫存欄位可從資料庫既有的值點選，所有輸入框關閉瀏覽器建議", async ({ page }) => {
+  const data = seed()
+  const model = `Draft Model ${randomUUID().slice(0, 8)}`
+  await page.goto("/products/new")
+  await page.getByLabel(/^名稱\*?$/).fill(`${data.name} 既有商品`)
+  await page.getByRole("combobox", { name: /^品牌\*?$/ }).selectOption({ label: data.name })
+  await page.getByRole("combobox", { name: /^分類\*?$/ }).selectOption("包包")
+  await page.getByLabel("型號", { exact: true }).fill(model)
+  await page.getByLabel(/^成本（新臺幣）\*?$/).fill("3000")
+  await page.getByRole("button", { name: "儲存", exact: true }).click()
+  await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
+
+  await open(page, data.id)
+  const input = page.getByRole("combobox", { name: "型號", exact: true })
+  await input.fill(model.slice(0, -3).toLowerCase())
+  await page.getByRole("option", { name: model, exact: true }).click()
+  await expect(input).toHaveValue(model)
+  const fields = page.getByRole("region", { name: "商品資訊", exact: true })
+    .locator("input, textarea")
+  expect(await fields.count()).toBeGreaterThanOrEqual(7)
+  for (const field of await fields.all()) {
+    await expect(field).toHaveAttribute("autocomplete", "off")
+  }
+})

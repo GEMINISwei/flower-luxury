@@ -164,3 +164,41 @@ test("商品歷程可直接開啟且不存在商品顯示找不到頁面", async
     await expect(page.getByRole("heading", { name: "找不到頁面", exact: true })).toBeVisible()
   }
 })
+
+test("新增商品的名稱、型號、顏色、序號可從資料庫既有的值點選", async ({ page }) => {
+  await login(page, admin)
+  const token = Date.now().toString(36)
+  const brand = `Suggest Brand ${token}`
+  await createBrand(page, brand)
+  await page.goto("/products/new")
+  const values = { "名稱": `Suggest Bag ${token}`, "型號": `Suggest Model ${token}`,
+    "序號": `SUGGEST-${token}`, "顏色": `Suggest Rose ${token}` }
+  await page.getByLabel(/^名稱\*?$/).fill(values["名稱"])
+  await page.getByRole("combobox", { name: /^品牌\*?$/ }).selectOption({ label: brand })
+  await page.getByRole("combobox", { name: /^分類\*?$/ }).selectOption("包包")
+  for (const label of ["型號", "序號", "顏色"] as const) {
+    await page.getByLabel(label, { exact: true }).fill(values[label])
+  }
+  await page.getByLabel(/^成本（新臺幣）\*?$/).fill("3000")
+  await page.getByRole("button", { name: "儲存", exact: true }).click()
+  await expect(page).toHaveURL(/\/products\/[0-9a-f-]+$/)
+
+  await page.goto("/products/new")
+  for (const [label, value] of Object.entries(values)) {
+    const input = page.getByRole("combobox", { name: new RegExp(`^${label}\\*?$`) })
+    await input.fill(value.slice(0, -2).toUpperCase())
+    await page.getByRole("option", { name: value, exact: true }).click()
+    await expect(input).toHaveValue(value)
+    await expect(page.getByRole("listbox")).toBeHidden()
+  }
+})
+
+test("新增商品的所有輸入框都關閉瀏覽器自己的建議與自動填入", async ({ page }) => {
+  await login(page, admin)
+  await page.goto("/products/new")
+  const fields = page.locator("form").locator("input:not([type=file]), textarea")
+  expect(await fields.count()).toBeGreaterThanOrEqual(7)
+  for (const field of await fields.all()) {
+    await expect(field).toHaveAttribute("autocomplete", "off")
+  }
+})
