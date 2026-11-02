@@ -9,7 +9,8 @@ from shared.auth.dependency import check_user_permission
 from shared.http.errors import LangException
 from shared.http.schema import PaginationParams, UuidText
 
-from . import draft_quotes, issues, messages, photos, review, service
+from . import draft_quotes, issues, messages, photos, review, rounds, service
+from .collection_schema import CollectionInfo
 from .errors import DraftError
 from .quote_schema import DraftQuoteUpdate
 from .schema import (
@@ -31,6 +32,34 @@ from .schema import (
 )
 
 router = APIRouter(prefix="/product-drafts", tags=["product-drafts"])
+
+
+@router.get("/collections/current")
+async def current_collection_route(source_key: str,
+    _: CurrentUser = Depends(check_user_permission()),
+) -> CollectionInfo:
+    return await rounds.current_collection(source_key)
+
+
+@router.post("/collections/{id}/complete")
+async def complete_collection_route(id: UuidText,
+    _: CurrentUser = Depends(check_user_permission()),
+) -> CollectionInfo:
+    return await rounds.complete_collection(id)
+
+
+@router.post("/{id}/finalize")
+async def finalize_draft_route(id: UuidText, form: VersionRequest,
+    actor: CurrentUser = Depends(check_user_permission()),
+) -> DraftInfo:
+    return await rounds.finalize_draft(id, form, actor)
+
+
+@router.post("/messages/{id}/new-group")
+async def split_message_route(id: UuidText, form: VersionRequest,
+    actor: CurrentUser = Depends(check_user_permission()),
+) -> DraftInfo:
+    return await rounds.split_message(id, form, actor)
 
 
 @router.patch("/{id}/sale-selection")

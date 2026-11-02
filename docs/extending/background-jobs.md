@@ -2,7 +2,7 @@
 
 背景工作使用獨立的 `line-collector` 容器，與 API 共用 image、PostgreSQL 及 uploads volume，
 不另外引入 Redis（[ADR 0006](../decisions/0006-postgres-job-queue.md)）。
-目前已註冊商品暫存清理、到期摘要、LINE 圖片下載、群組名稱查詢與指令回覆／到期清理任務。
+目前已註冊商品暫存清理、到期摘要、LINE 圖片下載、群組名稱查詢、定稿後圖片加工與一次 AI 預填任務。
 LINE 功能兩項金鑰都留空即可停用，群組預設不收集，見 [LINE 商品收集](../features/line-collection.md)。
 
 ## 宣告與排入任務
@@ -73,7 +73,7 @@ make services logs line-collector    # 追蹤背景程序紀錄
 Docker 在啟動期間每秒、之後每 30 秒用 shell 檢查心跳檔時間，不啟動 Python。
 缺少、過期或未來時間的心跳都判定失敗。正式環境的 collector 共用半核心 CPU 與 512M
 記憶體配額，CPU 排程權重較低，主機忙碌時優先讓給網站服務。
-下載、AI、一般工作、維運清理與目前的指令回覆各自並行一個工作；原生函式庫的執行緒上限為一。
+下載、圖片加工、AI、一般工作與維運清理各自並行一個工作；原生函式庫的執行緒上限為一。
 
 工作紀錄由同一個 worker 每小時分批清理，每批最多 500 筆：succeeded 保留 7 天、dead 保留 30 天，
 pending／running 不清理。這只清工作紀錄，不清業務原文與原圖。
@@ -87,7 +87,7 @@ docker exec -w /app <專案>-api python -m app.jobs retry <工作UUID>
 
 `status` 輸出各佇列數量、已到期工作的最久等待時間，以及最近 50 筆死信的安全 metadata，
 不輸出 payload 或連線資訊。`retry` 只接受已啟用、可安全重試的 dead 工作；最多一次嘗試的
-AI／回覆工作拒絕重排，避免未知結果的外部呼叫被重送。重排成功後重複操作不會再排一筆。
+AI 工作拒絕重排，避免未知結果的外部呼叫被重送。重排成功後重複操作不會再排一筆。
 
 備份、還原及 migration 的停止與恢復規則見[維運文件](../operations.md#背景收集程序)。
 LINE Developers Console、Webhook、邀請 Bot 入群及群組啟用步驟見

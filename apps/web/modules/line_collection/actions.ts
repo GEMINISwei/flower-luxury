@@ -8,6 +8,6 @@ export async function updateGroup(id: string, enabled: boolean) {
 }
 
 export async function stopGroup(id: string) {
-  return apiPost({ url: "/line/groups/{id}/stop", params: { id },
+  return apiPost({ url: "/product-drafts/collections/{id}/complete", params: { id },
     refresh: { path: LINE_GROUPS_ROUTE.path } })
 }

@@ -28,7 +28,7 @@ def _message_info(row: model.MessageTable) -> MessageInfo:
 
 
 def _photo_info(row: model.PhotoTable, main_id: object = None) -> DraftPhotoInfo:
-    ready = row.status == "ready"
+    ready = row.status in {"stored", "ready"}
     return DraftPhotoInfo(id=str(row.id), message_id=str(row.message_id),
                           draft_id=str(row.draft_id) if row.draft_id else None,
                           status=row.status, sort_order=row.sort_order,
@@ -60,7 +60,10 @@ async def get_draft(id: str | None) -> DraftInfo:
                         "prefill_configured": get_env().prefill_configured,
                         "prefill_status": row.prefill_status or "idle",
                         "processing": bool(row.processing),
-                        "needs_confirmation": bool(row.needs_confirmation)},
+                        "needs_confirmation": bool(row.needs_confirmation),
+                        "requires_finalization": bool(row.collection_id and not row.finalized_at),
+                        "finalized": row.finalized_at is not None,
+                        "source_locked": bool(row.collection_id and row.finalized_at)},
                      messages=messages, photos=photos)
 
 
@@ -81,6 +84,10 @@ async def get_draft_list(
     for row in page["list_data"]:
         row["id"] = str(row["id"])
         row["main_photo_id"] = str(row["main_photo_id"]) if row["main_photo_id"] else None
+        row["requires_finalization"] = bool(row.get("collection_id")
+                                            and not row.get("finalized_at"))
+        row["finalized"] = row.get("finalized_at") is not None
+        row["source_locked"] = bool(row.get("collection_id") and row.get("finalized_at"))
     return DraftList.model_validate(page)
 
 

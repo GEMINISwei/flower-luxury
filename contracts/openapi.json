@@ -286,6 +286,52 @@
         "title": "BufferedIssueList",
         "type": "object"
       },
+      "CollectionInfo": {
+        "properties": {
+          "draft_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Draft Ids",
+            "type": "array"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "message_count": {
+            "default": 0,
+            "title": "Message Count",
+            "type": "integer"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "status": {
+            "default": "collecting",
+            "enum": [
+              "collecting",
+              "confirmation",
+              "finalized"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_key"
+        ],
+        "title": "CollectionInfo",
+        "type": "object"
+      },
       "DiscardInfo": {
         "properties": {
           "id": {
@@ -422,6 +468,11 @@
           "fields": {
             "$ref": "#/components/schemas/DraftFields"
           },
+          "finalized": {
+            "default": false,
+            "title": "Finalized",
+            "type": "boolean"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -480,7 +531,8 @@
               "disabled",
               "queued",
               "ready",
-              "failed"
+              "failed",
+              "unknown"
             ],
             "title": "Prefill Status",
             "type": "string"
@@ -502,6 +554,11 @@
             "title": "Received At",
             "type": "string"
           },
+          "requires_finalization": {
+            "default": false,
+            "title": "Requires Finalization",
+            "type": "boolean"
+          },
           "selected_quote_id": {
             "anyOf": [
               {
@@ -516,6 +573,11 @@
           "source_key": {
             "title": "Source Key",
             "type": "string"
+          },
+          "source_locked": {
+            "default": false,
+            "title": "Source Locked",
+            "type": "boolean"
           },
           "updated_at": {
             "anyOf": [
@@ -644,6 +706,7 @@
           "status": {
             "enum": [
               "pending",
+              "stored",
               "ready",
               "failed"
             ],
@@ -776,6 +839,11 @@
           "fields": {
             "$ref": "#/components/schemas/DraftFields"
           },
+          "finalized": {
+            "default": false,
+            "title": "Finalized",
+            "type": "boolean"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -806,9 +874,19 @@
             "title": "Received At",
             "type": "string"
           },
+          "requires_finalization": {
+            "default": false,
+            "title": "Requires Finalization",
+            "type": "boolean"
+          },
           "source_key": {
             "title": "Source Key",
             "type": "string"
+          },
+          "source_locked": {
+            "default": false,
+            "title": "Source Locked",
+            "type": "boolean"
           },
           "updated_at": {
             "anyOf": [
@@ -912,6 +990,17 @@
             "title": "Created At",
             "type": "string"
           },
+          "current_round_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Round Id"
+          },
           "enabled": {
             "title": "Enabled",
             "type": "boolean"
@@ -955,6 +1044,11 @@
             "default": false,
             "title": "Processing",
             "type": "boolean"
+          },
+          "received_count": {
+            "default": 0,
+            "title": "Received Count",
+            "type": "integer"
           },
           "reply_failed": {
             "default": false,
@@ -2283,7 +2377,8 @@
           "action": {
             "enum": [
               "attach",
-              "discard"
+              "discard",
+              "new"
             ],
             "title": "Action",
             "type": "string"
@@ -2721,6 +2816,22 @@
       },
       "SourceInfo": {
         "properties": {
+          "current_round_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Round Id"
+          },
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
           "name": {
             "anyOf": [
               {
@@ -2731,6 +2842,11 @@
               }
             ],
             "title": "Name"
+          },
+          "received_count": {
+            "default": 0,
+            "title": "Received Count",
+            "type": "integer"
           },
           "source_key": {
             "title": "Source Key",
@@ -3942,6 +4058,90 @@
         ]
       }
     },
+    "/api/product-drafts/collections/current": {
+      "get": {
+        "operationId": "current_collection_route_api_product_drafts_collections_current_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "source_key",
+            "required": true,
+            "schema": {
+              "title": "Source Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Current Collection Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/collections/{id}/complete": {
+      "post": {
+        "operationId": "complete_collection_route_api_product_drafts_collections__id__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Complete Collection Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
     "/api/product-drafts/issues": {
       "get": {
         "operationId": "list_issues_route_api_product_drafts_issues_get",
@@ -4273,6 +4473,58 @@
           }
         },
         "summary": "Move Message Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/messages/{id}/new-group": {
+      "post": {
+        "operationId": "split_message_route_api_product_drafts_messages__id__new_group_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Split Message Route",
         "tags": [
           "product-drafts"
         ]
@@ -4685,6 +4937,58 @@
           }
         },
         "summary": "Approve Draft Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/{id}/finalize": {
+      "post": {
+        "operationId": "finalize_draft_route_api_product_drafts__id__finalize_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Finalize Draft Route",
         "tags": [
           "product-drafts"
         ]

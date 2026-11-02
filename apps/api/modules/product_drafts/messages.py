@@ -16,7 +16,7 @@ async def _clear_buffered_issue(message: model.MessageTable) -> None:
     event = message.buffered_event
     if event is None:
         return
-    if event.status != "issue":
+    if event.status != "issue" and message.collection_id is None:
         raise LangException(409, DraftError.NOT_READY)
     await active_session().delete(event)
     await active_session().flush()
@@ -39,14 +39,31 @@ async def get_unassigned_messages(
     return page
 
 
-async def move_message(id: str | None, form: MessageMove, actor: CurrentUser) -> DraftInfo:
+async def _check_move_state(message: model.MessageTable, target: model.DraftTable,
+                             source: model.DraftTable | None) -> None:
+    if any(draft.finalized_at is not None for draft in (source, target) if draft):
+        raise LangException(409, DraftError.NOT_READY)
+    collection = await active_session().get(model.CollectionRoundTable,
+        message.collection_id) if message.collection_id else None
+    if collection and collection.status == "collecting":
+        raise LangException(409, DraftError.NOT_READY)
+
+
+async def move_message(id: str | None, form: MessageMove,
+                       actor: CurrentUser | None = None) -> DraftInfo:
     async with transaction():
+        initial = ensure_found(await model.get_message_row(id), DraftError.NOT_FOUND)
+        await model.stream_for(initial.source_key)
         message = ensure_found(await model.get_message_row(id, lock=True), DraftError.NOT_FOUND)
-        target = ensure_found(await model.get_draft_row(form.target_draft_id), DraftError.NOT_FOUND)
+        target = ensure_found(await model.get_draft_row(form.target_draft_id),
+                              DraftError.NOT_FOUND)
         if message.source_key != target.source_key:
             raise LangException(409, DraftError.DIFFERENT_SOURCE)
+        target = ensure_found(await model.get_draft_row(form.target_draft_id, lock=True),
+                              DraftError.NOT_FOUND)
         check_version(target.version, form.target_version)
         source = await model.get_draft_row(str(message.draft_id)) if message.draft_id else None
+        await _check_move_state(message, target, source)
         if source:
             check_version(source.version, form.source_version)
         if source and source.id == target.id:
@@ -67,6 +84,7 @@ async def move_message(id: str | None, form: MessageMove, actor: CurrentUser) ->
         stream.next_sequence += 1
         message.sequence = stream.next_sequence
         message.draft_id = target.id
+        message.collection_id = target.collection_id
         target.has_text = target.has_text or message.kind == "text"
         for draft in (source, target):
             if draft:
@@ -99,6 +117,9 @@ async def withdraw_message(source_key: str, external_id: str,
         if draft:
             _bump(draft)
         await active_session().flush()
+        if draft and draft.finalized_at is not None:
+            draft.processing = any(item.status in {"pending", "stored"}
+                                   for item in await model.photos_for(str(draft.id)))
         if buffered:
             await model.refresh_source_confirmation(source_key)
         return WithdrawalResult(removed=True)

@@ -3,16 +3,15 @@ from typing import Literal
 
 from modules.product_drafts.public import (
     IncomingMessage,
-    control_collection,
     finish_collection,
     get_collection_state,
     withdraw_message,
 )
-from modules.product_drafts.public import ingest_batch_message as ingest_message
+from modules.product_drafts.public import receive_message as ingest_message
 from shared.db.session import active_session
 from shared.db.table import parse_uuid
 from shared.db.transaction import transaction
-from shared.http.errors import LangException, LangText, ensure_found, resolve_text
+from shared.http.errors import LangException, ensure_found
 from shared.jobs.queue import enqueue_job
 from shared.time import utc_now
 
@@ -24,7 +23,11 @@ from .schema import GroupInfo, GroupList, GroupUpdate, LineEvent, SourceList, We
 
 
 async def list_sources() -> SourceList:
-    return await model.source_list()
+    listing = await model.source_list()
+    for item in listing.list_data:
+        state = await get_collection_state(item.source_key)
+        item.current_round_id, item.received_count = state.current_round_id, state.received_count
+    return listing
 
 
 async def list_groups(limit: int = 20, cursor: str | None = None,
@@ -42,8 +45,6 @@ async def update_group(id: str, form: GroupUpdate) -> GroupInfo:
             raise LangException(409, LineError.LEFT)
         if form.enabled and not row.enabled:
             row.collect_from = utc_now()
-        if not form.enabled:
-            await finish_collection(f"line:{row.group_id}", utc_now())
         row.enabled = form.enabled
         await active_session().flush()
         return await _group_info(row)
@@ -59,40 +60,6 @@ async def stop_group(id: str) -> GroupInfo:
         row = ensure_found(await model.get_group(id, lock=True), LineError.NOT_FOUND)
         await finish_collection(f"line:{row.group_id}", utc_now())
         return await _group_info(row)
-
-
-COMMAND_TEXTS = {
-    "queued_start": LangText(zh="已收到開始收集指令，訊息將依原始時間整理。",
-                             en="Start received. Messages will be grouped by original time."),
-    "queued_end": LangText(zh="已收到結束收集指令，等待訊息收齊後整理。",
-                           en="End received. Messages will be grouped after the waiting period."),
-    "started": LangText(zh="已開始收集。請先傳商品圖片，再傳說明。",
-                        en="Collection started. Send product images before descriptions."),
-    "already_collecting": LangText(zh="目前已在收集中，維持原批次。",
-                                   en="Already collecting; continuing the current batch."),
-    "stopped": LangText(zh="已停止收集。圖片下載將繼續完成，請至系統審核商品。",
-                        en="Collection stopped. Downloads continue; review drafts in the app."),
-    "already_stopped": LangText(zh="目前未在收集，請傳送 /start 開始。",
-                                en="Collection is stopped. Send /start to begin."),
-    "unsafe": LangText(zh="指令順序不明，收集狀態未變更，請確認後重新傳送指令。",
-                       en="Command order is ambiguous. Check the state and resend the command."),
-}
-
-
-async def _command(group: model.GroupTable, event: LineEvent, command: str) -> bool:
-    result = await control_collection(f"line:{group.group_id}",
-                                     "start" if command == "/start" else "end", event.occurred_at)
-    if event.replyToken:
-        reply = model.ReplyTable(group_id=group.id, reply_token=event.replyToken,
-                                text=resolve_text(COMMAND_TEXTS[result.result]),
-                                expires_at=utc_now() + timedelta(seconds=50))
-        active_session().add(reply)
-        await active_session().flush()
-        await enqueue_job("line_collection.reply", {"reply_id": str(reply.id)},
-                          queue="replies", max_attempts=1)
-        await enqueue_job("line_collection.expire_reply", {"reply_id": str(reply.id)},
-                          available_at=reply.expires_at, queue="maintenance")
-    return True
 
 
 async def _remember(group: model.GroupTable, event: LineEvent) -> bool:
@@ -126,9 +93,6 @@ async def _collect(group: model.GroupTable, event: LineEvent) -> bool:
         return False
     if not await _remember(group, event):
         return False
-    command = str(message.get("text", "")).strip() if kind == "text" else ""
-    if command in {"/start", "/end"}:
-        return await _command(group, event, command)
     external_id = str(message["id"])
     if await model.message_link(fingerprint(group.group_id, external_id).value):
         return False
@@ -174,7 +138,6 @@ async def _handle(event: LineEvent) -> bool:
             refresh_name = refresh_name or group.joined
             if not group.joined:
                 group.enabled = False
-                await finish_collection(f"line:{group.group_id}", event.occurred_at)
     elif event.type == "unsend":
         # 停用只阻止新收件, 已收內容的撤回仍然必須處理.
         await _unsend(group, event)

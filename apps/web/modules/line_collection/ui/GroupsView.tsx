@@ -25,7 +25,7 @@ export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
   const { isPending, submit } = useActionSubmit()
   function toggle() {
     if (!selected) return
-    const action = stopping ? () => stopGroup(selected.id)
+    const action = stopping ? () => stopGroup(selected.current_round_id ?? "")
       : () => updateGroup(selected.id, !selected.enabled)
     submit(action, {
       onSuccess: () => { setSelected(null); setError(""); router.refresh() }, onError: setError,
@@ -47,7 +47,7 @@ export default function GroupsView({ items, meta, errorMessage, seq, limit }: {
           <Button variant="outlined" disabled={isPending || !groupCapabilities(group).canToggle}
             onClick={() => { setSelected(group); setStopping(false); setError("") }}>
             {t(group.enabled ? "disable" : "enable")}</Button>
-          {group.collecting && <Button variant="outlined" disabled={isPending}
+          {group.current_round_id && <Button variant="outlined" disabled={isPending}
             onClick={() => { setSelected(group); setStopping(true); setError("") }}>{t("stop")}</Button>}
           {group.review_product_id && <div className={styles.notice}>
             <p>{t("reviewHint")}</p><Link href={`/products/${group.review_product_id}`}>

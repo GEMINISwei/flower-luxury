@@ -2,15 +2,19 @@ from copy import deepcopy
 from datetime import timedelta
 from uuid import uuid4
 
+from sqlalchemy import update
+
 from modules.brands.public import get_brands
 from modules.vendors.public import get_vendors
-from shared.db.session import active_session, release_connection
+from shared.db.session import active_session, release_connection, session_scope
+from shared.db.table import parse_uuid
 from shared.db.transaction import transaction
 from shared.jobs.contracts import Job
 from shared.jobs.queue import enqueue_job
 from shared.time import utc_now
 
 from . import model, prefill_settings
+from .collection_schema import FinalizedSnapshot
 from .prefill_config import get_env
 from .prefill_prompt import BASE_PROMPT
 from .prefill_rules import build_input, merge_prefill, output_schema, parse_prefill
@@ -22,6 +26,8 @@ from .service import _bump
 
 async def schedule_prefill(row: model.DraftTable) -> None:
     if row.collecting or (row.prefill_revision or 0) > 0:
+        return
+    if row.collection_id is not None and row.finalized_at is None:
         return
     row.prefill_revision = 1
     row.prefill_status = "queued" if get_env().prefill_configured else "disabled"
@@ -36,7 +42,7 @@ async def apply_prefill(id: str, revision: int, result: PrefillResult,
     async with transaction():
         row = await model.get_draft_row(id, lock=True)
         if (row is None or row.collecting or row.prefill_revision != revision
-                or row.prefill_status != "queued"):
+                or row.prefill_status not in {"queued", "unknown"}):
             return PrefillApplication(applied=False)
         row.fields = merge_prefill(DraftFields.model_validate(row.fields), result,
                                    row.manual_fields or []).model_dump(mode="json")
@@ -54,10 +60,20 @@ async def apply_prefill(id: str, revision: int, result: PrefillResult,
 
 async def _mark_failed(id: str, revision: int) -> None:
     row = await model.get_draft_row(id, lock=True)
-    if row and row.prefill_revision == revision and row.prefill_status == "queued":
+    if row and row.prefill_revision == revision and row.prefill_status in {"queued", "unknown"}:
         row.prefill_status = "failed"
         _bump(row)
         await active_session().flush()
+
+
+async def _mark_started(id: str, revision: int) -> bool:
+    # 呼叫前獨立提交, 即使程序死在回應與業務提交之間, 也不會重送同一份快照.
+    async with session_scope() as session:
+        changed = await session.execute(update(model.DraftTable).where(
+            model.DraftTable.id == parse_uuid(id), model.DraftTable.prefill_revision == revision,
+            model.DraftTable.prefill_status == "queued",
+        ).values(prefill_status="unknown").returning(model.DraftTable.id))
+        return changed.scalar_one_or_none() is not None
 
 
 async def run_prefill(job: Job) -> None:
@@ -68,7 +84,9 @@ async def run_prefill(job: Job) -> None:
         return
     original_quotes = deepcopy(row.quotes or [])
     settings = await prefill_settings.get_settings()
-    messages = await model.messages_for(id)
+    snapshot = FinalizedSnapshot.model_validate(row.finalized_snapshot) \
+        if row.finalized_snapshot is not None else None
+    messages = snapshot.messages if snapshot else await model.messages_for(id)
     if not any(item.kind == "text" and item.text and item.text.strip() for item in messages):
         await apply_prefill(id, revision, PrefillResult(), original_quotes)
         return
@@ -79,6 +97,8 @@ async def run_prefill(job: Job) -> None:
     try:
         content = build_input(messages, options, settings.supplement, companies)
         await release_connection()
+        if snapshot is not None and not await _mark_started(id, revision):
+            return
         response = await generate_prefill(BASE_PROMPT.zh, content.content,
                                           output_schema().json_schema)
         available = await get_brands()

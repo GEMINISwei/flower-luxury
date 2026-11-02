@@ -1,7 +1,7 @@
 # LINE 商品收集
 
-LINE 收件後端會自動發現群組，將已啟用群組在指令批次內的圖片與逐則文字送入商品暫存。
-店長於 `/admin/line-groups` 啟停群組資格、手動結束批次與查看異常；所有登入者於 `/product-drafts` 整理與逐筆審核。
+LINE 收件後端會自動發現群組，持久保存已啟用群組的圖片與逐則文字，下載原圖後等待人工分組定稿。
+店長於 `/admin/line-groups` 啟停群組資格、完成收集輪次與查看異常；所有登入者於 `/product-drafts` 整理與逐筆審核。
 
 ## LINE 後台設定
 
@@ -21,16 +21,13 @@ LINE 收件後端會自動發現群組，將已啟用群組在指令批次內的
 6. 開啟 **Allow bot to join group chats**，把官方帳號邀請進目標群組，在群組傳一則訊息。
    系統從入群／訊息事件取得群組 ID，背景查詢名稱；使用者不必找 ID。
    LINE 的群組限制見[官方群組文件](https://developers.line.biz/en/docs/messaging-api/group-chats/)。
-7. 店長在 `/admin/line-groups` 依群組名稱啟用收集資格，再於群組傳送 `/start` 開始收集、`/end` 結束整批。
-   群組任何成員均能下指令，同群組多人共用一批；啟用前與收集區間外的訊息不補收。
-   先以測試群組完成實際驗收，再啟用真正的商品來源。
+7. 店長在 `/admin/line-groups` 依群組名稱啟用收集，系統立即持續收件，不需要 `/start` 或 `/end`。
+   人員在商品暫存或群組設定點「收集完成」，固定目前輪次，再到商品暫存確認分組並定稿。
+   新訊息會另開下一輪；先以測試群組完成實際驗收，再啟用真正的商品來源。
 
 本機 `localhost` 不能直接供 LINE 呼叫；開發驗收需另外準備公開 HTTPS 測試入口。
-本功能只接收群組訊息，不收私訊、舊式 room、相簿或記事本。已啟用群組的精確指令會回覆開始／停止／已在目前狀態的結果。
-後台停用群組時，`/start` 與 `/end` 均直接忽略，不更動收集狀態，也不回覆。
-指令去除頭尾空白後須整則符合 `/start` 或 `/end`，指令不保存為商品原文；重複指令不重開或建立空批次。
-群組設定以 Badge 顯示 Bot「已加入／未加入」與收集「收集中／待整理／已停用」，不顯示批次起迄時間。
-不設定自動逾時，忘記 `/end` 時可由店長於後台結束；重啟會保留收集狀態。
+本功能只接收群組訊息，不收私訊、舊式 room、相簿或記事本。`/start`、`/end` 只視為一般文字保存，沒有控制或回覆功能。
+群組設定以 Badge 顯示 Bot 與收集狀態；不設定自動逾時，重啟保留收集輪次。
 如官方帳號仍有自動回應或歡迎訊息，可於 Official Account Manager 依團隊需要關閉。
 
 ## 收件與群組狀態
@@ -42,34 +39,29 @@ LINE 收件後端會自動發現群組，將已啟用群組在指令批次內的
   群組名稱查詢失敗仍保留群組識別，可用 ID 辨認；不會因此自動啟用。
 - 群組列表及啟用／停用 API 只供店長呼叫，網址為 `/api/line/groups`。
   管理 API 不經 nginx 對外公開，由 Server Component／Server Action 接線。
-  `/api/line/sources` 只回傳來源鍵與名稱，所有登入者可供暫存群組篩選使用，不含管理狀態。
+  `/api/line/sources` 回傳來源鍵、名稱、啟用狀態及目前輪次與收件數，所有登入者可篩選與完成收集。
 - 啟用時記下 UTC 邊界，時間早於啟用的延遲事件不補收。群組停用或 Bot 退群後停止新收件，
   已收進暫存的資料仍保留。退群會撤銷啟用狀態；重新邀請後要由店長再次啟用。
-- 同一封 Webhook 的各群組依固定順序鎖定，同群組依原始傳送時間處理；跨 Webhook 的延遲事件依
-  [商品暫存規則](product-drafts.md#收集與分組)補入原商品或留下異常提示，不重切已成立的商品。
-  `/end` 後才送達、但原始時間在區間內的事件仍可補入；群組停用或 Bot 退群則停止所有新收件。
-- 指令狀態與回覆工作同一交易提交，worker 在提交後送出回覆；回覆失敗不回滾批次，後台提示未送達。
-  reply token 僅在獨立暫存表保存最多 50 秒的有效窗口，工作 payload 只有內部識別；正常完成或失敗即刪除，
-  worker 停止時實際清除延後至恢復。過期不傳送，另有到期清理工作；不使用 push 補送。
-  LINE reply token 單次使用，程序中斷後即使重跑亦不會重複成功送出；回覆失敗不安排一般延遲重試。
-  回覆文案提供中英文，Webhook 使用系統預設中文。
-- 原文、分組、去重摘要及圖片工作在同一個交易保存，提交成功才回覆 LINE。
+- 同一封 Webhook 的各群組依固定順序鎖定，同群組依原始傳送時間保存。
+  「收集完成」與收件共用來源鎖；重複完成舊輪次不會關閉新輪次。時間屬於已完成輪次的遲到訊息保留待確認，
+  只能人工加入未定稿組別、另建組別或忽略；不自動改寫分組。詳見[商品暫存](product-drafts.md#收集與分組)。
+- 原文、輪次、去重摘要及圖片下載工作在同一個交易保存，提交成功才回覆 LINE。
   請開啟 LINE 重送；LINE 的投遞與重送本身不保證永不漏訊息，見
   [Webhook 官方說明](https://developers.line.biz/en/docs/messaging-api/receiving-messages/)。
 
 ## 圖片、撤回與保留期限
 
 - `line-collector` 在背景向 LINE 下載原圖，不在 Webhook 等圖片。單張最多 15 MiB，
-  依實際內容驗證 JPEG、PNG、WebP、HEIC，沿用商品暫存的原圖保存及檔案清理。
+  收件階段只保存原始 bytes，不解碼或產生衍生圖。人工定稿後才由 images 佇列在子行程驗證 JPEG、PNG、WebP、HEIC 並加工。
   請及時處理，LINE 的內容下載有保存期限，不是永久的備份來源。
 - 下載與名稱查詢最多嘗試三次，由工作佇列安排間隔。下載最終失敗會把照片標成 failed，
   保留原有分組；無論下載是否成功，已放棄／撤回的訊息不能被背景工作重新建立。
-  程序強制中止時依佇列持有期限恢復，詳見[背景工作](../extending/background-jobs.md)。
+  程序強制中止時依 worker 心跳與持有權恢復，詳見[背景工作](../extending/background-jobs.md)。
 - 撤回事件即使在群組停用後仍處理。暫存內的該則原文與照片關聯立即移除，
   實體圖片由背景清理工作刪除；先收到撤回、後收到原訊息時，也不重新收集。
 - 已審核的商品不自動刪除或更改，群組回傳 `review_product_id` 供群組設定頁提示人工確認；訊息移到其他暫存再審核，也追蹤實際建立的商品。
 - 事件與訊息防重送摘要保存 30 天，由背景工作到期刪除。只保存 SHA-256、處理關聯與期限，
-  不另外保存原始 Webhook、傳送者或文字；指令回覆的短期 reply token 例外如上；下載用外部訊息 ID 在工作結束後清掉。
+  不另外保存原始 Webhook、傳送者或文字；不保存指令 reply token，下載用外部訊息 ID 在工作結束後清掉。
   過期後不保證辨認舊重送或撤回；既有備份依備份策略淘汰。
 
 ## 排查
@@ -80,15 +72,17 @@ LINE 收件後端會自動發現群組，將已啟用群組在指令批次內的
 | Verify 回應 401 | Channel secret 是否屬於同一個 channel，代理是否改寫 body |
 | 找不到群組 | Bot 是否已加入、Use webhook 是否開啟、HTTPS 是否能從外部連入 |
 | 名稱暫時空白 | Access token 是否有效，Bot 是否仍在群組；查看 `make services logs line-collector` |
-| 收不到商品 | 群組是否啟用並已 /start、訊息是否在批次區間內且先有圖片，及收集程序是否 healthy |
+| 收不到商品 | 群組是否啟用、是否已完成人工收集與分組定稿，以及收集程序是否 healthy |
 | 圖片 failed | 權杖／LINE 連線、圖片格式與大小、LINE 內容保存期限及 uploads 磁碟 |
 
 Log 僅提供工作識別與錯誤類別，不輸出 LINE 錯誤內容或金鑰。
 
 ## 切換既有資料
 
-此版 migration 保留商品暫存、原文、圖片與歷史待歸類資料，回填第一張圖片的原始時間（沒有圖片則使用暫存建立時間）。
-原本收集中暫存會結束收集並增加版本；所有群組在新流程等待 `/start`，不從既有訊息推測開批次。
+此版 migration 保留已結束暫存的人工欄位、AI 結果、原文與照片，視為既有定稿資料。
+原本收集中暫存轉為待確認分組；尚未分組的收件轉為收集輪次，不自動加工或呼叫 AI。
+舊版已結束收集但尚未下載的圖片，下載後仍接續背景加工，不重跑既有 AI。
+移除三分鐘整理與指令回覆任務及短期回覆表，不刪除業務收件。
 
 ## 程式與測試
 
@@ -99,6 +93,5 @@ Log 僅提供工作識別與錯誤類別，不輸出 LINE 錯誤內容或金鑰�
 - 簽章與設定：[`test_rules.py`](../../apps/api/tests/modules/line_collection/test_rules.py)
 - nginx 實際入口：[`line-webhook.spec.ts`](../../e2e/tests/line-webhook.spec.ts)
 
-- 批次指令與延遲事件：[`test_batches.py`](../../apps/api/tests/modules/line_collection/test_batches.py)
-
-- 指令回覆生命週期：[`test_reply_jobs.py`](../../apps/api/tests/modules/line_collection/test_reply_jobs.py)
+- 無指令收集與重送：[`test_batches.py`](../../apps/api/tests/modules/line_collection/test_batches.py)
+- 人工完成、定稿與遲到訊息：[`test_collection_rounds.py`](../../apps/api/tests/modules/product_drafts/test_collection_rounds.py)

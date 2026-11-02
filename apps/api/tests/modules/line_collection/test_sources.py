@@ -20,5 +20,6 @@ async def test_sources_are_available_to_staff(client, set_current_users, monkeyp
     authenticate(client, "staff")
     result = await client.get("/api/line/sources")
     assert result.status_code == 200
-    assert result.json()["list_data"] == [{"source_key": "line:group-a", "name": "供應商"}]
+    row = result.json()["list_data"][0]
+    assert row["source_key"] == "line:group-a" and row["name"] == "供應商"
     assert (await client.patch("/api/line/groups/any", json={"enabled": True})).status_code == 403

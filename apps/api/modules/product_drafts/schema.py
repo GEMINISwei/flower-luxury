@@ -113,7 +113,7 @@ class DraftPhotoInfo(BaseModel):
     id: str
     message_id: str
     draft_id: str | None
-    status: Literal["pending", "ready", "failed"]
+    status: Literal["pending", "stored", "ready", "failed"]
     sort_order: int
     is_main: bool
     url: str | None = None
@@ -129,6 +129,9 @@ class DraftSummary(BaseModel):
     collecting: bool
     processing: bool = False
     needs_confirmation: bool = False
+    requires_finalization: bool = False
+    finalized: bool = False
+    source_locked: bool = False
     received_at: UtcDateTime
     created_at: UtcDateTime
     updated_at: UtcDateTime | None = None
@@ -146,7 +149,7 @@ class DraftInfo(DraftSummary):
     selected_quote_id: str | None = None
     prefill_revision: int = 0
     prefill_configured: bool = False
-    prefill_status: Literal["idle", "disabled", "queued", "ready", "failed"] = "idle"
+    prefill_status: Literal["idle", "disabled", "queued", "ready", "failed", "unknown"] = "idle"
 
 
 class DraftList(PaginatedResponse[DraftSummary]):
@@ -175,7 +178,7 @@ class BufferedIssueList(PaginatedResponse[BufferedIssueInfo]):
 
 
 class ResolveIssue(BaseModel):
-    action: Literal["attach", "discard"]
+    action: Literal["attach", "discard", "new"]
     target_draft_id: UuidText | None = None
     target_version: int | None = Field(default=None, ge=1)
 
@@ -222,6 +225,8 @@ class BatchIssueInfo(BaseModel):
 class BatchState(BaseModel):
     collecting: bool = False
     processing: bool = False
+    current_round_id: str | None = None
+    received_count: int = 0
     batch_started_at: UtcDateTime | None = None
     batch_ended_at: UtcDateTime | None = None
     issue_count: int = 0

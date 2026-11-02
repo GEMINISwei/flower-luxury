@@ -1,3 +1,4 @@
+from .images import MAX_BATCH_BYTES as MAX_BATCH_BYTES
 from .images import PhotoSize as PhotoSize
 from .images import PreparedPhoto as PreparedPhoto
 from .images import prepare_photo as prepare_photo
