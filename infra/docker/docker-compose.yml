@@ -34,11 +34,13 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
-      interval: 10s
+      # 單機 compose 不會因 unhealthy 重啟容器; 啟動密集、常態放慢, 並避免起直譯器。
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8000 && printf 'GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q '^HTTP/[0-9.]* 200 '"]
+      interval: 30s
       timeout: 5s
-      start_period: 10s
-      retries: 5
+      start_period: 60s
+      start_interval: 1s
+      retries: 3
     restart: always
     expose:
       - "8000"
@@ -76,10 +78,12 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "python", "-m", "shared.jobs.health", "--healthcheck"]
-      interval: 10s
+      # 同時拒絕未來時間; stat 的 fallback 讓本機 macOS 與容器 GNU 工具都能驗證。
+      test: ["CMD", "bash", "-c", "path=/tmp/line-collector-heartbeat; modified=$$(stat -c %Y \"$$path\" 2>/dev/null || stat -f %m \"$$path\" 2>/dev/null) && now=$$(date +%s) && (( now >= modified && now - modified <= 30 ))", "--healthcheck"]
+      interval: 30s
       timeout: 5s
-      start_period: 10s
+      start_period: 60s
+      start_interval: 1s
       retries: 3
     stop_grace_period: 45s
     restart: always
@@ -104,10 +108,11 @@ services:
     healthcheck:
       # `-h 127.0.0.1`: 走 unix socket 的話 initdb 期間就會提早轉綠。
       test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
-      start_period: 20s
-      retries: 10
+      start_period: 60s
+      start_interval: 1s
+      retries: 3
     restart: always
 
   web:
@@ -130,11 +135,12 @@ services:
         condition: service_healthy
     healthcheck:
       # 探 /healthz 而不是真實頁面: 頁面會打後端, web 的健康狀態就會跟著 api 一起紅。
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
-      interval: 10s
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/3000 && printf 'GET /healthz HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q '^HTTP/[0-9.]* 200 '"]
+      interval: 30s
       timeout: 5s
-      start_period: 20s
-      retries: 5
+      start_period: 60s
+      start_interval: 1s
+      retries: 3
     restart: always
     expose:
       - "3000"
