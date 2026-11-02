@@ -8,6 +8,7 @@ import sys
 
 from shared.db.session import configure_session_factory, create_engine
 from shared.jobs.health import HEARTBEAT_PATH, is_healthy
+from shared.jobs.maintenance import CLEANUP_TASK
 from shared.jobs.registry import collect_tasks
 from shared.jobs.worker import serve
 
@@ -18,7 +19,7 @@ async def run() -> None:
     url = os.environ.get("POSTGRES_URL", "")
     if not url.startswith("postgresql+asyncpg://"):
         raise SystemExit("line-collector 需要 POSTGRES_URL (見 .env / .env.example)")
-    tasks = collect_tasks(ENABLED_MODULES)
+    tasks = {**collect_tasks(ENABLED_MODULES), CLEANUP_TASK.name: CLEANUP_TASK}
     engine = create_engine(url)
     configure_session_factory(engine)
     stop = asyncio.Event()
