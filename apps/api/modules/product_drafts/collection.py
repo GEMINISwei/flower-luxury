@@ -62,24 +62,59 @@ async def _split(current: model.DraftTable, interval: model.IntervalTable,
                  form: IncomingMessage) -> model.DraftTable:
     await _close(current, interval, form.occurred_at)
     draft, opened = await _open(form)
-    # 先送達但原始時間較晚的內容, 依時間屬於新商品.
+    await _move_later(current, draft, opened, form.occurred_at)
+    return draft
+
+
+async def _move_later(current: model.DraftTable, draft: model.DraftTable,
+                      opened: model.IntervalTable, time: datetime) -> None:
+    # 先送達但原始時間較晚的內容, 依時間屬於新商品; 新商品已結束收集時交給人員判斷.
+    pending = not draft.collecting
     later = [item for item in await model.messages_for(str(current.id))
-             if item.occurred_at > form.occurred_at]
+             if item.occurred_at > time]
     for item in later:
-        item.draft_id = draft.id
+        item.draft_id, item.pending = draft.id, pending
         photo = await model.photo_for_message(str(item.id))
         if photo:
-            photo.draft_id = draft.id
+            photo.draft_id = None if pending else draft.id
             if current.main_photo_id == photo.id:
                 current.main_photo_id = None
-            draft.main_photo_id = draft.main_photo_id or photo.id
+            if not pending:
+                draft.main_photo_id = draft.main_photo_id or photo.id
         if item.kind == "text":
             opened.first_text_at = min(opened.first_text_at or item.occurred_at, item.occurred_at)
-    draft.has_text = opened.first_text_at is not None
+            draft.has_text = draft.has_text or not pending
     if later and current.main_photo_id is None:
         remaining = await model.photos_for(str(current.id))
         current.main_photo_id = remaining[0].id if remaining else None
-    return draft
+
+
+async def _after_close(draft: model.DraftTable | None, interval: model.IntervalTable,
+                       form: IncomingMessage) -> tuple[model.DraftTable | None, bool]:
+    # 多張圖片不保證依原始時間送達, 下一件較晚的圖片可能已先把分界切在它之後.
+    if (form.kind == "image" and interval.first_text_at is not None
+            and form.occurred_at > interval.first_text_at):
+        return await _claim(draft, interval, form)
+    return await _late_target(interval), True
+
+
+async def _claim(previous: model.DraftTable | None, interval: model.IntervalTable,
+                 form: IncomingMessage) -> tuple[model.DraftTable | None, bool]:
+    """前一件文字之後的晚到圖片是下一件的開頭, 分界移到它的原始時間."""
+    time = form.occurred_at
+    following = await model.interval_following(form.source_key, time)
+    if following is None:
+        interval.ended_at = time
+        draft, opened = await _open(form)
+    else:
+        found = await model.get_draft_row(following.draft_key)
+        if found is None:
+            return None, False
+        interval.ended_at = following.started_at = time
+        draft, opened = found, following
+    if previous is not None:
+        await _move_later(previous, draft, opened, time)
+    return draft, not draft.collecting
 
 
 async def _late_target(interval: model.IntervalTable | None) -> model.DraftTable | None:
@@ -107,7 +142,7 @@ async def _route(form: IncomingMessage) -> tuple[model.DraftTable | None, bool]:
         return opened_draft, False
     draft = await model.get_draft_row(interval.draft_key)
     if interval.ended_at is not None or draft is None or not draft.collecting:
-        return await _late_target(interval), True
+        return await _after_close(draft, interval, form)
     if form.kind == "image" and interval.first_text_at is not None:
         if time == interval.first_text_at:
             return draft, True
