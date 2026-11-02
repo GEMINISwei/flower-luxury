@@ -56,7 +56,8 @@ export default function DraftDetail({ initial, brands, sources, vendors }: {
       </div>
       <div className={styles.detailGrid}>
         <div className={styles.sourceColumn}>
-          <DraftPhotos draft={draft} disabled={disabled} mutate={editor.run} />
+          <DraftPhotos draft={draft} disabled={disabled} mutate={editor.run}
+            onError={editor.setError} />
           <div className={styles.panel}><MessageList messages={draftTextMessages(draft.messages)}
             onCopy={(success) => {
               editor.setStatus(success ? t("copied") : "")
