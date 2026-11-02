@@ -339,6 +339,12 @@ async def interval_for(draft_key: str) -> IntervalTable | None:
         IntervalTable.draft_key == draft_key).execution_options(populate_existing=True))
 
 
+async def interval_following(source_key: str, occurred_at: datetime) -> IntervalTable | None:
+    return await active_session().scalar(select(IntervalTable).where(
+        IntervalTable.source_key == source_key, IntervalTable.started_at > occurred_at,
+    ).order_by(IntervalTable.started_at).limit(1).execution_options(populate_existing=True))
+
+
 async def interval_after(source_key: str, occurred_at: datetime) -> bool:
     return await active_session().scalar(select(IntervalTable.id).where(
         IntervalTable.source_key == source_key, IntervalTable.started_at > occurred_at,

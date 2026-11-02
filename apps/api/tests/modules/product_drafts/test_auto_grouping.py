@@ -10,7 +10,7 @@ from shared.db.session import active_session
 from shared.http.errors import LangException
 from shared.jobs.model import JobTable
 from shared.time import utc_now
-from tests.modules.product_drafts.helpers import ACTOR, image_bytes, incoming
+from tests.modules.product_drafts.helpers import ACTOR, BASE, image_bytes, incoming
 
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
@@ -34,6 +34,12 @@ async def two_drafts(source="group-a"):
     second = await receive(second=5, source=source)
     assert first.draft_id and second.draft_id and first.draft_id != second.draft_id
     return first.draft_id, second.draft_id
+
+
+async def interval_of(draft_id):
+    found = await model.interval_for(draft_id)
+    assert found is not None
+    return found
 
 
 async def jobs(task_name):
@@ -116,15 +122,57 @@ async def test_late_message_becomes_pending_in_matching_interval():
     assert listed[first].pending_count == 1
 
 
-async def test_late_image_after_text_is_pending_in_previous_draft():
+async def test_late_image_after_text_joins_next_draft_and_moves_its_start():
     first, second = await two_drafts()
     late = await receive(second=3)
-    assert late.draft_id == first and late.pending
-    draft = await service.get_draft(first)
-    assert len(draft.photos) == 1
-    assert [item.kind for item in draft.pending_messages] == ["image"]
-    assert draft.pending_messages[0].photo is not None
-    assert len((await service.get_draft(second)).photos) == 1
+    assert late.draft_id == second and not late.pending
+    previous, following = await service.get_draft(first), await service.get_draft(second)
+    assert len(previous.photos) == 1 and not previous.pending_messages
+    assert len(following.photos) == 2 and following.collecting
+    assert following.messages[0].id == late.message_id
+    assert (await interval_of(first)).ended_at == BASE.replace(second=3)
+    assert (await interval_of(second)).started_at == BASE.replace(second=3)
+    text = await receive("text", second=4, text="B 說明")
+    assert text.draft_id == second and not text.pending
+
+
+async def test_late_image_moves_later_text_from_previous_to_next_draft():
+    first = await receive(second=1)
+    await receive("text", second=2, text="A 說明")
+    await receive("text", second=4, text="B 說明")
+    second = await receive(second=5)
+    late = await receive(second=3)
+    assert late.draft_id == second.draft_id and not late.pending
+    previous = await service.get_draft(first.draft_id)
+    following = await service.get_draft(second.draft_id)
+    assert [(item.kind, item.text) for item in previous.messages] == [
+        ("image", None), ("text", "A 說明")]
+    assert [(item.kind, item.text) for item in following.messages] == [
+        ("image", None), ("text", "B 說明"), ("image", None)]
+    assert following.messages[0].id == late.message_id
+
+
+async def test_late_image_after_completed_draft_opens_new_draft():
+    first = await receive(second=1)
+    await receive("text", second=2, text="A 說明")
+    draft = await service.get_draft(first.draft_id)
+    await collection.complete_draft(draft.id, VersionRequest(version=draft.version), ACTOR)
+    late = await receive(second=3)
+    assert late.draft_id not in {None, first.draft_id} and not late.pending
+    assert (await service.get_draft(late.draft_id)).collecting
+    assert (await interval_of(first.draft_id)).ended_at == BASE.replace(second=3)
+    text = await receive("text", second=4, text="B 說明")
+    assert text.draft_id == late.draft_id and not text.pending
+
+
+async def test_late_image_for_completed_next_draft_is_pending_there():
+    first, second = await two_drafts()
+    await receive("text", second=6, text="B 說明")
+    draft = await service.get_draft(second)
+    await collection.complete_draft(draft.id, VersionRequest(version=draft.version), ACTOR)
+    late = await receive(second=3)
+    assert late.draft_id == second and late.pending
+    assert not (await service.get_draft(first)).pending_messages
 
 
 async def test_same_millisecond_message_is_pending_not_assigned():
@@ -153,7 +201,7 @@ async def test_late_message_for_removed_or_missing_interval_is_skipped():
 async def test_accept_and_ignore_pending_message():
     first, _ = await two_drafts()
     text = await receive("text", second=3, text="加入的內容")
-    image = await receive(second=4)
+    image = await receive(second=2)
     draft = await service.get_draft(first)
     with pytest.raises(LangException) as stale:
         await pending.accept_message(first, text.message_id,
