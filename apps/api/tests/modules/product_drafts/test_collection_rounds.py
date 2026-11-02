@@ -103,6 +103,7 @@ async def test_late_message_requires_manual_attachment_before_finalization():
     assert late.unassigned
     assert len((await service.get_draft(draft.id)).messages) == 2
     issue = (await issues.get_issues(20)).list_data[0]
+    draft = await service.get_draft(draft.id)
     await issues.resolve_issue(issue.id, ResolveIssue(action="attach", target_draft_id=draft.id,
                                target_version=draft.version), ACTOR)
     updated = await service.get_draft(draft.id)

@@ -17,8 +17,9 @@ async def test_silence_never_completes_collection(db, monkeypatch):
 
 
 async def test_sources_and_redelivery_do_not_change_each_other(db):
-    first = await rounds.receive_message(incoming())
-    duplicate = await rounds.receive_message(incoming())
+    receipt = incoming()
+    first = await rounds.receive_message(receipt)
+    duplicate = await rounds.receive_message(receipt)
     await rounds.receive_message(incoming(source="group-b"))
     assert duplicate.duplicate and first.message_id is not None
     source = await rounds.current_collection("group-a")
