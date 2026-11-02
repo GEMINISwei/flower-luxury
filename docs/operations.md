@@ -155,8 +155,10 @@ environment（見下方〈新增一套系統〉），workflow 不用改。`produ
 5. **一次一套**依序部署，每套是一個獨立的 job（`deploy (<environment>)`）：檢查 secrets →
    SSH 到主機 → `make backup allow-fresh`（資料庫與上傳檔案，期間 nginx 暫停；在 checkout 之前，
    備份檔才會標上線上那一版的版號）→ `git checkout` 同一個 tag（compose 檔與 nginx 模板是從原始碼
-   bind mount 的）→ 拉 image 並重啟（`make start`）→ `make services` → 清掉被取代的舊 image →
+   bind mount 的）→ 拉 image 並重啟（`make start`）→ `make services` → 驗證實際容器版本與健康 → 清掉被取代的舊 image →
    只留最近 `BACKUP_KEEP` 組備份。
+   非互動命令隔離 stdin，避免讀走後續 SSH 腳本；驗證會等待服務就緒、核對 API 容器版本及 API／worker 映像一致，
+   失敗時停止清理並標示部署失敗。驗證片段由 runner 傳送，重新部署既有 tag 也使用目前 workflow 的檢查。
    **一套失敗不會中斷其他套**。
 6. 每套的結果看執行頁面左側的 **job 列表**（一套一行，失敗的標紅叉）。**Annotations** 會寫出
    停在主機上的哪一步（例如「備份失敗」、「啟動服務失敗」、「連不上主機」）。點進失敗的 job，

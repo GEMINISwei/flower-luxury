@@ -362,6 +362,7 @@ jobs:
             echo "::error::BACKUP_KEEP 必須是正整數，目前是「${BACKUP_KEEP}」"
             exit 1
           fi
+      - uses: actions/checkout@v7
       - name: 準備 SSH
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -413,7 +414,9 @@ jobs:
           # 失敗時由 ERR trap 印成 ::error::, 經 ssh 的 stdout 回到 runner, 不必點進 log 就知道停在哪。
           # ssh 本身連不上時以 255 結束, 主機端的 trap 沒機會跑, 由這一端補上。
           {
-            echo 'set -euo pipefail'
+            echo 'set -Eeuo pipefail'
+            # 先完整讀取函式, 再以空 stdin 執行; 子命令不能讀走後續腳本.
+            echo 'deployment_main() {'
             echo 'step="準備部署目錄"'
             echo "trap 'echo \"::error::\${step}失敗\"' ERR"
             echo 'DOCKER_CONFIG="$(mktemp -d)"; export DOCKER_CONFIG'
@@ -434,11 +437,15 @@ jobs:
             echo 'make start'
             echo 'step="檢查服務狀態"'
             echo 'make services'
+            echo 'step="驗證容器版本與健康"'
+            cat .github/scripts/verify-deployment.sh
             echo 'step="清理舊 image"'
             printf 'docker image prune -f --filter %q\n' \
               "label=org.opencontainers.image.source=${IMAGE_SOURCE}"
             printf 'make backup prune %q || echo "::warning::清理舊備份失敗，請上主機手動 make backup prune"\n' \
               "${BACKUP_KEEP}"
+            echo '}'
+            echo 'deployment_main </dev/null'
           } | ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT:-22}" -o BatchMode=yes \
                 "${DEPLOY_USER}@${DEPLOY_HOST}" 'bash -s' || {
             status=$?
