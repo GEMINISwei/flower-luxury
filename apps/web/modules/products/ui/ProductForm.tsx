@@ -3,14 +3,14 @@
 import { useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
 import { unstable_rethrow, useRouter } from "next/navigation"
-import { Button, SelectInput, TextInput, useActionSubmit } from "@/shared/ui"
+import { AutocompleteInput, Button, SelectInput, TextInput, useActionSubmit } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { ProductCategory, ProductInfo } from "../types"
 import { productMessages } from "../i18n"
 import { CATEGORIES } from "../constants"
 import { validateProduct } from "../validation"
-import { createProduct, updateProduct, uploadPhotos } from "../actions"
+import { createProduct, loadFieldSuggestions, updateProduct, uploadPhotos } from "../actions"
 import { saveProductWithPhotos } from "../creation"
 import { availableProductBrands, productFormCapabilities, selectProductPhotos } from "../capabilities"
 import NewProductPhotos from "./NewProductPhotos"
@@ -25,6 +25,38 @@ function initial(product?: ProductInfo): Values {
     serial_number: "", color: "", year: "", cost_price: "", internal_note: "" }
   return Object.fromEntries((Object.keys(blank) as (keyof Values)[]).map((field) =>
     [field, String(product?.[field] ?? "")])) as Values
+}
+
+function BasicFields({ values, brands, disabled, set, error }: {
+  values: Values; brands: BrandInfo[]; disabled: boolean
+  set: (field: keyof Values, value: string) => void
+  error: (field: keyof Values) => string | undefined
+}) {
+  const t = useT(productMessages)
+  return <div className={styles.formFields}>
+    <AutocompleteInput label={t("name")} value={values.name}
+      required disabled={disabled}
+      loadOptions={(keyword) => loadFieldSuggestions("name", keyword)}
+      onChange={(value) => set("name", value)} error={error("name")} />
+    <SelectInput label={t("brand_id")} value={values.brand_id} required disabled={disabled}
+      onChange={(value) => set("brand_id", value)}
+      error={error("brand_id")}
+      options={[{ value: "", label: t("choose") },
+        ...brands.map((brand) => ({ value: brand.id, label: brand.name }))]} />
+    <SelectInput label={t("category")} value={values.category} required disabled={disabled}
+      onChange={(value) => set("category", value)}
+      error={error("category")}
+      options={[{ value: "", label: t("choose") },
+        ...Object.entries(CATEGORIES).map(([value, key]) => ({ value, label: t(key) }))]} />
+    {(["model_name", "serial_number", "color"] as const).map((field) =>
+      <AutocompleteInput key={field} label={t(field)} value={values[field]}
+        disabled={disabled}
+        loadOptions={(keyword) => loadFieldSuggestions(field, keyword)}
+        onChange={(value) => set(field, value)} error={error(field)} />)}
+    <TextInput label={t("year")} value={values.year} type="number" browserSuggestions={false}
+      disabled={disabled} onChange={(value) => set("year", value)}
+      error={error("year")} />
+  </div>
 }
 
 export default function ProductForm({ product, brands, onSaved }: {
@@ -81,32 +113,17 @@ export default function ProductForm({ product, brands, onSaved }: {
   return <form className={styles.stack} noValidate
     onSubmit={(event) => { event.preventDefault(); save() }}>
     <section className={styles.formSection}>
-    <h3>{t("basic")}</h3><div className={styles.formFields}>
-      <TextInput label={t("name")} value={values.name}
-        required disabled={state.fieldsDisabled}
-        onChange={(value) => set("name", value)} error={errors.name ?? fieldError("name")} />
-      <SelectInput label={t("brand_id")} value={values.brand_id} required disabled={state.fieldsDisabled}
-        onChange={(value) => set("brand_id", value)}
-        error={errors.brand_id ?? fieldError("brand_id")}
-        options={[{ value: "", label: t("choose") },
-          ...availableBrands.map((brand) => ({ value: brand.id, label: brand.name }))]} />
-      <SelectInput label={t("category")} value={values.category} required disabled={state.fieldsDisabled}
-        onChange={(value) => set("category", value)}
-        error={errors.category ?? fieldError("category")}
-        options={[{ value: "", label: t("choose") },
-          ...Object.entries(CATEGORIES).map(([value, key]) => ({ value, label: t(key) }))]} />
-      {(["model_name", "serial_number", "color", "year"] as const).map((field) =>
-        <TextInput key={field} label={t(field)} value={values[field]}
-          type={field === "year" ? "number" : "text"} disabled={state.fieldsDisabled}
-          onChange={(value) => set(field, value)} error={errors[field] ?? fieldError(field)} />)}
-    </div></section>
+    <h3>{t("basic")}</h3>
+    <BasicFields values={values} brands={availableBrands} disabled={state.fieldsDisabled}
+      set={set} error={(field) => errors[field] ?? fieldError(field)} /></section>
     <section className={styles.formSection}>
     <h3>{t("pricing")}</h3>
     <TextInput label={t("cost_price")} value={values.cost_price} type="number"
-      required disabled={state.fieldsDisabled} onChange={(value) => set("cost_price", value)}
+      browserSuggestions={false} required disabled={state.fieldsDisabled} onChange={(value) => set("cost_price", value)}
       error={errors.cost_price ?? fieldError("cost_price")} />
     <label className={styles.notes} htmlFor={noteId}>{t("internal_note")}
-      <textarea id={noteId} aria-label={t("internal_note")} value={values.internal_note} disabled={state.fieldsDisabled}
+      <textarea id={noteId} aria-label={t("internal_note")} value={values.internal_note}
+        autoComplete="off" disabled={state.fieldsDisabled}
         onChange={(event) => set("internal_note", event.target.value)} />
     </label></section>
     {state.showPhotos && <NewProductPhotos files={files} disabled={!state.canSelectPhotos}

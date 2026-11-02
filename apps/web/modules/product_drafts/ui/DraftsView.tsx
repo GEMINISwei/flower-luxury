@@ -5,7 +5,7 @@ import { RefreshCw, SlidersHorizontal } from "lucide-react"
 import { useRouter } from "next/navigation"
 import type { ApiListMeta } from "@/shared/api/response"
 import { Button, Container, ErrorState, ListTableCard, PageHeader, Pagination,
-  ICON_SIZE, StatusBadge, TableRow, useActionSubmit } from "@/shared/ui"
+  ICON_SIZE, StatusBadge, TableRow, useActionSubmit, useListRefresh } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { DraftSummary, SourceInfo } from "../types"
@@ -27,7 +27,8 @@ export default function DraftsView({ drafts, sources, source, seq, limit, source
   const router = useRouter()
   const [filterOpen, setFilterOpen] = useState(false)
   const [refreshing, startRefresh] = useTransition()
-  const reload = () => startRefresh(() => router.refresh())
+  const refresh = useListRefresh()
+  const reload = () => startRefresh(refresh)
   const [failure, setFailure] = useState("")
   const { isPending, submit } = useActionSubmit()
   const complete = (draft: DraftSummary) => submit(() => completeDraft(draft.id, draft.version), {

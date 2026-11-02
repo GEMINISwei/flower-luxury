@@ -56,5 +56,7 @@ export function useMobileProducts({
     return () => { active = false; observer.disconnect() }
   }, [page.meta, page.errorMessage, filters, sentinel, errorFallback, restoring, enabled])
   return { ...page, loading, restoring,
-    retry: () => setPage((current) => ({ ...current, errorMessage: "" })) }
+    retry: () => setPage((current) => ({ ...current, errorMessage: "" })),
+    // 重新整理等同重新進入: 收起續載的頁面, 只留伺服器給的第一頁.
+    reset: () => setPage({ products, meta, errorMessage: "" }) }
 }

@@ -763,6 +763,23 @@
         "title": "DraftUpdate",
         "type": "object"
       },
+      "FieldSuggestions": {
+        "description": "欄位在既有商品中用過的值, 使用次數多的在前。",
+        "properties": {
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "values"
+        ],
+        "title": "FieldSuggestions",
+        "type": "object"
+      },
       "GroupInfo": {
         "properties": {
           "created_at": {
@@ -5217,6 +5234,66 @@
           }
         },
         "summary": "Get Photo File Route",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/products/suggestions": {
+      "get": {
+        "description": "列出欄位在既有商品中用過、且包含關鍵字的值, 最多 10 筆。",
+        "operationId": "get_field_suggestions_route_api_products_suggestions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "field",
+            "required": true,
+            "schema": {
+              "enum": [
+                "name",
+                "model_name",
+                "serial_number",
+                "color"
+              ],
+              "title": "Field",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 100,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldSuggestions"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Field Suggestions Route",
         "tags": [
           "products"
         ]

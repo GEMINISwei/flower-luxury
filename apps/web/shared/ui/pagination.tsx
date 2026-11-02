@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { usePathname, useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { ApiListMeta } from "@/shared/api/response"
 import { useT } from "@/shared/i18n/context"
@@ -23,6 +23,19 @@ export function usePaginationResetHref(): string {
   params.delete("seq")
   const query = params.toString()
   return query ? `${pathname}?${query}` : pathname
+}
+
+/**
+ * 列表的重新整理: 等同重新進入畫面, 保留篩選但回到第一頁。
+ *
+ * 已在第一頁時網址不變, `push` 同一個網址不保證重取資料, 所以改用 `refresh`。
+ */
+export function useListRefresh(): () => void {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const resetHref = usePaginationResetHref()
+  const paged = ["cursor", "direction", "seq"].some((key) => searchParams.has(key))
+  return () => { if (paged) router.push(resetHref); else router.refresh() }
 }
 
 export function Pagination({ meta, seq, limit, summary }: PaginationProps) {

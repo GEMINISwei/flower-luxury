@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { ChevronRight, ClipboardList, ImageOff, Plus, SlidersHorizontal, RefreshCw } from "lucide-react"
 import { Button, Container, ErrorState, ICON_SIZE, PageHeader, Pagination,
-  RouteLoading, StatusBadge, usePaginationResetHref } from "@/shared/ui"
+  RouteLoading, StatusBadge, useListRefresh } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
 import { formatDateTime } from "@/shared/i18n/date-time"
 import type { ApiListMeta } from "@/shared/api/response"
@@ -26,7 +26,7 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
   const t = useT(productMessages)
   const locale = useLocale()
   const router = useRouter()
-  const resetHref = usePaginationResetHref()
+  const refresh = useListRefresh()
   const [filterOpen, setFilterOpen] = useState(false)
   const sentinel = useRef<HTMLDivElement>(null)
   const state = useProductListState(filters)
@@ -38,7 +38,7 @@ export default function ProductsView({ products, brands, filters, meta, seq, err
     <PageHeader title={t("title")} subtitle={t("subtitle")}
       actions={[
         { label: t("reload"), icon: <RefreshCw size={ICON_SIZE.md} />, refresh: true,
-          onClick: () => { if (meta.hasPrevious) router.push(resetHref); else router.refresh() } },
+          onClick: () => { state.forget(); mobile.reset(); refresh() } },
         { label: t("filterTitle"), icon: <SlidersHorizontal size={ICON_SIZE.md} />,
           onClick: () => setFilterOpen(true) },
         { label: DRAFTS_ROUTE.label[locale], icon: <ClipboardList size={ICON_SIZE.md} />,

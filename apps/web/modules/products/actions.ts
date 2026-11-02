@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
-import { apiDelete, apiPatch, apiPost, apiUpload } from "@/shared/api/request.server"
+import { apiDelete, apiGet, apiPatch, apiPost, apiUpload } from "@/shared/api/request.server"
 import type { ApiRequestBody } from "@/shared/api/contract"
 import { fetchPaginatedList } from "@/shared/pagination/fetch.server"
 import { getT } from "@/shared/i18n/locale.server"
@@ -10,7 +10,7 @@ import { getLocale } from "@/shared/i18n/locale.server"
 import { validatePhotoBatch } from "./validation"
 import { productListQuery } from "./capabilities"
 import { productMessages } from "./i18n"
-import type { ProductStatus } from "./types"
+import type { ProductStatus, SuggestionField } from "./types"
 import { PRODUCTS_PATH } from "./manifest"
 
 const refresh = { path: PRODUCTS_PATH }
@@ -24,6 +24,12 @@ export async function loadProductPage(filters: Record<string, string>, cursor: s
   const t = await getT(productMessages)
   return fetchPaginatedList({ url: "/products/", cursor, direction: "next", limit: 20,
     query: productListQuery(filters), errorFallback: t("failed") })
+}
+
+// 建議只是輔助輸入, 查不到時讓使用者照常打字, 不顯示錯誤.
+export async function loadFieldSuggestions(field: SuggestionField, keyword: string) {
+  const result = await apiGet({ url: "/products/suggestions", query: { field, q: keyword } })
+  return result.status === "success" ? result.data.values : []
 }
 
 export async function createProduct(data: ApiRequestBody<"/products/", "post">) {

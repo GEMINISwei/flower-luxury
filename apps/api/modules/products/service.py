@@ -15,6 +15,7 @@ from .model import (
     ProductHistoryTable,
     ProductTable,
     current_sale,
+    field_suggestions,
     generate_sku,
     lock_product,
     product_fields,
@@ -22,6 +23,7 @@ from .model import (
 )
 from .rules import ensure_transition
 from .schema import (
+    FieldSuggestions,
     ProductCreate,
     ProductInfo,
     ProductList,
@@ -29,6 +31,7 @@ from .schema import (
     StatusHistoryInfo,
     StatusHistoryList,
     StatusReturn,
+    SuggestionField,
 )
 
 
@@ -99,6 +102,10 @@ async def get_product_list(
         where=product_filters(keyword, brand_id=parse_uuid(brand_id) if brand_id else None,
                               category=category, status=status, color=color, year=year),
     ))
+
+
+async def get_field_suggestions(field: SuggestionField, keyword: str) -> FieldSuggestions:
+    return FieldSuggestions(values=await field_suggestions(field, keyword))
 
 
 async def apply_status(id: str, to_status: str, reason: str | None,

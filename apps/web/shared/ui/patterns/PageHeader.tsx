@@ -1,11 +1,16 @@
 "use client"
 
 import type { ComponentProps } from "react"
+import { useEffect, useRef, useTransition } from "react"
 import styles from "../styles/page-header.module.css"
 import IconButton from "./IconButton"
 import ActionMenu from "./ActionMenu"
 
-type PageHeaderAction = ComponentProps<typeof IconButton> & { refresh?: boolean }
+type PageHeaderAction = Omit<ComponentProps<typeof IconButton>, "onClick"> & {
+  refresh?: boolean
+  /** 重新整理可以回傳 Promise, 頁首會等它完成才捲回頂端。 */
+  onClick?: () => void | Promise<unknown>
+}
 type PageHeaderProps = {
   title: string
   subtitle?: string
@@ -20,22 +25,31 @@ function headerActions(actions: PageHeaderAction[]) {
   return { visible, overflow: actions.filter((item) => !visible.includes(item)) }
 }
 
-// 重新整理後的資料從第一筆開始, 停在原本的捲動位置會看到中段而誤以為沒有更新.
 // 版面可能由 <main> 自己捲動, 視窗與它都要回到頂端.
-function scrollToTopOnRefresh(action: PageHeaderAction): PageHeaderAction {
-  if (!action.refresh) return action
-  return { ...action, onClick: () => {
-    document.querySelector("main")?.scrollTo({ top: 0 })
-    window.scrollTo({ top: 0 })
-    action.onClick?.()
-  } }
+function scrollToTop() {
+  document.querySelector("main")?.scrollTo({ top: 0 })
+  window.scrollTo({ top: 0 })
+}
+
+// 重新整理要像重新進入畫面: 按下時先回頂端, 新資料畫好後再回一次,
+// 否則重繪時捲動位置會被改掉, 看起來像跳到中段.
+function useRefreshActions(actions: PageHeaderAction[]): PageHeaderAction[] {
+  const [refreshing, startRefresh] = useTransition()
+  const wasRefreshing = useRef(false)
+  useEffect(() => {
+    if (wasRefreshing.current && !refreshing) scrollToTop()
+    wasRefreshing.current = refreshing
+  }, [refreshing])
+  return actions.map((action) => !action.refresh ? action : { ...action, onClick: () => {
+    scrollToTop()
+    startRefresh(async () => { await action.onClick?.() })
+  } })
 }
 
 export default function PageHeader({ title, subtitle, actions = [] }: PageHeaderProps) {
-  const { visible, overflow } = headerActions(
-    (actions ?? []).filter((item): item is PageHeaderAction => Boolean(item))
-      .map(scrollToTopOnRefresh),
-  )
+  const { visible, overflow } = headerActions(useRefreshActions(
+    (actions ?? []).filter((item): item is PageHeaderAction => Boolean(item)),
+  ))
   return (
     <header className={styles.pageHeader}>
       <div className={styles.pageHeaderText}>
