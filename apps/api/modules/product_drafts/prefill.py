@@ -27,8 +27,6 @@ from .service import _bump
 async def schedule_prefill(row: model.DraftTable) -> None:
     if row.collecting or (row.prefill_revision or 0) > 0:
         return
-    if row.collection_id is not None and row.finalized_at is None:
-        return
     row.prefill_revision = 1
     row.prefill_status = "queued" if get_env().prefill_configured else "disabled"
     if row.prefill_status == "queued":

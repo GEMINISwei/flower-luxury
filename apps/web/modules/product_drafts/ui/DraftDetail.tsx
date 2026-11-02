@@ -6,7 +6,7 @@ import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
 import { discardDraft } from "../actions"
-import { draftQueueHref, draftStage, draftTextMessages } from "../capabilities"
+import { approvalCapabilities, draftQueueHref, draftStage, draftTextMessages } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { DraftInfo, SourceInfo } from "../types"
 import DraftFields from "./DraftFields"
@@ -14,6 +14,7 @@ import DraftPhotos from "./DraftPhotos"
 import DraftQuotes from "./DraftQuotes"
 import DraftSaleSummary from "./DraftSaleSummary"
 import PrefillStatus from "./PrefillStatus"
+import PendingMessages from "./PendingMessages"
 import MessageList from "./MessageList"
 import useDraftEditor from "./useDraftEditor"
 import DraftQueueNotice from "./DraftQueueNotice"
@@ -34,13 +35,15 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
     else editor.run(() => discardDraft(draft.id, draft.version))
   }
   const stage = draftStage(draft)
-  const disabled = pending || editor.stale || stage !== "waiting"
+  const disabled = pending || editor.stale
+  const approvable = approvalCapabilities(draft).canApprove
   return <FormPageShell title={t("detail")} subtitle={source?.name ?? draft.source_key}
     backHref={draftQueueHref(undefined, scope)} backLabel={t("back")}
     actions={[
       { label: t("reload"), icon: <RefreshCw size={ICON_SIZE.md} />, refresh: true,
         disabled: pending, onClick: editor.reload },
-      { label: t("approve"), icon: <FileCheck2 size={ICON_SIZE.md} />, primary: true, disabled,
+      { label: t("approve"), icon: <FileCheck2 size={ICON_SIZE.md} />, primary: true,
+        disabled: disabled || !approvable,
         onClick: () => { if (editor.validate(true)) setDialog("approve") } },
       { label: t("save"), icon: <Save size={ICON_SIZE.md} />, disabled, onClick: () => editor.save() },
       { label: t("discard"), icon: <Trash2 size={ICON_SIZE.md} />, disabled, color: "error",
@@ -48,6 +51,7 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
     ]}>
     <div className={styles.stack}>
       <DraftQueueNotice created={created} />
+      <PendingMessages draft={draft} disabled={disabled} mutate={editor.run} />
       <div className={styles.feedback}>
         {stage !== "waiting" && <p role="status">{t(stage)} — {t("blockedHint")}</p>}
         <p className={styles.hint}>{t("reloadHint")}</p>
@@ -72,8 +76,7 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
         </div>
         <div className={styles.editorColumn}>
           <PrefillStatus draft={draft} />
-          <DraftFields values={values} brands={brands} disabled={pending || stage !== "waiting"}
-            onChange={editor.set} />
+          <DraftFields values={values} brands={brands} disabled={pending} onChange={editor.set} />
           <DraftQuotes draft={draft} vendors={vendors} disabled={disabled} mutate={editor.run} />
         </div>
       </div>

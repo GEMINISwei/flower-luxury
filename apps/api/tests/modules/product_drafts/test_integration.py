@@ -72,16 +72,17 @@ async def test_image_after_text_starts_next_draft(db):
     assert (await service.get_draft_list(limit=1)).has_next
 
 
-async def test_sources_and_unassigned_messages_preserve_originals(db):
+async def test_sources_are_separate_and_text_outside_intervals_is_skipped(db):
     orphan = await collection.ingest_message(incoming("text", text="先到的文字"))
-    assert orphan.unassigned and orphan.draft_id is None
+    assert orphan.message_id is None and orphan.draft_id is None
     first = await collection.ingest_message(incoming(second=3))
     other = await collection.ingest_message(incoming(source="group-b", second=3))
     late = await collection.ingest_message(incoming("text", text="延遲文字", second=1))
-    assert late.unassigned and first.draft_id != other.draft_id
+    assert late.message_id is None and first.draft_id != other.draft_id
     page = await messages.get_unassigned_messages(limit=20, source_key="group-a")
-    assert {row.text for row in page.list_data} == {"先到的文字", "延遲文字"}
-    assert all(row.sender_name == "供應商" for row in page.list_data)
+    assert not page.list_data
+    draft = await service.get_draft(first.draft_id)
+    assert all(row.sender_name == "供應商" for row in draft.messages)
 
 
 async def test_duplicate_events_do_not_resurrect_discarded_drafts(db):
@@ -163,7 +164,7 @@ async def test_move_message_checks_both_draft_versions(db):
     target = await messages.move_message(text.message_id, MessageMove(
         target_draft_id=target.id, target_version=target.version, source_version=source.version,
     ), ACTOR)
-    assert target.messages[-1].text == "應該移到第二件"
+    assert "應該移到第二件" in [item.text for item in target.messages]
     assert len((await service.get_draft(source.id)).messages) == 1
 
 

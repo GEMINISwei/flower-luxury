@@ -12,41 +12,18 @@ from .schema import DiscardInfo, DraftInfo, MessageList, MessageMove, Withdrawal
 from .service import _bump, _photo_info, get_draft
 
 
-async def _clear_buffered_issue(message: model.MessageTable) -> None:
-    event = message.buffered_event
-    if event is None:
-        return
-    if event.status != "issue" and message.collection_id is None:
-        raise LangException(409, DraftError.NOT_READY)
-    await active_session().delete(event)
-    await active_session().flush()
-    await model.refresh_source_confirmation(message.source_key)
-
-
 async def get_unassigned_messages(
     limit: int, cursor: str | None = None, direction: Literal["next", "prev"] = "next",
     source_key: str | None = None,
-    issues_only: bool = False,
 ) -> MessageList:
-    listing = model.issue_page if issues_only else model.unassigned_page
     page = MessageList.model_validate(
-        await listing(limit, cursor, direction, source_key),
+        await model.unassigned_page(limit, cursor, direction, source_key),
     )
     for item in page.list_data:
         if item.kind == "image":
             photo = await model.photo_for_message(item.id)
             item.photo = _photo_info(photo) if photo else None
     return page
-
-
-async def _check_move_state(message: model.MessageTable, target: model.DraftTable,
-                             source: model.DraftTable | None) -> None:
-    if any(draft.finalized_at is not None for draft in (source, target) if draft):
-        raise LangException(409, DraftError.NOT_READY)
-    collection = await active_session().get(model.CollectionRoundTable,
-        message.collection_id) if message.collection_id else None
-    if collection and collection.status == "collecting":
-        raise LangException(409, DraftError.NOT_READY)
 
 
 async def move_message(id: str | None, form: MessageMove,
@@ -63,7 +40,8 @@ async def move_message(id: str | None, form: MessageMove,
                               DraftError.NOT_FOUND)
         check_version(target.version, form.target_version)
         source = await model.get_draft_row(str(message.draft_id)) if message.draft_id else None
-        await _check_move_state(message, target, source)
+        if message.pending:
+            raise LangException(409, DraftError.STALE)
         if source:
             check_version(source.version, form.source_version)
         if source and source.id == target.id:
@@ -84,12 +62,10 @@ async def move_message(id: str | None, form: MessageMove,
         stream.next_sequence += 1
         message.sequence = stream.next_sequence
         message.draft_id = target.id
-        message.collection_id = target.collection_id
         target.has_text = target.has_text or message.kind == "text"
         for draft in (source, target):
             if draft:
                 _bump(draft, actor)
-        await _clear_buffered_issue(message)
         await active_session().flush()
         return await get_draft(str(target.id))
 
@@ -105,7 +81,6 @@ async def withdraw_message(source_key: str, external_id: str,
                 return WithdrawalResult(product_id=receipt.approved_product_id)
             approval = await model.approval_for(draft_id) if draft_id else None
             return WithdrawalResult(product_id=str(approval.product_id) if approval else None)
-        buffered = message.buffered_event is not None
         draft = await model.get_draft_row(str(message.draft_id)) if message.draft_id else None
         photo = await model.photo_for_message(str(message.id))
         if photo:
@@ -117,11 +92,6 @@ async def withdraw_message(source_key: str, external_id: str,
         if draft:
             _bump(draft)
         await active_session().flush()
-        if draft and draft.finalized_at is not None:
-            draft.processing = any(item.status in {"pending", "stored"}
-                                   for item in await model.photos_for(str(draft.id)))
-        if buffered:
-            await model.refresh_source_confirmation(source_key)
         return WithdrawalResult(removed=True)
 
 
@@ -130,12 +100,9 @@ async def discard_legacy_message(id: str) -> DiscardInfo:
         message = ensure_found(await model.get_message_row(id, lock=True), DraftError.NOT_FOUND)
         if message.draft_id is not None:
             raise LangException(409, DraftError.STALE)
-        buffered = message.buffered_event is not None
         photo = await model.photo_for_message(id)
         if photo:
             await storage.schedule_cleanup([photo])
         await active_session().delete(message)
         await active_session().flush()
-        if buffered:
-            await model.refresh_source_confirmation(message.source_key)
         return DiscardInfo(id=id)

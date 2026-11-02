@@ -19,8 +19,7 @@ export default function DraftPhotos({ draft, disabled, mutate, onError }: {
   return <section className={styles.panel} aria-label={t("photos")}>
     <div className={styles.sectionHeader}><h2>{t("photos")}</h2>
       <span className={styles.count}>{draft.photos.length}</span>
-      {!draft.source_locked && <DraftUpload draft={draft} disabled={disabled}
-        mutate={mutate} onError={onError} />}</div>
+      <DraftUpload draft={draft} disabled={disabled} mutate={mutate} onError={onError} /></div>
     <DraftGallery draft={draft} disabled={disabled} mutate={mutate} onRemove={setRemoving} />
     <ConfirmDialog title={t("deletePhoto")} open={Boolean(removing)} isPending={disabled}
       confirmText={t("delete")} onClose={() => setRemoving(null)} onConfirm={() => {

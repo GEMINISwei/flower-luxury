@@ -2,17 +2,13 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 
 export const draftMessages = defineMessages({
   zh: {
-    collection: "訊息收集", receivedCount: "已收到 {count} 則訊息",
-    completeCollection: "收集完成", completeHint: "固定目前收到的訊息範圍，進入分組確認；之後的新訊息會另開一輪收集。",
-    needsFinalization: "待確認分組", reviewGrouping: "確認分組", groupReview: "確認商品分組",
-    groupingHint: "請核對原文與原圖，必要時移動訊息或另建組別。確認定稿後才會加工照片並預填商品資料。",
-    finalize: "確認分組並定稿", finalizeHint: "定稿後將固定這組原文與原圖，無法再加入或移動訊息。確定分組正確？",
-    moveTarget: "移入組別", moveMessage: "移至其他組別", splitMessage: "另建組別",
-    originalRequired: "請等候原圖下載完成，並處理待確認訊息後再定稿。",
-    stored: "原圖已保存", processing: "處理中", needsConfirmation: "待確認",
-    queueProcessing: "處理中：正在接收或整理 LINE 訊息，完成分組後會顯示商品暫存。",
-    blockedHint: "收集、處理與訊息確認完成後才能進入審核。",
-    reviewIssues: "處理待確認訊息", createdNotice: "上一筆商品已建檔。",
+    completeCollection: "收集完成",
+    stored: "原圖已保存", processing: "處理中", pendingLate: "有待加入",
+    blockedHint: "收集結束、原圖齊全並處理完待加入訊息後才能建檔。",
+    pendingTitle: "待加入訊息", accept: "加入", ignore: "忽略",
+    pendingHint: "以下訊息在收集結束後才送達，依 LINE 原始時間屬於這件商品。請確認是否加入，全部處理後才能建檔。",
+    ignoreHint: "忽略會永久刪除這則訊息與照片，確定繼續？",
+    createdNotice: "上一筆商品已建檔。",
     viewCreated: "查看已建檔商品", queueDone: "商品已建檔，目前沒有待審核商品；收集中或處理中的商品請稍後再查看。",
     title: "商品暫存", subtitle: "整理 LINE 訊息與照片，逐筆審核建檔", detail: "整理商品暫存",
     drafts: "商品暫存", source: "來源群組", all: "全部群組",
@@ -46,17 +42,13 @@ export const draftMessages = defineMessages({
     unsaved: "欄位尚未儲存。離開此頁會失去變更。",
   },
   en: {
-    collection: "Message collection", receivedCount: "{count} messages received",
-    completeCollection: "Complete collection", completeHint: "Fix the received message range for grouping. New messages will enter a new collection round.",
-    needsFinalization: "Confirm grouping", reviewGrouping: "Confirm grouping", groupReview: "Confirm product grouping",
-    groupingHint: "Check the original messages and photos. Move messages or create groups before finalizing. Photo processing and AI prefill start after finalization.",
-    finalize: "Confirm grouping and finalize", finalizeHint: "This fixes the original messages and photos. Messages cannot be added or moved afterward. Confirm this group?",
-    moveTarget: "Target group", moveMessage: "Move to another group", splitMessage: "Create another group",
-    originalRequired: "Wait for original photos and resolve unresolved messages before finalizing.",
-    stored: "Original saved", processing: "Processing", needsConfirmation: "Needs confirmation",
-    queueProcessing: "Processing LINE messages. Drafts will appear when grouping is complete.",
-    blockedHint: "Finish collection, processing and message review before opening this draft.",
-    reviewIssues: "Review unresolved messages", createdNotice: "The previous product was created.",
+    completeCollection: "Complete collection",
+    stored: "Original saved", processing: "Processing", pendingLate: "Late messages",
+    blockedHint: "Finish collection, original photos and late messages before approval.",
+    pendingTitle: "Late messages", accept: "Add", ignore: "Ignore",
+    pendingHint: "These messages arrived after collection ended and belong to this product by their original LINE time. Add or ignore each one before approval.",
+    ignoreHint: "Ignoring permanently deletes this message and its photo. Continue?",
+    createdNotice: "The previous product was created.",
     viewCreated: "View created product",
     queueDone: "Product created. No drafts await review. Check collecting or processing items later.",
     title: "Product drafts", subtitle: "Organize LINE messages and photos, then review each product",
@@ -94,27 +86,6 @@ export const draftMessages = defineMessages({
   },
 })
 
-export const issueMessages = defineMessages({
-  zh: {
-    title: "待確認訊息", back: "返回暫存列表", empty: "沒有待確認訊息。",
-    hint: "核對 LINE 原始內容後，將訊息加入正確商品；不需要的訊息可忽略。",
-    newGroup: "另建商品組別", target: "目標商品", choose: "請選擇商品", unnamed: "未命名商品", attach: "加入商品",
-    discard: "忽略訊息", confirmDiscard: "忽略會永久刪除這則未歸屬訊息與照片，確定繼續？",
-    image: "圖片訊息", viewPhoto: "查看照片", pending: "圖片下載中", failedPhoto: "圖片下載失敗",
-    failed: "無法完成操作，請重新載入後再試。", reload: "重新載入資料",
-  },
-  en: {
-    title: "Unresolved messages", back: "Back to drafts", empty: "No unresolved messages.",
-    hint: "Check the original LINE content, then attach each message to a draft or discard it.",
-    newGroup: "Create product group", target: "Target draft", choose: "Choose a draft", unnamed: "Unnamed product", attach: "Attach to draft",
-    discard: "Discard message", confirmDiscard: "Permanently delete this unassigned message and photo?",
-    image: "Image message", viewPhoto: "View photo", pending: "Downloading image",
-    failedPhoto: "Image download failed", failed: "Action failed. Reload and try again.",
-    reload: "Reload data",
-  },
-})
-
-
 export const prefillMessages = defineMessages({
   zh: {
     title: "AI 助手", prefill: "審核預填", supplement: "補充條件", save: "儲存設定", saved: "已儲存",
@@ -125,7 +96,7 @@ export const prefillMessages = defineMessages({
     testText: "測試文字", test: "測試預填", testHint: "使用目前輸入的補充條件測試，不儲存設定或修改商品。",
     result: "預填預覽", required: "請輸入測試文字。",
     unknown: "AI 呼叫結果不明，系統不會重送。請參考原始訊息手動整理。",
-    idle: "AI 將在分組定稿後，依固定原文預填一次。", disabled: "未設定 Gemini API 金鑰，AI 預填暫停使用。",
+    idle: "AI 將在收集結束後，依當時的原文預填一次。", disabled: "未設定 Gemini API 金鑰，AI 預填暫停使用。",
     queued: "AI 預填排程中，完成後請重新載入資料。", ready: "AI 已完成預填，請確認後再審核建檔。",
     prefillFailed: "AI 預填未完成，請參考原始訊息手動整理。",
   },
@@ -139,7 +110,7 @@ export const prefillMessages = defineMessages({
     testText: "Test text", test: "Test prefill", testHint: "Test the current rules without saving settings or changing products.",
     result: "Prefill preview", required: "Enter test text.",
     unknown: "The AI call outcome is unknown and will not be retried. Fill in the fields using the original messages.",
-    idle: "AI will prefill once from the fixed original messages after finalization.",
+    idle: "AI will prefill once from the original messages when collection ends.",
     disabled: "AI prefill is unavailable: Gemini API key is not configured.",
     queued: "AI prefill is queued. Reload data after it completes.", ready: "AI prefill is ready. Confirm the fields before approval.",
     prefillFailed: "AI prefill did not complete. Use the original messages to fill in the fields manually.",

@@ -40,29 +40,17 @@ export async function approveDraft(id: string, version: number, source?: string)
   return result
 }
 
-export async function resolveDraftIssue(id: string,
-  data: { action: "attach" | "discard" | "new"; target_draft_id?: string; target_version?: number }) {
-  return apiPost({ url: "/product-drafts/issues/{id}/resolve", params: { id }, data,
+export async function completeDraft(id: string, version: number) {
+  return apiPost({ url: "/product-drafts/{id}/complete", params: { id }, data: { version },
     refresh })
 }
-export async function completeCollection(id: string) {
-  const result = await apiPost({ url: "/product-drafts/collections/{id}/complete", params: { id } })
-  if (result.status === "success") {
-    revalidatePath("/product-drafts"); revalidatePath("/admin/line-groups")
-  }
-  return result
-}
-export async function finalizeDraft(id: string, version: number) {
-  return apiPost({ url: "/product-drafts/{id}/finalize", params: { id }, data: { version }, refresh })
-}
-export async function splitDraftMessage(id: string, version: number) {
-  return apiPost({ url: "/product-drafts/messages/{id}/new-group", params: { id },
-    data: { version }, refresh })
-}
-export async function moveDraftMessage(id: string, source_version: number,
-  target_draft_id: string, target_version: number) {
-  return apiPost({ url: "/product-drafts/messages/{id}/move", params: { id },
-    data: { source_version, target_draft_id, target_version }, refresh })
+export async function resolvePendingMessage(id: string, version: number, message_id: string,
+  action: "accept" | "ignore") {
+  return action === "accept"
+    ? apiPost({ url: "/product-drafts/{id}/pending/{message_id}/accept",
+      params: { id, message_id }, data: { version }, refresh })
+    : apiPost({ url: "/product-drafts/{id}/pending/{message_id}/ignore",
+      params: { id, message_id }, data: { version }, refresh })
 }
 export async function discardDraft(id: string, version: number) {
   const result = await apiDelete({ url: "/product-drafts/{id}", params: { id }, query: { version } })

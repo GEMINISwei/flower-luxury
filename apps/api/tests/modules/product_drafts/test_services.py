@@ -12,6 +12,7 @@ from modules.product_drafts import collection, messages, model, photos, review, 
 from modules.product_drafts.model import (
     ApprovalTable,
     DraftTable,
+    IntervalTable,
     MessageTable,
     PhotoTable,
     ReceiptTable,
@@ -43,7 +44,8 @@ class MemorySession:
     def add(self, row):
         row.id = row.id or uuid.uuid4()
         for key, value in {"created_at": BASE, "received_at": BASE, "version": 1, "fields": {},
-                           "collecting": True, "has_text": False, "attempts": 0}.items():
+                           "collecting": True, "has_text": False, "attempts": 0,
+                           "pending": False}.items():
             if hasattr(row, key) and getattr(row, key) is None:
                 setattr(row, key, value)
         self.rows[type(row)][str(row.id)] = row
@@ -71,7 +73,8 @@ class MemorySession:
 @pytest.fixture
 def state(monkeypatch, tmp_path):
     rows: dict[type[BaseTable], dict[str, Any]] = {
-        cls: {} for cls in (DraftTable, MessageTable, PhotoTable, ReceiptTable, ApprovalTable)
+        cls: {} for cls in (DraftTable, MessageTable, PhotoTable, ReceiptTable, ApprovalTable,
+                            IntervalTable)
     }
     stream = SimpleNamespace(source_key="group-a", last_occurred_at=None, next_sequence=0)
 
@@ -79,8 +82,18 @@ def state(monkeypatch, tmp_path):
     token = _current_session.set(session)  # type: ignore[arg-type]
     monkeypatch.setattr(storage, "UPLOADS_DIR", tmp_path)
     monkeypatch.setattr(model, "stream_for", AsyncMock(return_value=stream))
-    monkeypatch.setattr(model, "mark_source_processing", AsyncMock())
-    monkeypatch.setattr(model, "refresh_source_confirmation", AsyncMock())
+    intervals = rows[IntervalTable]
+
+    def interval_at(key, time):
+        found = [row for row in intervals.values() if row.source_key == key
+                 and row.started_at <= time and (row.ended_at is None or time < row.ended_at)]
+        return max(found, key=lambda row: row.started_at, default=None)
+
+    monkeypatch.setattr(model, "interval_at", AsyncMock(side_effect=interval_at))
+    monkeypatch.setattr(model, "interval_for", AsyncMock(side_effect=lambda key: next(
+        (row for row in intervals.values() if row.draft_key == key), None)))
+    monkeypatch.setattr(model, "interval_after", AsyncMock(side_effect=lambda key, time: any(
+        row.source_key == key and row.started_at > time for row in intervals.values())))
     monkeypatch.setattr(model, "current_draft", AsyncMock(side_effect=lambda key: next(
         (row for row in rows[DraftTable].values()
          if row.source_key == key and row.collecting), None,
@@ -93,10 +106,10 @@ def state(monkeypatch, tmp_path):
     monkeypatch.setattr(model, "receipt_for", AsyncMock(side_effect=lambda fingerprint: next(
         (row for row in rows[ReceiptTable].values() if row.fingerprint == fingerprint), None,
     )))
-    monkeypatch.setattr(model, "messages_for", AsyncMock(side_effect=lambda id: sorted(
-        [row for row in rows[MessageTable].values() if str(row.draft_id) == str(id)],
-        key=lambda row: row.sequence,
-    )))
+    monkeypatch.setattr(model, "messages_for", AsyncMock(side_effect=lambda id, pending=False:
+        sorted([row for row in rows[MessageTable].values()
+         if str(row.draft_id) == str(id) and bool(row.pending) == pending],
+        key=lambda row: (row.occurred_at, row.sequence))))
     monkeypatch.setattr(model, "photos_for", AsyncMock(side_effect=lambda id: sorted(
         [row for row in rows[PhotoTable].values() if str(row.draft_id) == str(id)],
         key=lambda row: row.sort_order,
@@ -131,11 +144,12 @@ async def test_collection_preserves_text_and_duplicate_identity_without_database
     assert not (await service.get_draft(draft.id)).collecting
 
 
-async def test_unassigned_and_late_messages_do_not_change_active_draft(state):
-    assert (await collection.ingest_message(incoming("text", text="先到"))).unassigned
+async def test_messages_outside_any_interval_are_skipped_without_changing_active_draft(state):
+    assert (await collection.ingest_message(incoming("text", text="先到"))).message_id is None
     current = await collection.ingest_message(incoming(second=2))
     before = await service.get_draft(current.draft_id)
-    assert (await collection.ingest_message(incoming("text", text="延遲", second=1))).unassigned
+    late = await collection.ingest_message(incoming("text", text="延遲", second=1))
+    assert late.message_id is None
     assert (await service.get_draft(current.draft_id)).version == before.version
 
 
@@ -203,7 +217,7 @@ async def test_message_move_enforces_versions_and_source_without_database(state)
     moved = await messages.move_message(text.message_id, MessageMove(
         target_draft_id=target.id, target_version=target.version, source_version=source.version,
     ), ACTOR)
-    assert moved.messages[-1].text == "move"
+    assert "move" in [item.text for item in moved.messages]
     with pytest.raises(LangException):
         await messages.move_message(text.message_id, MessageMove(
             target_draft_id=source.id, target_version=1, source_version=1,
@@ -270,19 +284,3 @@ async def test_photo_write_failure_cleans_partial_files(state, monkeypatch, tmp_
     with pytest.raises(OSError):
         await photos.complete_photo(event.message_id, image_bytes(), "photo.png")
     assert not [path for path in tmp_path.rglob("*") if path.is_file()]
-
-
-async def test_unassigned_text_can_be_attached_and_foreign_source_is_rejected(state):
-    orphan = await collection.ingest_message(incoming("text", text="先到"))
-    draft = await ready()
-    result = await messages.move_message(orphan.message_id, MessageMove(
-        target_draft_id=draft.id, target_version=draft.version,
-    ), ACTOR)
-    assert any(row.text == "先到" for row in result.messages)
-    other = await collection.ingest_message(incoming(source="group-b", second=3))
-    target = await service.get_draft(other.draft_id)
-    with pytest.raises(LangException):
-        await messages.move_message(orphan.message_id, MessageMove(
-            target_draft_id=target.id, target_version=target.version,
-            source_version=result.version,
-        ), ACTOR)

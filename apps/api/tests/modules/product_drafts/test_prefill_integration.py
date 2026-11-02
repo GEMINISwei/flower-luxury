@@ -6,7 +6,6 @@ import pytest
 from sqlalchemy import select
 
 from modules.product_drafts import (
-    batches,
     collection,
     draft_quotes,
     messages,
@@ -26,7 +25,7 @@ from modules.vendors.public import VendorTable
 from shared.db.session import active_session
 from shared.jobs.contracts import Job
 from shared.jobs.model import JobTable
-from tests.modules.product_drafts.helpers import ACTOR, BASE, incoming
+from tests.modules.product_drafts.helpers import ACTOR, incoming
 
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
@@ -68,23 +67,6 @@ async def test_prefill_schedules_once_when_collection_closes(db):
     jobs = list(await active_session().scalars(select(JobTable).where(
         JobTable.task_name == "product_drafts.prefill")))
     assert len(jobs) == 1 and jobs[0].payload["draft_id"] == draft.id
-
-
-async def test_batch_closure_schedules_prefill_once(db):
-    from datetime import timedelta
-
-    await batches.control_collection("batch", "start", BASE)
-    first = await batches.ingest_batch_message(incoming(source="batch", second=1))
-    await batches.ingest_batch_message(incoming("text", source="batch", second=2, text="A 100"))
-    second = await batches.ingest_batch_message(incoming(source="batch", second=3))
-    assert (await service.get_draft(first.draft_id)).prefill_status == "queued"
-    assert (await service.get_draft(second.draft_id)).prefill_revision == 0
-    await batches.control_collection("batch", "end", BASE + timedelta(seconds=4))
-    await batches.finish_collection("batch", BASE + timedelta(seconds=5))
-    assert (await service.get_draft(second.draft_id)).prefill_revision == 1
-    jobs = list(await active_session().scalars(select(JobTable).where(
-        JobTable.task_name == "product_drafts.prefill")))
-    assert len(jobs) == 2
 
 
 async def test_prefill_failure_is_final_and_preserves_fields(db, monkeypatch):

@@ -1,15 +1,6 @@
 from datetime import datetime
-from typing import Literal
 
-from pydantic import BaseModel, Field
-
-
-class CollectionInfo(BaseModel):
-    id: str | None = None
-    source_key: str
-    status: Literal["collecting", "confirmation", "finalized"] = "collecting"
-    message_count: int = 0
-    draft_ids: list[str] = Field(default_factory=list)
+from pydantic import BaseModel
 
 
 class SnapshotMessage(BaseModel):

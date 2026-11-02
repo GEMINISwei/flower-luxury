@@ -24,15 +24,13 @@ export default async function DraftsPage({ searchParams }: DraftsPageProps) {
   const t = await getT(draftMessages)
   const options = { ...pagination, limit: 20, errorFallback: t("failed"),
     query: params.source_key ? { source_key: params.source_key } : {} }
-  const [sources, drafts, processing] = await Promise.all([
+  const [sources, drafts] = await Promise.all([
     apiGet({ url: "/line/sources" }),
     fetchPaginatedList({ url: "/product-drafts/", ...options }),
-    apiGet({ url: "/product-drafts/processing", query: options.query }),
   ])
   return <DraftsView drafts={drafts}
     sources={sources.status === "success" ? sources.data.list_data : []}
     source={params.source_key ?? ""} seq={pagination.seq} limit={20}
     created={params.created} completed={params.completed === "1"}
-    processing={processing.status === "success" && processing.data.processing}
-    sourceError={sources.status === "success" && processing.status === "success" ? "" : t("failed")} />
+    sourceError={sources.status === "success" ? "" : t("failed")} />
 }

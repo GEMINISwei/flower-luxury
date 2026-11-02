@@ -35,8 +35,8 @@ from PIL import Image
 from app.server import app
 from modules.brands.public import BrandTable
 from modules.line_collection.model import discover_group
-from modules.product_drafts import batches, collection, model as draft_model, photos, rounds, service
-from modules.product_drafts.schema import IncomingMessage, DraftUpdate, DraftFields
+from modules.product_drafts import collection, model as draft_model, photos, service
+from modules.product_drafts.schema import IncomingMessage, DraftUpdate, DraftFields, VersionRequest
 from shared.db.session import configure_session_factory, create_engine, session_scope
 from shared.time import utc_now
 actor = {"id": "22222222-2222-4222-8222-222222222222", "username": "fixture", "auth_version": 1, "permissions": [], "is_disabled": False}
@@ -62,10 +62,13 @@ async def run():
             base = utc_now() - timedelta(minutes=1)
             if arg.get("buffer"):
                 group.enabled = True
-                await rounds.receive_message(IncomingMessage(source_key=source,
+                queued = await collection.ingest_message(IncomingMessage(source_key=source,
                     external_id=uuid.uuid4().hex, kind="image",
                     occurred_at=base + timedelta(seconds=1)))
-                print(json.dumps({"id": "", "second": "", "source": source,
+                data = BytesIO()
+                Image.new("RGB", (8, 4), "red").save(data, "PNG")
+                await photos.complete_photo(queued.message_id, data.getvalue(), "line.png")
+                print(json.dumps({"id": queued.draft_id, "second": "", "source": source,
                     "group": str(group.id), "name": arg["name"], "brand": "", "review": ""}))
                 return
             async def message(kind, second, text=None):
@@ -76,7 +79,8 @@ async def run():
             first = await message("image", 1)
             data = BytesIO()
             Image.new("RGB", (8, 4), "red").save(data, "PNG")
-            await photos.complete_photo(first.message_id, data.getvalue(), "line.png")
+            if not arg.get("processing"):
+                await photos.complete_photo(first.message_id, data.getvalue(), "line.png")
             for index in range(1, int(arg.get("photos", "1"))):
                 extra = await message("image", 1 + index / 10)
                 await photos.complete_photo(extra.message_id, data.getvalue(), f"line-{index}.png")
@@ -86,33 +90,25 @@ async def run():
                 for index in range(24):
                     await message("text", index + 4, f"補充訊息 {index + 1}\n" + "商品細節\n" * 8)
             second = await message("image", 40)
-            await photos.mark_photo_failed(second.message_id)
-            last = await draft_model.get_draft_row(second.draft_id)
-            last.collecting = False
+            if arg.get("ready_second"):
+                await photos.complete_photo(second.message_id, data.getvalue(), "line-b.png")
+            else:
+                await photos.mark_photo_failed(second.message_id)
+            last = await service.get_draft(second.draft_id)
+            await collection.complete_draft(last.id, VersionRequest(version=last.version), actor)
             if arg.get("collecting"):
                 first_row = await draft_model.get_draft_row(first.draft_id)
                 first_row.collecting = True
-            if arg.get("processing"):
-                first_row = await draft_model.get_draft_row(first.draft_id)
-                first_row.processing = True
+            if arg.get("late"):
+                await message("text", 2.5, "晚到的補充")
+                late = await message("image", 2.7)
+                await photos.complete_photo(late.message_id, data.getvalue(), "late.png")
             if arg.get("single"):
                 from modules.product_drafts import review
-                from modules.product_drafts.schema import VersionRequest
                 last_info = await service.get_draft(second.draft_id)
                 await review.discard_draft(last_info.id, VersionRequest(version=last_info.version), actor)
-            if arg.get("issue"):
-                for kind in ("image", "text"):
-                    await rounds.receive_message(IncomingMessage(source_key=source,
-                        external_id=uuid.uuid4().hex, kind=kind,
-                        text="同時到達待確認文字" if kind == "text" else None,
-                        occurred_at=base + timedelta(seconds=42)))
-                pending = await rounds.current_collection(source)
-                await rounds.complete_collection(pending.id)
-            if arg.get("batch"):
+            if arg.get("enabled"):
                 group.enabled = True
-                await rounds.receive_message(IncomingMessage(source_key=source,
-                    external_id=uuid.uuid4().hex, kind="image", occurred_at=base + timedelta(seconds=45)))
-                await batches.record_issue(source, base + timedelta(seconds=46), "ambiguous")
             brand = await BrandTable.create({"name": arg["name"], "is_active": True})
             if arg.get("ai"):
                 from unittest.mock import AsyncMock, patch
@@ -237,30 +233,21 @@ test("來源篩選由視窗套用並可清除", async ({ page }) => {
   await expect(page).toHaveURL("/product-drafts")
 })
 
-test("店長可結束批次並查看異常且不再顯示歷史待歸類資料", async ({ page }) => {
-  const data = fixture({ name: `Batch ${randomUUID().slice(0, 8)}`, batch: "true" })
+test("群組設定不顯示批次異常且不提供收集完成", async ({ page }) => {
+  const data = fixture({ name: `Batch ${randomUUID().slice(0, 8)}`, enabled: "true" })
   await login(page, admin)
   await page.goto("/admin/line-groups")
   const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
   await expect(row).toContainText("收集中")
-  await expect(row).toContainText("無法確認訊息歸屬")
-  await row.getByRole("button", { name: "收集完成", exact: true }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "收集完成", exact: true }).click()
-  await expect(row).toContainText("待整理")
+  await expect(row).not.toContainText("批次異常")
   await expect(row.getByRole("button", { name: "收集完成", exact: true })).toHaveCount(0)
   await expect(row.getByRole("cell", { name: "已加入", exact: true })).toBeVisible()
-  await expect(row).not.toContainText("批次開始")
-  await expect(row).not.toContainText("批次結束")
   const leftRow = page.getByRole("row").filter({ hasText: `${data.name} left` })
   await expect(leftRow.getByRole("cell", { name: "未加入", exact: true })).toBeVisible()
   await expect(leftRow).toContainText("已停用")
-  for (const suffix of ["", "&view=messages"]) {
-    await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}${suffix}`)
-    await expect(page.getByRole("heading", { name: "商品暫存", exact: true })).toBeVisible()
-    await expect(page.getByRole("link", { name: "歷史待歸類資料", exact: true })).toHaveCount(0)
-    await expect(page.getByRole("button", { name: "先到的文字", exact: true })).toHaveCount(0)
-    await expect(page.getByRole("button", { name: "刪除歷史訊息", exact: true })).toHaveCount(0)
-  }
+  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+  await expect(page.getByRole("button", { name: "先到的文字", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "待確認訊息", exact: true })).toHaveCount(0)
   await open(page, data.id)
   await expect(page.getByRole("button", { name: "第一行 第二行", exact: true })).toBeVisible()
 })
@@ -814,36 +801,46 @@ workspaceTest("手機暫存以重整圖示與操作面板完成整理流程", as
   await expect(page).toHaveURL("/product-drafts")
 })
 
-workspaceTest("收集中與處理中停用審核且直接網址不顯示整理表單", async ({ page }) => {
+workspaceTest("不可建檔的暫存仍顯示原詳情版面並停用建檔", async ({ page }) => {
   for (const flag of ["collecting", "processing"]) {
     const data = fixture({ name: `Blocked ${randomUUID().slice(0, 8)}`, [flag]: "true" })
     await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
-    await expect(page.getByRole("button", { name: "審核", exact: true })).toBeDisabled()
+    const row = page.getByRole("row").filter({ hasText: flag === "collecting" ? "收集中" : "處理中" })
+    await expect(row.getByRole("button", { name: "收集完成", exact: true }))
+      .toHaveCount(flag === "collecting" ? 1 : 0)
     await open(page, data.id)
-    await expect(page.getByLabel("名稱", { exact: true })).toHaveCount(0)
+    await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
+    await expect(page.getByRole("region", { name: "訊息內容", exact: true })).toBeVisible()
+    await expect(page.getByRole("button", { name: "審核建檔", exact: true })).toBeDisabled()
     await expect(page.getByRole("main")).toContainText(flag === "collecting" ? "收集中" : "處理中")
   }
 })
 
-workspaceTest("待確認原文可加入商品且忽略剩餘異常後恢復審核", async ({ page }) => {
-  const data = fixture({ name: `Issue ${randomUUID().slice(0, 8)}`, issue: "true" })
+workspaceTest("遲到訊息在暫存詳情頂端醒目顯示並可加入或忽略", async ({ page }) => {
+  const data = fixture({ name: `Late ${randomUUID().slice(0, 8)}`, late: "true" })
   await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
-  await page.getByRole("link", { name: "處理待確認訊息", exact: true }).first().click()
-  const text = page.getByRole("article").filter({ hasText: "同時到達待確認文字" })
-  await text.getByLabel("目標商品", { exact: true }).selectOption(data.id)
-  await text.getByRole("button", { name: "加入商品", exact: true }).click()
-  await expect(text).toHaveCount(0)
-  const image = page.getByRole("article").filter({ hasText: "圖片訊息" })
-  await image.getByRole("button", { name: "忽略訊息", exact: true }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "忽略訊息", exact: true }).click()
-  await expect(image).toHaveCount(0)
+  await expect(page.getByRole("row").filter({ hasText: "有待加入" })).toHaveCount(1)
   await open(page, data.id)
-  await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "同時到達待確認文字", exact: true })).toBeVisible()
+  const late = page.getByRole("region", { name: "待加入訊息", exact: true })
+  await expect(late).toBeVisible()
+  const box = await late.boundingBox()
+  const fields = await page.getByLabel("名稱", { exact: true }).boundingBox()
+  expect(box!.y).toBeLessThan(fields!.y)
+  await expect(page.getByRole("button", { name: "審核建檔", exact: true })).toBeDisabled()
+  const text = late.getByRole("article").filter({ hasText: "晚到的補充" })
+  await text.getByRole("button", { name: "加入", exact: true }).click()
+  await expect(text).toHaveCount(0)
+  await expect(page.getByRole("region", { name: "訊息內容", exact: true })
+    .getByRole("button", { name: "晚到的補充", exact: true })).toBeVisible()
+  const image = late.getByRole("article").filter({ has: page.getByRole("img") })
+  await image.getByRole("button", { name: "忽略", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "忽略", exact: true }).click()
+  await expect(late).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "審核建檔", exact: true })).toBeEnabled()
 })
 
-workspaceTest("審核後自動開啟同群組下一筆並在沒有下一筆時返回列表", async ({ page }) => {
-  const data = seed()
+workspaceTest("審核後自動開啟下一筆並在沒有下一筆時返回列表", async ({ page }) => {
+  const data = fixture({ name: `Next ${randomUUID().slice(0, 8)}`, ready_second: "true" })
   await page.goto(`/product-drafts/${data.id}?source_key=${encodeURIComponent(data.source)}`)
   await fillRequired(page, data.name, data.brand)
   await page.getByRole("button", { name: "審核建檔", exact: true }).click()
@@ -869,12 +866,33 @@ workspaceTest("下一筆暫存已被他人移除時重新尋找同群組待審�
   await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
 })
 
-workspaceTest("尚未產生商品列時仍能看到已收到的訊息並完成收集", async ({ page }) => {
+workspaceTest("暫存列表的收集中商品可按收集完成並開放審核", async ({ page }) => {
   const data = fixture({ name: `Queued ${randomUUID().slice(0, 8)}`, buffer: "true" })
   await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
-  await expect(page.getByRole("status")).toContainText("已收到 1 則訊息")
-  await expect(page.getByRole("button", { name: "收集完成", exact: true })).toBeEnabled()
-  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
+  const row = page.getByRole("row").filter({ hasText: "收集中" })
+  await row.getByRole("button", { name: "收集完成", exact: true }).click()
+  await expect(page.getByRole("row").filter({ hasText: "待審核" })).toHaveCount(1)
+  await expect(page.getByRole("button", { name: "收集完成", exact: true })).toHaveCount(0)
+  await page.getByRole("link", { name: "審核", exact: true }).click()
+  await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
+})
+
+workspaceTest("重新整理後回到列表頂部", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 360 })
+  const main = page.locator("main")
+  async function expectRefreshScrollsToTop() {
+    await main.evaluate((element) => element.scrollTo(0, element.scrollHeight))
+    await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+    await page.locator("header").getByRole("button", { name: "重新整理", exact: true }).click()
+    await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBe(0)
+  }
+  for (const path of ["/products", "/product-drafts"]) {
+    await page.goto(path)
+    await expectRefreshScrollsToTop()
+  }
+  await page.context().addCookies(managerState!.cookies)
+  await page.goto("/admin/line-groups")
+  await expectRefreshScrollsToTop()
 })
 
 workspaceTest("手機頁首直接開啟新增與篩選", async ({ page }) => {
@@ -941,129 +959,4 @@ workspaceTest("AI 助手以卡片右上角新增條件且隱藏冗餘標籤", as
     await add.click()
     await expect(card.getByRole("textbox", { name: /^補充條件 \d+$/ }).last()).toBeVisible()
   }
-})
-
-const collectionTest = test.extend({
-  storageState: async ({}, use) => {
-    if (!managerState) throw new Error("Manager session is not initialized")
-    await use(managerState)
-  },
-})
-
-const collectionScript = String.raw`
-import asyncio, json, os, sys, uuid
-from datetime import timedelta
-from io import BytesIO
-from PIL import Image
-from sqlalchemy import select
-from app.server import app
-from modules.line_collection.model import discover_group
-from modules.product_drafts import model, raw_photos, rounds
-from modules.product_drafts.schema import IncomingMessage
-from shared.db.session import configure_session_factory, create_engine, session_scope
-from shared.time import utc_now
-
-async def main():
-    engine = create_engine(os.environ["POSTGRES_URL"])
-    configure_session_factory(engine)
-    async with session_scope():
-        args = json.loads(sys.argv[1])
-        if args.get("source"):
-            source = args["source"]
-            first = await active_first(source)
-            await rounds.receive_message(IncomingMessage(source_key=source,
-                external_id=uuid.uuid4().hex, kind="text", text="晚到待確認內容",
-                occurred_at=first.occurred_at + timedelta(milliseconds=500)))
-            rows = list(await model.active_session().scalars(select(model.DraftTable).where(
-                model.DraftTable.source_key == source)))
-            print(json.dumps({"draft": str(rows[0].id), "snapshot": rows[0].finalized_snapshot}))
-        else:
-            key = "C" + uuid.uuid4().hex
-            group, _ = await discover_group(key)
-            group.name, group.enabled = args["name"], True
-            source = "line:" + key
-            when = utc_now() - timedelta(seconds=30)
-            group.collect_from = when - timedelta(seconds=1)
-            image = await rounds.receive_message(IncomingMessage(source_key=source,
-                external_id=uuid.uuid4().hex, kind="image", occurred_at=when))
-            output = BytesIO()
-            Image.new("RGB", (8, 4), "red").save(output, "PNG")
-            await raw_photos.save_original(image.message_id, output.getvalue(), "original.png")
-            await rounds.receive_message(IncomingMessage(source_key=source,
-                external_id=uuid.uuid4().hex, kind="text", text="手袋原文",
-                occurred_at=when + timedelta(seconds=2)))
-            current = await rounds.current_collection(source)
-            print(json.dumps({"source": source, "round": current.id, "name": args["name"]}))
-    await engine.dispose()
-
-async def active_first(source):
-    return await model.active_session().scalar(select(model.MessageTable).where(
-        model.MessageTable.source_key == source, model.MessageTable.kind == "image")
-        .order_by(model.MessageTable.occurred_at))
-
-asyncio.run(main())
-`
-
-function collectionFixture(args: Record<string, string>) {
-  const project = process.env.COMPOSE_PROJECT_NAME
-  if (!project?.endsWith("-e2e")) throw new Error("Disposable stack required")
-  return JSON.parse(execFileSync("docker", ["exec", `${project}-api`, "python", "-c", collectionScript,
-    JSON.stringify(args)], { encoding: "utf8" })) as {
-    source: string; round: string; name: string; draft?: string; snapshot?: unknown
-  }
-}
-
-async function completeCollectionFlow(page: Page, source: string) {
-  await page.goto(`/product-drafts?source_key=${encodeURIComponent(source)}`)
-  await page.getByRole("button", { name: "收集完成", exact: true }).click()
-  const dialog = page.getByRole("dialog")
-  await dialog.getByRole("button", { name: "收集完成", exact: true }).click()
-  await expect(dialog).toBeHidden()
-  await page.getByRole("link", { name: "確認分組", exact: true }).click()
-}
-
-collectionTest("收集完成後先確認分組，定稿才進行加工並開放審核", async ({ page }) => {
-  const data = collectionFixture({ name: `Collection ${randomUUID().slice(0, 8)}` })
-  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
-  await expect(page.getByRole("status")).toContainText("已收到 2 則訊息")
-  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
-  await completeCollectionFlow(page, data.source)
-  await expect(page.getByRole("heading", { name: "確認商品分組" })).toBeVisible()
-  await expect(page.getByText("手袋原文", { exact: true })).toBeVisible()
-  await expect(page.getByLabel("名稱", { exact: true })).toHaveCount(0)
-  await page.getByRole("button", { name: "確認分組並定稿", exact: true }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "確認分組並定稿", exact: true }).click()
-  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
-  await expect.poll(async () => {
-    await page.reload()
-    return page.getByRole("link", { name: "審核", exact: true }).count()
-  }, { timeout: 30_000 }).toBe(1)
-})
-
-collectionTest("遲到訊息由人工加入未定稿商品，加入後仍需確認定稿", async ({ page }) => {
-  const data = collectionFixture({ name: `Late ${randomUUID().slice(0, 8)}` })
-  await completeCollectionFlow(page, data.source)
-  const late = collectionFixture({ source: data.source })
-  await page.goto(`/product-drafts/issues?source_key=${encodeURIComponent(data.source)}`)
-  await expect(page.getByText("晚到待確認內容", { exact: true })).toBeVisible()
-  await page.getByRole("combobox").selectOption(late.draft!)
-  await page.getByRole("button", { name: "加入商品", exact: true }).click()
-  await expect(page.getByText("沒有待確認訊息。", { exact: true })).toBeVisible()
-  await page.goto(`/product-drafts/${late.draft}`)
-  await expect(page.getByText("晚到待確認內容", { exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "確認分組並定稿", exact: true })).toBeEnabled()
-})
-
-collectionTest("定稿後遲到訊息不再加入原組別或觸發二次處理", async ({ page }) => {
-  const data = collectionFixture({ name: `Frozen ${randomUUID().slice(0, 8)}` })
-  await completeCollectionFlow(page, data.source)
-  await page.getByRole("button", { name: "確認分組並定稿", exact: true }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "確認分組並定稿", exact: true }).click()
-  await expect(page.getByRole("dialog")).toBeHidden()
-  const late = collectionFixture({ source: data.source })
-  expect(JSON.stringify(late.snapshot)).not.toContain("晚到待確認內容")
-  await page.goto(`/product-drafts/issues?source_key=${encodeURIComponent(data.source)}`)
-  await expect(page.getByText("晚到待確認內容", { exact: true })).toBeVisible()
-  await expect(page.getByRole("combobox").getByRole("option", { includeHidden: true })).toHaveCount(1)
-  await expect(page.getByRole("button", { name: "加入商品", exact: true })).toBeDisabled()
 })

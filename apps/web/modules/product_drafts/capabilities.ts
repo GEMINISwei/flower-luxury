@@ -18,24 +18,19 @@ export function draftSaleSummary<T extends SaleQuote>(quotes: T[], selected: str
 }
 
 export function draftStage(draft: {
-  collecting: boolean; processing?: boolean; needs_confirmation?: boolean;
-  requires_finalization?: boolean
+  collecting: boolean; processing?: boolean; pending_count?: number
 }) {
-  if (draft.needs_confirmation) return "needsConfirmation"
   if (draft.collecting) return "collecting"
-  if (draft.requires_finalization) return "needsFinalization"
   if (draft.processing) return "processing"
+  if (draft.pending_count) return "pendingLate"
   return "waiting"
 }
 
-export function collectionCapabilities(round: { id?: string | null; message_count: number }) {
-  return { canComplete: Boolean(round.id) && round.message_count > 0 }
-}
-
-export function groupingCapabilities(draft: {
-  needs_confirmation?: boolean; photos: { status: string }[]
+export function approvalCapabilities(draft: {
+  collecting: boolean; pending_messages?: unknown[]; photos: { status: string }[]
 }) {
-  return { canFinalize: !draft.needs_confirmation && draft.photos.length > 0
+  return { canApprove: !draft.collecting && !draft.pending_messages?.length
+    && draft.photos.length > 0
     && draft.photos.every((photo) => photo.status === "stored" || photo.status === "ready") }
 }
 

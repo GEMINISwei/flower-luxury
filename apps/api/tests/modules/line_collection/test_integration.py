@@ -10,7 +10,7 @@ from modules.line_collection import model, service
 from modules.line_collection.config import LineSettings
 from modules.line_collection.rules import fingerprint
 from modules.line_collection.schema import GroupUpdate
-from modules.product_drafts import photos, review, rounds, storage
+from modules.product_drafts import collection, photos, review, storage
 from modules.product_drafts.model import MessageTable
 from modules.product_drafts.schema import VersionRequest
 from modules.product_drafts.service import get_draft, get_draft_list
@@ -84,7 +84,7 @@ async def test_duplicate_webhook_does_not_duplicate_messages(db):
     messages = list(await active_session().scalars(select(MessageTable).order_by(
         MessageTable.occurred_at)))
     assert len(messages) == 2 and messages[1].text == "原文\n  保留空白  "
-    assert (await get_draft_list(limit=20)).total_count == 0
+    assert (await get_draft_list(limit=20)).total_count == 1
     downloads = list(await active_session().scalars(select(JobTable).where(
         JobTable.task_name == "line_collection.download",
     )))
@@ -103,12 +103,12 @@ async def test_concurrent_redelivery_creates_one_message(db):
     assert len(list(await active_session().scalars(select(MessageTable)))) == 1
 
 
-async def test_text_before_first_image_is_preserved_for_confirmation(db):
+async def test_text_before_first_image_is_skipped(db):
     await enable_group()
     await receive(event(second=3))
     await receive(event("text", event_id="late", message_id="late", second=1))
     row = await active_session().scalar(select(MessageTable).where(MessageTable.kind == "text"))
-    assert row is not None and row.draft_id is None
+    assert row is None
 
 
 async def test_ingest_failure_rolls_back_receipts_and_jobs(db, monkeypatch):
@@ -134,7 +134,7 @@ async def test_disable_and_leave_preserve_existing_drafts(db):
     await receive(event(event_type="leave", event_id="leave", second=4))
     await receive(event("text", event_id="after-leave", message_id="after", second=5))
     assert len(list(await active_session().scalars(select(MessageTable)))) == 1
-    assert (await get_draft_list(limit=20)).total_count == 0
+    assert (await get_draft_list(limit=20)).total_count == 1
     group = await model.group_for("group-a")
     assert group is not None and not group.joined and not group.enabled
 
@@ -198,8 +198,6 @@ async def test_unsend_after_moving_and_approval_requires_manual_review(db):
     await receive(event(second=1))
     await receive(event("text", event_id="text", message_id="text", second=2))
     await receive(event(event_id="image-b", message_id="image-b", second=3))
-    current = await rounds.current_collection("line:group-a")
-    await rounds.complete_collection(current.id)
     first = await model.message_link(fingerprint("group-a", "message-a").value)
     second = await model.message_link(fingerprint("group-a", "image-b").value)
     assert first is not None and second is not None
@@ -218,7 +216,8 @@ async def test_unsend_after_moving_and_approval_requires_manual_review(db):
             name="商品", brand_id=str(brand["id"]), category="包包", cost_price=3000,
         ),
     ), ACTOR)
-    target = await rounds.finalize_draft(target.id, VersionRequest(version=target.version), ACTOR)
+    target = await collection.complete_draft(target.id, VersionRequest(version=target.version),
+                                             ACTOR)
     result = await review.approve_draft(target.id, VersionRequest(version=target.version), ACTOR)
     await receive(event(event_type="unsend", event_id="unsend", second=5))
     group = await model.group_for("group-a")

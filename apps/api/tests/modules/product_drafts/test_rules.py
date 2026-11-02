@@ -1,24 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from modules.product_drafts.rules import decide_collection
 from modules.product_drafts.schema import DraftFields, DraftUpdate, IncomingMessage, PhotoOrder
 from tests.modules.product_drafts.helpers import BASE, ID
-
-
-@pytest.mark.parametrize("kind,current,text,late,assign,start", [
-    ("image", False, False, False, True, True),
-    ("image", True, False, False, True, False),
-    ("image", True, True, False, True, True),
-    ("text", True, False, False, True, False),
-    ("text", True, True, False, True, False),
-    ("text", False, False, False, False, False),
-    ("image", True, True, True, False, False),
-    ("text", True, True, True, False, False),
-])
-def test_collection_decisions(kind, current, text, late, assign, start):
-    decision = decide_collection(kind, has_current=current, has_text=text, is_late=late)
-    assert decision.assign == assign and decision.start_new == start
 
 
 @pytest.mark.parametrize("data", [

@@ -15,7 +15,6 @@ from .schema import (
     DraftInfo,
     DraftList,
     DraftPhotoInfo,
-    DraftProcessingInfo,
     DraftUpdate,
     MessageInfo,
     NextReviewInfo,
@@ -53,18 +52,20 @@ async def get_draft(id: str | None) -> DraftInfo:
     messages = [_message_info(item) for item in await model.messages_for(str(row.id))]
     for message in messages:
         message.photo = photo_messages.get(message.id)
+    late = [_message_info(item) for item in await model.messages_for(str(row.id), pending=True)]
+    for message in late:
+        photo = await model.photo_for_message(message.id)
+        message.photo = _photo_info(photo) if photo else None
     return DraftInfo(**{**row.to_dict(), "id": str(row.id),
                         "main_photo_id": str(row.main_photo_id) if row.main_photo_id else None,
                         "manual_fields": row.manual_fields or [], "quotes": row.quotes or [],
                         "prefill_revision": row.prefill_revision or 0,
                         "prefill_configured": get_env().prefill_configured,
                         "prefill_status": row.prefill_status or "idle",
-                        "processing": bool(row.processing),
-                        "needs_confirmation": bool(row.needs_confirmation),
-                        "requires_finalization": bool(row.collection_id and not row.finalized_at),
-                        "finalized": row.finalized_at is not None,
-                        "source_locked": bool(row.collection_id and row.finalized_at)},
-                     messages=messages, photos=photos)
+                        "processing": any(photo.status not in {"stored", "ready"}
+                                          for photo in photos),
+                        "pending_count": len(late)},
+                     messages=messages, pending_messages=late, photos=photos)
 
 
 async def next_review(source_key: str | None = None) -> NextReviewInfo:
@@ -72,22 +73,18 @@ async def next_review(source_key: str | None = None) -> NextReviewInfo:
     return NextReviewInfo(id=str(row.id) if row else None)
 
 
-async def processing_state(source_key: str | None = None) -> DraftProcessingInfo:
-    return DraftProcessingInfo(processing=await model.source_processing(source_key))
-
-
 async def get_draft_list(
     limit: int, cursor: str | None = None, direction: Literal["next", "prev"] = "next",
     source_key: str | None = None,
 ) -> DraftList:
     page = await model.draft_page(limit, cursor, direction, source_key)
+    ids = [str(row["id"]) for row in page["list_data"]]
+    counts, processing = await model.pending_counts(ids), await model.missing_originals(ids)
     for row in page["list_data"]:
         row["id"] = str(row["id"])
         row["main_photo_id"] = str(row["main_photo_id"]) if row["main_photo_id"] else None
-        row["requires_finalization"] = bool(row.get("collection_id")
-                                            and not row.get("finalized_at"))
-        row["finalized"] = row.get("finalized_at") is not None
-        row["source_locked"] = bool(row.get("collection_id") and row.get("finalized_at"))
+        row["pending_count"] = counts.get(row["id"], 0)
+        row["processing"] = row["id"] in processing
     return DraftList.model_validate(page)
 
 
