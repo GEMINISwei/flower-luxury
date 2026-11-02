@@ -35,7 +35,7 @@ from PIL import Image
 from app.server import app
 from modules.brands.public import BrandTable
 from modules.line_collection.model import discover_group
-from modules.product_drafts import batches, collection, model as draft_model, photos, service
+from modules.product_drafts import batches, collection, model as draft_model, photos, rounds, service
 from modules.product_drafts.schema import IncomingMessage, DraftUpdate, DraftFields
 from shared.db.session import configure_session_factory, create_engine, session_scope
 from shared.time import utc_now
@@ -61,10 +61,8 @@ async def run():
             source = "line:" + key
             base = utc_now() - timedelta(minutes=1)
             if arg.get("buffer"):
-                from modules.product_drafts import buffer
                 group.enabled = True
-                await buffer.queue_control(source, "start", base)
-                await buffer.queue_message(IncomingMessage(source_key=source,
+                await rounds.receive_message(IncomingMessage(source_key=source,
                     external_id=uuid.uuid4().hex, kind="image",
                     occurred_at=base + timedelta(seconds=1)))
                 print(json.dumps({"id": "", "second": "", "source": source,
@@ -103,21 +101,17 @@ async def run():
                 last_info = await service.get_draft(second.draft_id)
                 await review.discard_draft(last_info.id, VersionRequest(version=last_info.version), actor)
             if arg.get("issue"):
-                from unittest.mock import patch
-                from modules.product_drafts import buffer
-                from shared.jobs.contracts import Job
-                await buffer.queue_control(source, "start", base + timedelta(seconds=41))
                 for kind in ("image", "text"):
-                    await buffer.queue_message(IncomingMessage(source_key=source,
+                    await rounds.receive_message(IncomingMessage(source_key=source,
                         external_id=uuid.uuid4().hex, kind=kind,
                         text="同時到達待確認文字" if kind == "text" else None,
                         occurred_at=base + timedelta(seconds=42)))
-                with patch.object(buffer, "utc_now", return_value=utc_now() + timedelta(minutes=4)):
-                    await buffer.process_buffer(Job(id=uuid.uuid4(), task_name="product_drafts.buffer",
-                        payload={"source_key": source}, attempts=1))
+                pending = await rounds.current_collection(source)
+                await rounds.complete_collection(pending.id)
             if arg.get("batch"):
                 group.enabled = True
-                await batches.control_collection(source, "start", base + timedelta(seconds=45))
+                await rounds.receive_message(IncomingMessage(source_key=source,
+                    external_id=uuid.uuid4().hex, kind="image", occurred_at=base + timedelta(seconds=45)))
                 await batches.record_issue(source, base + timedelta(seconds=46), "ambiguous")
             brand = await BrandTable.create({"name": arg["name"], "is_active": True})
             if arg.get("ai"):
@@ -188,12 +182,12 @@ test("group_settings_respect_permissions", async ({ page }) => {
 })
 
 
-workspaceTest("緩衝收件時顯示處理中且尚未開放新商品審核", async ({ page }) => {
+workspaceTest("收件先保存並顯示收集中，尚未開放新商品審核", async ({ page }) => {
   const data = fixture({ name: `Buffer ${randomUUID().slice(0, 8)}`, buffer: "true" })
   await page.context().addCookies(managerState!.cookies)
   await page.goto("/admin/line-groups")
   const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
-  await expect(row).toContainText("處理中")
+  await expect(row).toContainText("收集中")
   await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
   await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
 })
@@ -250,10 +244,10 @@ test("店長可結束批次並查看異常且不再顯示歷史待歸類資料",
   const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
   await expect(row).toContainText("收集中")
   await expect(row).toContainText("無法確認訊息歸屬")
-  await row.getByRole("button", { name: "結束批次", exact: true }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "結束批次", exact: true }).click()
+  await row.getByRole("button", { name: "收集完成", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "收集完成", exact: true }).click()
   await expect(row).toContainText("待整理")
-  await expect(row.getByRole("button", { name: "結束批次", exact: true })).toHaveCount(0)
+  await expect(row.getByRole("button", { name: "收集完成", exact: true })).toHaveCount(0)
   await expect(row.getByRole("cell", { name: "已加入", exact: true })).toBeVisible()
   await expect(row).not.toContainText("批次開始")
   await expect(row).not.toContainText("批次結束")
@@ -875,10 +869,11 @@ workspaceTest("下一筆暫存已被他人移除時重新尋找同群組待審�
   await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
 })
 
-workspaceTest("尚未產生暫存商品列時列表仍顯示處理中", async ({ page }) => {
+workspaceTest("尚未產生商品列時仍能看到已收到的訊息並完成收集", async ({ page }) => {
   const data = fixture({ name: `Queued ${randomUUID().slice(0, 8)}`, buffer: "true" })
   await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
-  await expect(page.getByRole("status")).toContainText("處理中")
+  await expect(page.getByRole("status")).toContainText("已收到 1 則訊息")
+  await expect(page.getByRole("button", { name: "收集完成", exact: true })).toBeEnabled()
   await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(0)
 })
 

@@ -37,7 +37,7 @@ def context(monkeypatch):
 
 @pytest.mark.parametrize("condition,code", [
     ("pending", 409), ("no_message", 422), ("no_target", 422),
-    ("collecting", 409), ("processing", 409),
+    ("collecting", 409), ("processing", 409), ("finalized", 409),
 ])
 async def test_resolve_issue_rejects_unfinished_or_invalid_targets(context, condition, code):
     if condition == "pending":
@@ -46,6 +46,8 @@ async def test_resolve_issue_rejects_unfinished_or_invalid_targets(context, cond
         context.event.message_id = None
     elif condition in {"collecting", "processing"}:
         setattr(context.target, condition, True)
+    elif condition == "finalized":
+        context.target.finalized_at = BASE
     form = ResolveIssue(action="attach", target_draft_id=None if condition == "no_target" else ID,
                         target_version=5)
     with pytest.raises(LangException) as error:

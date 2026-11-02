@@ -35,7 +35,7 @@ def download(monkeypatch):
         line_channel_secret=SecretStr("secret"), line_channel_access_token=SecretStr("token"),
     ))
     monkeypatch.setattr(jobs.transport, "download_image", fetch)
-    monkeypatch.setattr(jobs, "complete_photo", finish)
+    monkeypatch.setattr(jobs, "save_original", finish)
     return fetch, finish
 
 
