@@ -28,7 +28,7 @@ async def schedule_prefill(row: model.DraftTable) -> None:
     if row.prefill_status == "queued":
         await enqueue_job("product_drafts.prefill", {
             "draft_id": str(row.id), "revision": row.prefill_revision,
-        }, available_at=utc_now() + timedelta(seconds=2))
+        }, available_at=utc_now() + timedelta(seconds=2), queue="ai", max_attempts=1)
 
 
 async def apply_prefill(id: str, revision: int, result: PrefillResult,

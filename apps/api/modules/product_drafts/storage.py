@@ -71,7 +71,7 @@ async def schedule_cleanup(rows: list[PhotoTable]) -> None:
         key for row in rows for key in (row.original_key, row.display_key) if key
     ]
     if keys:
-        await enqueue_job("product_drafts.cleanup", {"keys": keys})
+        await enqueue_job("product_drafts.cleanup", {"keys": keys}, queue="maintenance")
 
 
 async def cleanup_files(job: Job) -> None:

@@ -25,7 +25,7 @@ async def _remember(form: IncomingMessage) -> bool:
     active_session().add(row)
     await active_session().flush()
     await enqueue_job("product_drafts.expire_receipt", {"receipt_id": str(row.id)},
-                      available_at=row.expires_at)
+                      available_at=row.expires_at, queue="maintenance")
     return True
 
 
