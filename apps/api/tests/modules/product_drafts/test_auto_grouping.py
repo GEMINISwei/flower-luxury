@@ -36,6 +36,12 @@ async def two_drafts(source="group-a"):
     return first.draft_id, second.draft_id
 
 
+async def interval_of(draft_id):
+    found = await model.interval_for(draft_id)
+    assert found is not None
+    return found
+
+
 async def jobs(task_name):
     return list(await active_session().scalars(select(JobTable).where(
         JobTable.task_name == task_name)))
@@ -123,9 +129,9 @@ async def test_late_image_after_text_joins_next_draft_and_moves_its_start():
     previous, following = await service.get_draft(first), await service.get_draft(second)
     assert len(previous.photos) == 1 and not previous.pending_messages
     assert len(following.photos) == 2 and following.collecting
-    assert [item.id for item in following.messages][0] == late.message_id
-    assert (await model.interval_for(first)).ended_at == BASE.replace(second=3)
-    assert (await model.interval_for(second)).started_at == BASE.replace(second=3)
+    assert following.messages[0].id == late.message_id
+    assert (await interval_of(first)).ended_at == BASE.replace(second=3)
+    assert (await interval_of(second)).started_at == BASE.replace(second=3)
     text = await receive("text", second=4, text="B 說明")
     assert text.draft_id == second and not text.pending
 
@@ -154,7 +160,7 @@ async def test_late_image_after_completed_draft_opens_new_draft():
     late = await receive(second=3)
     assert late.draft_id not in {None, first.draft_id} and not late.pending
     assert (await service.get_draft(late.draft_id)).collecting
-    assert (await model.interval_for(first.draft_id)).ended_at == BASE.replace(second=3)
+    assert (await interval_of(first.draft_id)).ended_at == BASE.replace(second=3)
     text = await receive("text", second=4, text="B 說明")
     assert text.draft_id == late.draft_id and not text.pending
 
