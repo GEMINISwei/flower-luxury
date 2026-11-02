@@ -101,7 +101,7 @@ async def run():
                 first_row.collecting = True
             if arg.get("late"):
                 await message("text", 2.5, "晚到的補充")
-                late = await message("image", 2.7)
+                late = await message("image", 2)
                 await photos.complete_photo(late.message_id, data.getvalue(), "late.png")
             if arg.get("single"):
                 from modules.product_drafts import review
