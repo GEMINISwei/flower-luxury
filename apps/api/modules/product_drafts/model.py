@@ -14,16 +14,13 @@ from sqlalchemy import (
     func,
     select,
     text,
-    update,
 )
 from sqlalchemy.dialects.postgresql import JSONB, insert
-from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
+from sqlalchemy.orm import Mapped, mapped_column
 
 from shared.db.session import active_session
 from shared.db.table import BaseTable, Condition, PagedResult, parse_uuid
 from shared.time import utc_now
-
-from .buffer_model import BufferedEventTable as BufferedEventTable
 
 
 class StreamTable(BaseTable):
@@ -31,31 +28,12 @@ class StreamTable(BaseTable):
     source_key: Mapped[str] = mapped_column(String(200), unique=True)
     last_occurred_at: Mapped[datetime | None]
     next_sequence: Mapped[int] = mapped_column(default=0)
-    last_control_at: Mapped[datetime | None]
-    buffer_until: Mapped[datetime | None]
-
-
-class CollectionRoundTable(BaseTable):
-    __tablename__ = "product_draft_collections"
-    __table_args__ = (
-        CheckConstraint("status IN ('collecting', 'confirmation', 'finalized')",
-                        name="valid_status"),
-        Index("uq_product_draft_collections_collecting_source", "source_key", unique=True,
-              postgresql_where=text("status = 'collecting'")),
-    )
-
-    source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
-    status: Mapped[str] = mapped_column(String(16), default="collecting")
-    first_event_at: Mapped[datetime]
-    last_event_at: Mapped[datetime]
-    completed_at: Mapped[datetime | None]
 
 
 class DraftTable(BaseTable):
     __tablename__ = "product_drafts"
     source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
-    collection_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("product_draft_collections.id"))
+    # 結束收集的時間點與當時的原文, AI 預填只讀這份, 之後才加入的內容不重跑.
     finalized_at: Mapped[datetime | None]
     finalized_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     version: Mapped[int] = mapped_column(default=1)
@@ -67,8 +45,6 @@ class DraftTable(BaseTable):
     prefill_revision: Mapped[int] = mapped_column(default=0)
     prefill_status: Mapped[str] = mapped_column(String(16), default="idle")
     collecting: Mapped[bool] = mapped_column(default=True)
-    processing: Mapped[bool] = mapped_column(default=False)
-    needs_confirmation: Mapped[bool] = mapped_column(default=False)
     has_text: Mapped[bool] = mapped_column(default=False)
     main_photo_id: Mapped[uuid.UUID | None]
     updated_by: Mapped[str | None]
@@ -128,8 +104,6 @@ async def write_prefill_settings(supplement: str, revision: int, actor_id: str) 
 class MessageTable(BaseTable):
     __tablename__ = "product_draft_messages"
     source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
-    collection_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("product_draft_collections.id"))
     draft_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("product_drafts.id", ondelete="CASCADE"),
     )
@@ -140,9 +114,8 @@ class MessageTable(BaseTable):
     sender_name: Mapped[str | None]
     occurred_at: Mapped[datetime]
     sequence: Mapped[int]
-    buffered_event: Mapped[BufferedEventTable | None] = relationship(
-        lazy="raise", uselist=False, cascade="all, delete-orphan", single_parent=True,
-        passive_deletes=True)
+    # 收集結束後才送達的訊息, 由人員決定加入或忽略之前不算商品內容.
+    pending: Mapped[bool] = mapped_column(default=False)
     __table_args__ = (
         CheckConstraint("(kind = 'text' AND text IS NOT NULL) OR (kind = 'image' AND text IS NULL)",
                         name="matching_content"),
@@ -225,8 +198,6 @@ async def _row(cls: Any, id: str | None, lock: bool) -> Any:
             return None
         await stream_for(source_key)
     statement = select(cls).where(cls.id == parse_uuid(id or ""))
-    if cls is MessageTable:
-        statement = statement.options(selectinload(MessageTable.buffered_event))
     return await active_session().scalar(statement.execution_options(populate_existing=True))
 
 
@@ -257,33 +228,29 @@ async def photos_for(id: str) -> list[PhotoTable]:
     ).order_by(PhotoTable.sort_order, PhotoTable.id)))
 
 
-async def messages_for(id: str) -> list[MessageTable]:
-    batched = await active_session().scalar(select(WindowTable.id).where(
-        WindowTable.draft_key == id))
-    collection = await active_session().scalar(select(DraftTable.collection_id).where(
-        DraftTable.id == parse_uuid(id)))
-    order = ((MessageTable.occurred_at, MessageTable.sequence) if batched or collection
-             else (MessageTable.sequence,))
+async def messages_for(id: str, *, pending: bool = False) -> list[MessageTable]:
     return list(await active_session().scalars(select(MessageTable).where(
-        MessageTable.draft_id == parse_uuid(id or ""),
-    ).order_by(*order, MessageTable.id)))
+        MessageTable.draft_id == parse_uuid(id or ""), MessageTable.pending.is_(pending),
+    ).order_by(MessageTable.occurred_at, MessageTable.sequence, MessageTable.id)))
+
+
+async def pending_counts(ids: list[str]) -> dict[str, int]:
+    rows = await active_session().execute(select(MessageTable.draft_id, func.count()).where(
+        MessageTable.draft_id.in_([parse_uuid(id) for id in ids]),
+        MessageTable.pending.is_(True)).group_by(MessageTable.draft_id))
+    return {str(draft_id): count for draft_id, count in rows.all()}
+
+
+async def missing_originals(ids: list[str]) -> set[str]:
+    rows = await active_session().scalars(select(PhotoTable.draft_id).where(
+        PhotoTable.draft_id.in_([parse_uuid(id) for id in ids]),
+        PhotoTable.status.not_in(["stored", "ready"])).distinct())
+    return {str(id) for id in rows}
 
 
 async def message_draft_id(id: str | None) -> str | None:
     row = await get_message_row(id)
     return str(row.draft_id) if row and row.draft_id else None
-
-
-async def pending_events(source_key: str) -> list[BufferedEventTable]:
-    return list(await active_session().scalars(select(BufferedEventTable).where(
-        BufferedEventTable.source_key == source_key, BufferedEventTable.status == "pending",
-    ).order_by(BufferedEventTable.occurred_at, BufferedEventTable.id)))
-
-
-async def issue_at(source_key: str, occurred_at: datetime) -> bool:
-    return await active_session().scalar(select(BatchIssueTable.id).where(
-        BatchIssueTable.source_key == source_key, BatchIssueTable.occurred_at == occurred_at,
-    ).limit(1)) is not None
 
 
 async def receipt_for(fingerprint: str) -> ReceiptTable | None:
@@ -304,58 +271,17 @@ async def draft_page(limit: int, cursor: str | None, direction: Literal["next", 
 
 
 async def next_review_row(source_key: str | None) -> DraftTable | None:
+    unready = select(PhotoTable.id).where(PhotoTable.draft_id == DraftTable.id,
+                                          PhotoTable.status.not_in(["stored", "ready"]))
+    photographed = select(PhotoTable.id).where(PhotoTable.draft_id == DraftTable.id)
+    late = select(MessageTable.id).where(MessageTable.draft_id == DraftTable.id,
+                                         MessageTable.pending.is_(True))
     statement = select(DraftTable).where(DraftTable.collecting.is_(False),
-        DraftTable.processing.is_(False), DraftTable.needs_confirmation.is_(False),
-        (DraftTable.collection_id.is_(None) | DraftTable.finalized_at.is_not(None)))
+        photographed.exists(), ~unready.exists(), ~late.exists())
     if source_key:
         statement = statement.where(DraftTable.source_key == source_key)
     return await active_session().scalar(statement.order_by(
         DraftTable.received_at, DraftTable.id).limit(1))
-
-
-async def source_processing(source_key: str | None) -> bool:
-    statement = select(StreamTable.id).where(StreamTable.buffer_until.is_not(None))
-    if source_key:
-        statement = statement.where(StreamTable.source_key == source_key)
-    return await active_session().scalar(statement.limit(1)) is not None
-
-
-async def mark_source_processing(source_key: str, processing: bool) -> None:
-    await active_session().execute(update(DraftTable).where(
-        DraftTable.source_key == source_key, DraftTable.processing != processing,
-    ).values(processing=processing, version=DraftTable.version + 1, updated_at=utc_now()))
-
-
-async def refresh_source_confirmation(source_key: str) -> None:
-    pending = await active_session().scalar(select(BufferedEventTable.id).where(
-        BufferedEventTable.source_key == source_key,
-        BufferedEventTable.status == "issue").limit(1))
-    needed = pending is not None
-    await active_session().execute(update(DraftTable).where(
-        DraftTable.source_key == source_key, DraftTable.needs_confirmation != needed,
-    ).values(needs_confirmation=needed, version=DraftTable.version + 1, updated_at=utc_now()))
-
-
-async def issue_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],
-                     source_key: str | None) -> PagedResult:
-    where: list[Condition] = [MessageTable.draft_id.is_(None), MessageTable.id.in_(
-        select(BufferedEventTable.message_id).where(BufferedEventTable.status == "issue"))]
-    if source_key:
-        where.append(MessageTable.source_key == source_key)
-    return await MessageTable.get_page(limit=limit, cursor=cursor, direction=direction, where=where)
-
-
-async def buffered_issue_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],
-                              source_key: str | None) -> PagedResult:
-    where: list[Condition] = [BufferedEventTable.status == "issue"]
-    if source_key:
-        where.append(BufferedEventTable.source_key == source_key)
-    return await BufferedEventTable.get_page(limit=limit, cursor=cursor, direction=direction,
-                                             sort_field="occurred_at", where=where)
-
-
-async def get_buffered_event(id: str, *, lock: bool = False) -> BufferedEventTable | None:
-    return await _row(BufferedEventTable, id, lock)
 
 
 async def unassigned_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],
@@ -374,8 +300,7 @@ async def expire_receipt_row(id: str) -> None:
 
 async def message_by_external_id(source_key: str, external_id: str) -> MessageTable | None:
     return await active_session().scalar(select(MessageTable).where(
-        MessageTable.source_key == source_key, MessageTable.external_id == external_id,
-    ).options(selectinload(MessageTable.buffered_event)))
+        MessageTable.source_key == source_key, MessageTable.external_id == external_id))
 
 
 def message_fingerprint(source_key: str, external_id: str) -> str:
@@ -384,62 +309,37 @@ def message_fingerprint(source_key: str, external_id: str) -> str:
 
 async def remember_approved_messages(draft_id: str, product_id: str) -> None:
     rows = await messages_for(draft_id)
-    for row in rows:
+    for row in [*rows, *await messages_for(draft_id, pending=True)]:
         receipt = await receipt_for(message_fingerprint(row.source_key, row.external_id))
         if receipt:
             receipt.approved_product_id = product_id
 
 
-class BatchTable(BaseTable):
-    __tablename__ = "product_draft_batches"
+class IntervalTable(BaseTable):
+    __tablename__ = "product_draft_intervals"
     source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
-    started_at: Mapped[datetime]
-    ended_at: Mapped[datetime | None]
-    latest_at: Mapped[datetime]
-    __table_args__ = (
-        Index("uq_product_draft_batches_active_source", "source_key", unique=True,
-              postgresql_where=text("ended_at IS NULL")),
-        Index("ix_product_draft_batches_source_start", "source_key", "started_at"),
-    )
-
-
-class WindowTable(BaseTable):
-    __tablename__ = "product_draft_windows"
-    batch_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("product_draft_batches.id", ondelete="CASCADE"))
-    # 保留不含內容的歸屬鍵, 才能辨認已審核或放棄商品的延遲事件.
+    # 不設外鍵: 商品建檔或放棄後仍要認得這段時間, 遲到訊息才會略過而不是另開商品.
     draft_key: Mapped[str] = mapped_column(String(200), unique=True)
     started_at: Mapped[datetime]
-    last_image_at: Mapped[datetime]
     first_text_at: Mapped[datetime | None]
     ended_at: Mapped[datetime | None]
-    __table_args__ = (Index("ix_product_draft_windows_batch_start", "batch_id", "started_at"),)
+    __table_args__ = (Index("ix_product_draft_intervals_source_start", "source_key", "started_at"),)
 
 
-class BatchIssueTable(BaseTable):
-    __tablename__ = "product_draft_batch_issues"
-    source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
-    occurred_at: Mapped[datetime]
-    reason: Mapped[str] = mapped_column(String(30))
-    __table_args__ = (Index("ix_product_draft_batch_issues_source", "source_key"),)
-
-
-async def latest_batch(source_key: str) -> BatchTable | None:
-    return await active_session().scalar(select(BatchTable).where(
-        BatchTable.source_key == source_key,
-    ).order_by(BatchTable.started_at.desc()).limit(1)
+async def interval_at(source_key: str, occurred_at: datetime) -> IntervalTable | None:
+    return await active_session().scalar(select(IntervalTable).where(
+        IntervalTable.source_key == source_key, IntervalTable.started_at <= occurred_at,
+        (IntervalTable.ended_at.is_(None) | (IntervalTable.ended_at > occurred_at)),
+    ).order_by(IntervalTable.started_at.desc()).limit(1)
         .execution_options(populate_existing=True))
 
 
-async def batch_at(source_key: str, occurred_at: datetime) -> BatchTable | None:
-    return await active_session().scalar(select(BatchTable).where(
-        BatchTable.source_key == source_key, BatchTable.started_at <= occurred_at,
-        (BatchTable.ended_at.is_(None) | (BatchTable.ended_at >= occurred_at)),
-    ).order_by(BatchTable.started_at.desc()).limit(1)
-        .execution_options(populate_existing=True))
+async def interval_for(draft_key: str) -> IntervalTable | None:
+    return await active_session().scalar(select(IntervalTable).where(
+        IntervalTable.draft_key == draft_key).execution_options(populate_existing=True))
 
 
-async def batch_windows(batch_id: uuid.UUID) -> list[WindowTable]:
-    return list(await active_session().scalars(select(WindowTable).where(
-        WindowTable.batch_id == batch_id,
-    ).order_by(WindowTable.started_at).execution_options(populate_existing=True)))
+async def interval_after(source_key: str, occurred_at: datetime) -> bool:
+    return await active_session().scalar(select(IntervalTable.id).where(
+        IntervalTable.source_key == source_key, IntervalTable.started_at > occurred_at,
+    ).limit(1)) is not None

@@ -177,161 +177,6 @@
         "title": "BrandUpdate",
         "type": "object"
       },
-      "BufferedIssueInfo": {
-        "properties": {
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "kind": {
-            "enum": [
-              "text",
-              "image",
-              "start",
-              "end"
-            ],
-            "title": "Kind",
-            "type": "string"
-          },
-          "occurred_at": {
-            "format": "date-time",
-            "title": "Occurred At",
-            "type": "string"
-          },
-          "photo": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/DraftPhotoInfo"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "source_key": {
-            "title": "Source Key",
-            "type": "string"
-          },
-          "text": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Text"
-          }
-        },
-        "required": [
-          "id",
-          "source_key",
-          "occurred_at",
-          "kind"
-        ],
-        "title": "BufferedIssueInfo",
-        "type": "object"
-      },
-      "BufferedIssueList": {
-        "properties": {
-          "has_next": {
-            "title": "Has Next",
-            "type": "boolean"
-          },
-          "has_previous": {
-            "title": "Has Previous",
-            "type": "boolean"
-          },
-          "list_data": {
-            "items": {
-              "$ref": "#/components/schemas/BufferedIssueInfo"
-            },
-            "title": "List Data",
-            "type": "array"
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Next Cursor"
-          },
-          "prev_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Prev Cursor"
-          },
-          "total_count": {
-            "title": "Total Count",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "list_data",
-          "has_next",
-          "has_previous",
-          "total_count"
-        ],
-        "title": "BufferedIssueList",
-        "type": "object"
-      },
-      "CollectionInfo": {
-        "properties": {
-          "draft_ids": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Draft Ids",
-            "type": "array"
-          },
-          "id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Id"
-          },
-          "message_count": {
-            "default": 0,
-            "title": "Message Count",
-            "type": "integer"
-          },
-          "source_key": {
-            "title": "Source Key",
-            "type": "string"
-          },
-          "status": {
-            "default": "collecting",
-            "enum": [
-              "collecting",
-              "confirmation",
-              "finalized"
-            ],
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "source_key"
-        ],
-        "title": "CollectionInfo",
-        "type": "object"
-      },
       "DiscardInfo": {
         "properties": {
           "id": {
@@ -468,11 +313,6 @@
           "fields": {
             "$ref": "#/components/schemas/DraftFields"
           },
-          "finalized": {
-            "default": false,
-            "title": "Finalized",
-            "type": "boolean"
-          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -502,10 +342,17 @@
             "title": "Messages",
             "type": "array"
           },
-          "needs_confirmation": {
-            "default": false,
-            "title": "Needs Confirmation",
-            "type": "boolean"
+          "pending_count": {
+            "default": 0,
+            "title": "Pending Count",
+            "type": "integer"
+          },
+          "pending_messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageInfo"
+            },
+            "title": "Pending Messages",
+            "type": "array"
           },
           "photos": {
             "items": {
@@ -554,11 +401,6 @@
             "title": "Received At",
             "type": "string"
           },
-          "requires_finalization": {
-            "default": false,
-            "title": "Requires Finalization",
-            "type": "boolean"
-          },
           "selected_quote_id": {
             "anyOf": [
               {
@@ -573,11 +415,6 @@
           "source_key": {
             "title": "Source Key",
             "type": "string"
-          },
-          "source_locked": {
-            "default": false,
-            "title": "Source Locked",
-            "type": "boolean"
           },
           "updated_at": {
             "anyOf": [
@@ -736,19 +573,6 @@
         "title": "DraftPhotoInfo",
         "type": "object"
       },
-      "DraftProcessingInfo": {
-        "properties": {
-          "processing": {
-            "title": "Processing",
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "processing"
-        ],
-        "title": "DraftProcessingInfo",
-        "type": "object"
-      },
       "DraftQuoteInfo": {
         "properties": {
           "exchange_rate": {
@@ -839,11 +663,6 @@
           "fields": {
             "$ref": "#/components/schemas/DraftFields"
           },
-          "finalized": {
-            "default": false,
-            "title": "Finalized",
-            "type": "boolean"
-          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -859,10 +678,10 @@
             ],
             "title": "Main Photo Id"
           },
-          "needs_confirmation": {
-            "default": false,
-            "title": "Needs Confirmation",
-            "type": "boolean"
+          "pending_count": {
+            "default": 0,
+            "title": "Pending Count",
+            "type": "integer"
           },
           "processing": {
             "default": false,
@@ -874,19 +693,9 @@
             "title": "Received At",
             "type": "string"
           },
-          "requires_finalization": {
-            "default": false,
-            "title": "Requires Finalization",
-            "type": "boolean"
-          },
           "source_key": {
             "title": "Source Key",
             "type": "string"
-          },
-          "source_locked": {
-            "default": false,
-            "title": "Source Locked",
-            "type": "boolean"
           },
           "updated_at": {
             "anyOf": [
@@ -956,50 +765,10 @@
       },
       "GroupInfo": {
         "properties": {
-          "batch_ended_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Batch Ended At"
-          },
-          "batch_started_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Batch Started At"
-          },
-          "collecting": {
-            "default": false,
-            "title": "Collecting",
-            "type": "boolean"
-          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
             "type": "string"
-          },
-          "current_round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Current Round Id"
           },
           "enabled": {
             "title": "Enabled",
@@ -1012,18 +781,6 @@
           "id": {
             "title": "Id",
             "type": "string"
-          },
-          "issue_count": {
-            "default": 0,
-            "title": "Issue Count",
-            "type": "integer"
-          },
-          "issues": {
-            "items": {
-              "$ref": "#/components/schemas/GroupIssue"
-            },
-            "title": "Issues",
-            "type": "array"
           },
           "joined": {
             "title": "Joined",
@@ -1039,16 +796,6 @@
               }
             ],
             "title": "Name"
-          },
-          "processing": {
-            "default": false,
-            "title": "Processing",
-            "type": "boolean"
-          },
-          "received_count": {
-            "default": 0,
-            "title": "Received Count",
-            "type": "integer"
           },
           "reply_failed": {
             "default": false,
@@ -1077,25 +824,6 @@
           "review_product_id"
         ],
         "title": "GroupInfo",
-        "type": "object"
-      },
-      "GroupIssue": {
-        "properties": {
-          "occurred_at": {
-            "format": "date-time",
-            "title": "Occurred At",
-            "type": "string"
-          },
-          "reason": {
-            "title": "Reason",
-            "type": "string"
-          }
-        },
-        "required": [
-          "occurred_at",
-          "reason"
-        ],
-        "title": "GroupIssue",
         "type": "object"
       },
       "GroupList": {
@@ -2372,47 +2100,6 @@
         "title": "RegistrationSettingsUpdate",
         "type": "object"
       },
-      "ResolveIssue": {
-        "properties": {
-          "action": {
-            "enum": [
-              "attach",
-              "discard",
-              "new"
-            ],
-            "title": "Action",
-            "type": "string"
-          },
-          "target_draft_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target Draft Id"
-          },
-          "target_version": {
-            "anyOf": [
-              {
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target Version"
-          }
-        },
-        "required": [
-          "action"
-        ],
-        "title": "ResolveIssue",
-        "type": "object"
-      },
       "RoleCreate": {
         "properties": {
           "name": {
@@ -2816,17 +2503,6 @@
       },
       "SourceInfo": {
         "properties": {
-          "current_round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Current Round Id"
-          },
           "enabled": {
             "default": false,
             "title": "Enabled",
@@ -2842,11 +2518,6 @@
               }
             ],
             "title": "Name"
-          },
-          "received_count": {
-            "default": 0,
-            "title": "Received Count",
-            "type": "integer"
           },
           "source_key": {
             "title": "Source Key",
@@ -4058,232 +3729,6 @@
         ]
       }
     },
-    "/api/product-drafts/collections/current": {
-      "get": {
-        "operationId": "current_collection_route_api_product_drafts_collections_current_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "source_key",
-            "required": true,
-            "schema": {
-              "title": "Source Key",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CollectionInfo"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Current Collection Route",
-        "tags": [
-          "product-drafts"
-        ]
-      }
-    },
-    "/api/product-drafts/collections/{id}/complete": {
-      "post": {
-        "operationId": "complete_collection_route_api_product_drafts_collections__id__complete_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "title": "Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CollectionInfo"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Complete Collection Route",
-        "tags": [
-          "product-drafts"
-        ]
-      }
-    },
-    "/api/product-drafts/issues": {
-      "get": {
-        "operationId": "list_issues_route_api_product_drafts_issues_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "source_key",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Source Key"
-            }
-          },
-          {
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Cursor"
-            }
-          },
-          {
-            "in": "query",
-            "name": "direction",
-            "required": false,
-            "schema": {
-              "default": "next",
-              "enum": [
-                "next",
-                "prev"
-              ],
-              "title": "Direction",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": true,
-            "schema": {
-              "maximum": 100,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BufferedIssueList"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "List Issues Route",
-        "tags": [
-          "product-drafts"
-        ]
-      }
-    },
-    "/api/product-drafts/issues/{id}/resolve": {
-      "post": {
-        "operationId": "resolve_issue_route_api_product_drafts_issues__id__resolve_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "title": "Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResolveIssue"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscardInfo"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Resolve Issue Route",
-        "tags": [
-          "product-drafts"
-        ]
-      }
-    },
     "/api/product-drafts/messages": {
       "get": {
         "operationId": "get_unassigned_route_api_product_drafts_messages_get",
@@ -4302,16 +3747,6 @@
                 }
               ],
               "title": "Source Key"
-            }
-          },
-          {
-            "in": "query",
-            "name": "issues_only",
-            "required": false,
-            "schema": {
-              "default": false,
-              "title": "Issues Only",
-              "type": "boolean"
             }
           },
           {
@@ -4478,58 +3913,6 @@
         ]
       }
     },
-    "/api/product-drafts/messages/{id}/new-group": {
-      "post": {
-        "operationId": "split_message_route_api_product_drafts_messages__id__new_group_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "title": "Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VersionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DraftInfo"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Split Message Route",
-        "tags": [
-          "product-drafts"
-        ]
-      }
-    },
     "/api/product-drafts/next-review": {
       "get": {
         "operationId": "next_review_route_api_product_drafts_next_review_get",
@@ -4670,55 +4053,6 @@
           }
         },
         "summary": "Get Draft Photo Route",
-        "tags": [
-          "product-drafts"
-        ]
-      }
-    },
-    "/api/product-drafts/processing": {
-      "get": {
-        "operationId": "processing_route_api_product_drafts_processing_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "source_key",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Source Key"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DraftProcessingInfo"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Processing Route",
         "tags": [
           "product-drafts"
         ]
@@ -4942,9 +4276,9 @@
         ]
       }
     },
-    "/api/product-drafts/{id}/finalize": {
+    "/api/product-drafts/{id}/complete": {
       "post": {
-        "operationId": "finalize_draft_route_api_product_drafts__id__finalize_post",
+        "operationId": "complete_draft_route_api_product_drafts__id__complete_post",
         "parameters": [
           {
             "in": "path",
@@ -4988,7 +4322,129 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Finalize Draft Route",
+        "summary": "Complete Draft Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/{id}/pending/{message_id}/accept": {
+      "post": {
+        "operationId": "accept_pending_route_api_product_drafts__id__pending__message_id__accept_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Pending Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
+    "/api/product-drafts/{id}/pending/{message_id}/ignore": {
+      "post": {
+        "operationId": "ignore_pending_route_api_product_drafts__id__pending__message_id__ignore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ignore Pending Route",
         "tags": [
           "product-drafts"
         ]

@@ -36,4 +36,5 @@
 | [0011](0011-full-repo-checkout-on-hosts.md) | 部署主機上 git clone 整份 repo | 採用 |
 | [0012](0012-e2e-required-in-ci.md) | Playwright E2E 是 CI 與部署的必要檢查 | 採用 |
 | [0013](0013-durable-worker-ownership.md) | 背景工作以 worker 心跳與每次領取 token 保護執行權 | 採用 |
-| [0014](0014-manual-collection-finalization.md) | 收件先保存，由人工完成收集與分組定稿後才加工 | 採用 |
+| [0014](0014-manual-collection-finalization.md) | 收件先保存，由人工完成收集與分組定稿後才加工 | 被 0015 取代 |
+| [0015](0015-automatic-grouping-with-late-review.md) | 依 LINE 原始時間自動分組，遲到訊息由人員加入 | 採用 |

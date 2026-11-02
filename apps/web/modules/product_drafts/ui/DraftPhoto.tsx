@@ -34,9 +34,8 @@ export default function DraftPhoto({ draft, photo, disabled, mutate, onRemove }:
         <Button variant="outlined" disabled={disabled || photo.is_main || photo.status !== "ready"}
           onClick={() => mutate(() => setDraftMainPhoto(draft.id, draft.version, photo.id))}>
           {t("setMain")}</Button>
-        {!draft.source_locked && <Button variant="outlined" disabled={disabled}
-          className={styles.dangerAction}
-          onClick={() => onRemove(photo.id)}>{t("deletePhoto")}</Button>}
+        <Button variant="outlined" disabled={disabled} className={styles.dangerAction}
+          onClick={() => onRemove(photo.id)}>{t("deletePhoto")}</Button>
       </Flex>
     </div>
   </article>

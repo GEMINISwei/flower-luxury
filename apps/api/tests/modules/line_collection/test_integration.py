@@ -10,7 +10,7 @@ from modules.line_collection import model, service
 from modules.line_collection.config import LineSettings
 from modules.line_collection.rules import fingerprint
 from modules.line_collection.schema import GroupUpdate
-from modules.product_drafts import photos, review, rounds, storage
+from modules.product_drafts import collection, photos, review, storage
 from modules.product_drafts.model import MessageTable
 from modules.product_drafts.schema import VersionRequest
 from modules.product_drafts.service import get_draft, get_draft_list
@@ -198,8 +198,6 @@ async def test_unsend_after_moving_and_approval_requires_manual_review(db):
     await receive(event(second=1))
     await receive(event("text", event_id="text", message_id="text", second=2))
     await receive(event(event_id="image-b", message_id="image-b", second=3))
-    current = await rounds.current_collection("line:group-a")
-    await rounds.complete_collection(current.id)
     first = await model.message_link(fingerprint("group-a", "message-a").value)
     second = await model.message_link(fingerprint("group-a", "image-b").value)
     assert first is not None and second is not None
@@ -218,7 +216,8 @@ async def test_unsend_after_moving_and_approval_requires_manual_review(db):
             name="商品", brand_id=str(brand["id"]), category="包包", cost_price=3000,
         ),
     ), ACTOR)
-    target = await rounds.finalize_draft(target.id, VersionRequest(version=target.version), ACTOR)
+    target = await collection.complete_draft(target.id, VersionRequest(version=target.version),
+                                             ACTOR)
     result = await review.approve_draft(target.id, VersionRequest(version=target.version), ACTOR)
     await receive(event(event_type="unsend", event_id="unsend", second=5))
     group = await model.group_for("group-a")

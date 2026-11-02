@@ -61,15 +61,16 @@ async def approve_draft(id: str, form: VersionRequest, actor: CurrentUser) -> Ap
         if draft is None:
             return _approval(ensure_found(await model.approval_for(id), DraftError.NOT_FOUND))
         check_version(draft.version, form.version)
-        if (draft.collecting or draft.processing or draft.needs_confirmation
-                or (draft.collection_id is not None and draft.finalized_at is None)):
+        if draft.collecting or await model.messages_for(id, pending=True):
             raise LangException(409, DraftError.NOT_READY)
         try:
             fields = ProductCreate.model_validate(draft.fields)
         except ValidationError as error:
             raise LangException(422, DraftError.INVALID_FIELDS) from error
         rows = await model.photos_for(id)
-        if not rows or any(row.status != "ready" for row in rows):
+        # 加工較慢不擋建檔, 正式商品讀取時會由原圖補齊尺寸.
+        if not rows or any(row.status not in {"stored", "ready"} or not row.original_key
+                           for row in rows):
             raise LangException(409, DraftError.PHOTO_NOT_READY)
         main_index = next((index for index, row in enumerate(rows)
                            if row.id == draft.main_photo_id), 0)

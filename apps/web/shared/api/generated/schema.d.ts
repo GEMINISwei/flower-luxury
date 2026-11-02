@@ -197,74 +197,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/product-drafts/collections/current": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Current Collection Route */
-        get: operations["current_collection_route_api_product_drafts_collections_current_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/product-drafts/collections/{id}/complete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Complete Collection Route */
-        post: operations["complete_collection_route_api_product_drafts_collections__id__complete_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/product-drafts/issues": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Issues Route */
-        get: operations["list_issues_route_api_product_drafts_issues_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/product-drafts/issues/{id}/resolve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Resolve Issue Route */
-        post: operations["resolve_issue_route_api_product_drafts_issues__id__resolve_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/product-drafts/messages": {
         parameters: {
             query?: never;
@@ -310,23 +242,6 @@ export interface paths {
         put?: never;
         /** Move Message Route */
         post: operations["move_message_route_api_product_drafts_messages__id__move_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/product-drafts/messages/{id}/new-group": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Split Message Route */
-        post: operations["split_message_route_api_product_drafts_messages__id__new_group_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -384,23 +299,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/product-drafts/processing": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Processing Route */
-        get: operations["processing_route_api_product_drafts_processing_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/product-drafts/{id}": {
         parameters: {
             query?: never;
@@ -437,7 +335,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/product-drafts/{id}/finalize": {
+    "/api/product-drafts/{id}/complete": {
         parameters: {
             query?: never;
             header?: never;
@@ -446,8 +344,42 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Finalize Draft Route */
-        post: operations["finalize_draft_route_api_product_drafts__id__finalize_post"];
+        /** Complete Draft Route */
+        post: operations["complete_draft_route_api_product_drafts__id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/pending/{message_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept Pending Route */
+        post: operations["accept_pending_route_api_product_drafts__id__pending__message_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/pending/{message_id}/ignore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ignore Pending Route */
+        post: operations["ignore_pending_route_api_product_drafts__id__pending__message_id__ignore_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1189,61 +1121,6 @@ export interface components {
             /** Name */
             name: string;
         };
-        /** BufferedIssueInfo */
-        BufferedIssueInfo: {
-            /** Id */
-            id: string;
-            /**
-             * Kind
-             * @enum {string}
-             */
-            kind: "text" | "image" | "start" | "end";
-            /**
-             * Occurred At
-             * Format: date-time
-             */
-            occurred_at: string;
-            photo?: components["schemas"]["DraftPhotoInfo"] | null;
-            /** Source Key */
-            source_key: string;
-            /** Text */
-            text?: string | null;
-        };
-        /** BufferedIssueList */
-        BufferedIssueList: {
-            /** Has Next */
-            has_next: boolean;
-            /** Has Previous */
-            has_previous: boolean;
-            /** List Data */
-            list_data: components["schemas"]["BufferedIssueInfo"][];
-            /** Next Cursor */
-            next_cursor?: string | null;
-            /** Prev Cursor */
-            prev_cursor?: string | null;
-            /** Total Count */
-            total_count: number;
-        };
-        /** CollectionInfo */
-        CollectionInfo: {
-            /** Draft Ids */
-            draft_ids?: string[];
-            /** Id */
-            id?: string | null;
-            /**
-             * Message Count
-             * @default 0
-             */
-            message_count: number;
-            /** Source Key */
-            source_key: string;
-            /**
-             * Status
-             * @default collecting
-             * @enum {string}
-             */
-            status: "collecting" | "confirmation" | "finalized";
-        };
         /** DiscardInfo */
         DiscardInfo: {
             /** Id */
@@ -1279,11 +1156,6 @@ export interface components {
              */
             created_at: string;
             fields: components["schemas"]["DraftFields"];
-            /**
-             * Finalized
-             * @default false
-             */
-            finalized: boolean;
             /** Id */
             id: string;
             /** Main Photo Id */
@@ -1293,10 +1165,12 @@ export interface components {
             /** Messages */
             messages: components["schemas"]["MessageInfo"][];
             /**
-             * Needs Confirmation
-             * @default false
+             * Pending Count
+             * @default 0
              */
-            needs_confirmation: boolean;
+            pending_count: number;
+            /** Pending Messages */
+            pending_messages?: components["schemas"]["MessageInfo"][];
             /** Photos */
             photos: components["schemas"]["DraftPhotoInfo"][];
             /**
@@ -1327,20 +1201,10 @@ export interface components {
              * Format: date-time
              */
             received_at: string;
-            /**
-             * Requires Finalization
-             * @default false
-             */
-            requires_finalization: boolean;
             /** Selected Quote Id */
             selected_quote_id?: string | null;
             /** Source Key */
             source_key: string;
-            /**
-             * Source Locked
-             * @default false
-             */
-            source_locked: boolean;
             /** Updated At */
             updated_at?: string | null;
             /** Version */
@@ -1383,11 +1247,6 @@ export interface components {
             /** Url */
             url?: string | null;
         };
-        /** DraftProcessingInfo */
-        DraftProcessingInfo: {
-            /** Processing */
-            processing: boolean;
-        };
         /** DraftQuoteInfo */
         DraftQuoteInfo: {
             /** @default 1 */
@@ -1422,20 +1281,15 @@ export interface components {
              */
             created_at: string;
             fields: components["schemas"]["DraftFields"];
-            /**
-             * Finalized
-             * @default false
-             */
-            finalized: boolean;
             /** Id */
             id: string;
             /** Main Photo Id */
             main_photo_id?: string | null;
             /**
-             * Needs Confirmation
-             * @default false
+             * Pending Count
+             * @default 0
              */
-            needs_confirmation: boolean;
+            pending_count: number;
             /**
              * Processing
              * @default false
@@ -1446,18 +1300,8 @@ export interface components {
              * Format: date-time
              */
             received_at: string;
-            /**
-             * Requires Finalization
-             * @default false
-             */
-            requires_finalization: boolean;
             /** Source Key */
             source_key: string;
-            /**
-             * Source Locked
-             * @default false
-             */
-            source_locked: boolean;
             /** Updated At */
             updated_at?: string | null;
             /** Version */
@@ -1473,49 +1317,21 @@ export interface components {
         };
         /** GroupInfo */
         GroupInfo: {
-            /** Batch Ended At */
-            batch_ended_at?: string | null;
-            /** Batch Started At */
-            batch_started_at?: string | null;
-            /**
-             * Collecting
-             * @default false
-             */
-            collecting: boolean;
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
-            /** Current Round Id */
-            current_round_id?: string | null;
             /** Enabled */
             enabled: boolean;
             /** Group Id */
             group_id: string;
             /** Id */
             id: string;
-            /**
-             * Issue Count
-             * @default 0
-             */
-            issue_count: number;
-            /** Issues */
-            issues?: components["schemas"]["GroupIssue"][];
             /** Joined */
             joined: boolean;
             /** Name */
             name: string | null;
-            /**
-             * Processing
-             * @default false
-             */
-            processing: boolean;
-            /**
-             * Received Count
-             * @default 0
-             */
-            received_count: number;
             /**
              * Reply Failed
              * @default false
@@ -1523,16 +1339,6 @@ export interface components {
             reply_failed: boolean;
             /** Review Product Id */
             review_product_id: string | null;
-        };
-        /** GroupIssue */
-        GroupIssue: {
-            /**
-             * Occurred At
-             * Format: date-time
-             */
-            occurred_at: string;
-            /** Reason */
-            reason: string;
         };
         /** GroupList */
         GroupList: {
@@ -1921,18 +1727,6 @@ export interface components {
             /** Registration Key */
             registration_key: string;
         };
-        /** ResolveIssue */
-        ResolveIssue: {
-            /**
-             * Action
-             * @enum {string}
-             */
-            action: "attach" | "discard" | "new";
-            /** Target Draft Id */
-            target_draft_id?: string | null;
-            /** Target Version */
-            target_version?: number | null;
-        };
         /** RoleCreate */
         RoleCreate: {
             /** Name */
@@ -2071,8 +1865,6 @@ export interface components {
         };
         /** SourceInfo */
         SourceInfo: {
-            /** Current Round Id */
-            current_round_id?: string | null;
             /**
              * Enabled
              * @default false
@@ -2080,11 +1872,6 @@ export interface components {
             enabled: boolean;
             /** Name */
             name: string | null;
-            /**
-             * Received Count
-             * @default 0
-             */
-            received_count: number;
             /** Source Key */
             source_key: string;
         };
@@ -2694,142 +2481,10 @@ export interface operations {
             };
         };
     };
-    current_collection_route_api_product_drafts_collections_current_get: {
-        parameters: {
-            query: {
-                source_key: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CollectionInfo"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    complete_collection_route_api_product_drafts_collections__id__complete_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CollectionInfo"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_issues_route_api_product_drafts_issues_get: {
-        parameters: {
-            query: {
-                source_key?: string | null;
-                cursor?: string | null;
-                direction?: "next" | "prev";
-                limit: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BufferedIssueList"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    resolve_issue_route_api_product_drafts_issues__id__resolve_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ResolveIssue"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DiscardInfo"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_unassigned_route_api_product_drafts_messages_get: {
         parameters: {
             query: {
                 source_key?: string | null;
-                issues_only?: boolean;
                 cursor?: string | null;
                 direction?: "next" | "prev";
                 limit: number;
@@ -2903,41 +2558,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MessageMove"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DraftInfo"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    split_message_route_api_product_drafts_messages__id__new_group_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VersionRequest"];
             };
         };
         responses: {
@@ -3043,37 +2663,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    processing_route_api_product_drafts_processing_get: {
-        parameters: {
-            query?: {
-                source_key?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DraftProcessingInfo"];
                 };
             };
             /** @description Validation Error */
@@ -3225,12 +2814,84 @@ export interface operations {
             };
         };
     };
-    finalize_draft_route_api_product_drafts__id__finalize_post: {
+    complete_draft_route_api_product_drafts__id__complete_post: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_pending_route_api_product_drafts__id__pending__message_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ignore_pending_route_api_product_drafts__id__pending__message_id__ignore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                message_id: string;
             };
             cookie?: never;
         };

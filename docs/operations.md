@@ -70,9 +70,9 @@ line-collector 另限半核心 CPU，worker 與容器內健康檢查共用配額
 
 `line-collector` 與 API 使用同一個 image，容器名稱為 `${COMPOSE_PROJECT_NAME}-line-collector`，
 由 `make start` 一起啟動，不對外開 port。工作佇列放 PostgreSQL，檔案共用 uploads volume。
-目前執行商品暫存清理、防重送摘要到期、原圖下載、群組名稱查詢、定稿後圖片加工與 AI 預填。
+目前執行商品暫存清理、防重送摘要到期、原圖下載、群組名稱查詢、圖片加工與 AI 預填。
 LINE 金鑰都留空時停用 LINE 接線；啟用步驟見 [LINE 商品收集](features/line-collection.md)。
-店長啟用群組後即持續保存收件與原圖；人員於後台完成收集、確認分組並定稿後才開始加工，不需 LINE 指令。
+店長啟用群組後即持續保存收件與原圖，依 LINE 原始時間自動分組，不需 LINE 指令。
 
 用 `make services` 查看健康狀態，`make services logs line-collector` 追蹤紀錄。
 每五秒更新資料庫 worker 紀錄與本機 heartbeat，超過 30 秒未更新則 unhealthy；程序錯誤退出後由容器重新啟動。

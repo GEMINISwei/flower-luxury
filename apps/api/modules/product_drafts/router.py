@@ -9,24 +9,20 @@ from shared.auth.dependency import check_user_permission
 from shared.http.errors import LangException
 from shared.http.schema import PaginationParams, UuidText
 
-from . import draft_quotes, issues, messages, photos, review, rounds, service
-from .collection_schema import CollectionInfo
+from . import collection, draft_quotes, messages, pending, photos, review, service
 from .errors import DraftError
 from .quote_schema import DraftQuoteUpdate
 from .schema import (
     ApprovalInfo,
-    BufferedIssueList,
     DiscardInfo,
     DraftInfo,
     DraftList,
-    DraftProcessingInfo,
     DraftUpdate,
     MainPhoto,
     MessageList,
     MessageMove,
     NextReviewInfo,
     PhotoOrder,
-    ResolveIssue,
     SaleSelection,
     VersionRequest,
 )
@@ -34,32 +30,25 @@ from .schema import (
 router = APIRouter(prefix="/product-drafts", tags=["product-drafts"])
 
 
-@router.get("/collections/current")
-async def current_collection_route(source_key: str,
-    _: CurrentUser = Depends(check_user_permission()),
-) -> CollectionInfo:
-    return await rounds.current_collection(source_key)
-
-
-@router.post("/collections/{id}/complete")
-async def complete_collection_route(id: UuidText,
-    _: CurrentUser = Depends(check_user_permission()),
-) -> CollectionInfo:
-    return await rounds.complete_collection(id)
-
-
-@router.post("/{id}/finalize")
-async def finalize_draft_route(id: UuidText, form: VersionRequest,
+@router.post("/{id}/complete")
+async def complete_draft_route(id: UuidText, form: VersionRequest,
     actor: CurrentUser = Depends(check_user_permission()),
 ) -> DraftInfo:
-    return await rounds.finalize_draft(id, form, actor)
+    return await collection.complete_draft(id, form, actor)
 
 
-@router.post("/messages/{id}/new-group")
-async def split_message_route(id: UuidText, form: VersionRequest,
+@router.post("/{id}/pending/{message_id}/accept")
+async def accept_pending_route(id: UuidText, message_id: UuidText, form: VersionRequest,
     actor: CurrentUser = Depends(check_user_permission()),
 ) -> DraftInfo:
-    return await rounds.split_message(id, form, actor)
+    return await pending.accept_message(id, message_id, form, actor)
+
+
+@router.post("/{id}/pending/{message_id}/ignore")
+async def ignore_pending_route(id: UuidText, message_id: UuidText, form: VersionRequest,
+    actor: CurrentUser = Depends(check_user_permission()),
+) -> DraftInfo:
+    return await pending.ignore_message(id, message_id, form, actor)
 
 
 @router.patch("/{id}/sale-selection")
@@ -68,30 +57,10 @@ async def select_sale_route(id: UuidText, form: SaleSelection,
     return await draft_quotes.select_sale(id, form, actor)
 
 
-@router.get("/processing")
-async def processing_route(
-    source_key: str | None = None, _: CurrentUser = Depends(check_user_permission()),
-) -> DraftProcessingInfo:
-    return await service.processing_state(source_key)
-
-
 @router.get("/next-review")
 async def next_review_route(source_key: str | None = None,
                             _: CurrentUser = Depends(check_user_permission())) -> NextReviewInfo:
     return await service.next_review(source_key)
-
-
-@router.get("/issues")
-async def list_issues_route(pagination: Annotated[PaginationParams, Depends()],
-                            source_key: str | None = None,
-                            _: CurrentUser = Depends(check_user_permission())) -> BufferedIssueList:
-    return await issues.get_issues(**pagination.model_dump(), source_key=source_key)
-
-
-@router.post("/issues/{id}/resolve")
-async def resolve_issue_route(id: UuidText, form: ResolveIssue,
-                              actor: CurrentUser = Depends(check_user_permission())) -> DiscardInfo:
-    return await issues.resolve_issue(id, form, actor)
 
 
 @router.post("/{id}/quotes")
@@ -140,11 +109,9 @@ async def get_drafts_route(
 @router.get("/messages")
 async def get_unassigned_route(
     pagination: Annotated[PaginationParams, Depends()], source_key: str | None = None,
-    issues_only: bool = False,
     _: CurrentUser = Depends(check_user_permission()),
 ) -> MessageList:
-    return await messages.get_unassigned_messages(**pagination.model_dump(), source_key=source_key,
-                                                  issues_only=issues_only)
+    return await messages.get_unassigned_messages(**pagination.model_dump(), source_key=source_key)
 
 
 @router.delete("/messages/{id}")

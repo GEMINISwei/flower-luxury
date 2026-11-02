@@ -87,7 +87,7 @@ class IngestResult(BaseModel):
     message_id: str | None = None
     draft_id: str | None = None
     duplicate: bool = False
-    unassigned: bool = False
+    pending: bool = False
 
 
 class MessageInfo(BaseModel):
@@ -128,10 +128,7 @@ class DraftSummary(BaseModel):
     main_photo_id: str | None = None
     collecting: bool
     processing: bool = False
-    needs_confirmation: bool = False
-    requires_finalization: bool = False
-    finalized: bool = False
-    source_locked: bool = False
+    pending_count: int = 0
     received_at: UtcDateTime
     created_at: UtcDateTime
     updated_at: UtcDateTime | None = None
@@ -143,6 +140,7 @@ class DraftQuoteInfo(QuoteCreate):
 
 class DraftInfo(DraftSummary):
     messages: list[MessageInfo]
+    pending_messages: list[MessageInfo] = Field(default_factory=list)
     photos: list[DraftPhotoInfo]
     manual_fields: list[str] = Field(default_factory=list)
     quotes: list[DraftQuoteInfo] = Field(default_factory=list)
@@ -158,29 +156,6 @@ class DraftList(PaginatedResponse[DraftSummary]):
 
 class NextReviewInfo(BaseModel):
     id: str | None
-
-
-class DraftProcessingInfo(BaseModel):
-    processing: bool
-
-
-class BufferedIssueInfo(BaseModel):
-    id: str
-    source_key: str
-    occurred_at: UtcDateTime
-    kind: Literal["text", "image", "start", "end"]
-    text: str | None = None
-    photo: DraftPhotoInfo | None = None
-
-
-class BufferedIssueList(PaginatedResponse[BufferedIssueInfo]):
-    pass
-
-
-class ResolveIssue(BaseModel):
-    action: Literal["attach", "discard", "new"]
-    target_draft_id: UuidText | None = None
-    target_version: int | None = Field(default=None, ge=1)
 
 
 class PhotoCompletion(BaseModel):
@@ -207,32 +182,6 @@ class StoredFile(BaseModel):
     filename: str
 
 
-class CollectionDecision(BaseModel):
-    assign: bool
-    start_new: bool
-
-
 class WithdrawalResult(BaseModel):
     removed: bool = False
     product_id: str | None = None
-
-
-class BatchIssueInfo(BaseModel):
-    occurred_at: UtcDateTime
-    reason: str
-
-
-class BatchState(BaseModel):
-    collecting: bool = False
-    processing: bool = False
-    current_round_id: str | None = None
-    received_count: int = 0
-    batch_started_at: UtcDateTime | None = None
-    batch_ended_at: UtcDateTime | None = None
-    issue_count: int = 0
-    issues: list[BatchIssueInfo] = Field(default_factory=list)
-
-
-class BatchControl(BaseModel):
-    result: Literal["started", "already_collecting", "stopped", "already_stopped", "unsafe",
-                    "queued_start", "queued_end"]

@@ -3,11 +3,10 @@ from typing import Literal
 
 from modules.product_drafts.public import (
     IncomingMessage,
-    finish_collection,
-    get_collection_state,
+    complete_source,
+    ingest_message,
     withdraw_message,
 )
-from modules.product_drafts.public import receive_message as ingest_message
 from shared.db.session import active_session
 from shared.db.table import parse_uuid
 from shared.db.transaction import transaction
@@ -23,19 +22,12 @@ from .schema import GroupInfo, GroupList, GroupUpdate, LineEvent, SourceList, We
 
 
 async def list_sources() -> SourceList:
-    listing = await model.source_list()
-    for item in listing.list_data:
-        state = await get_collection_state(item.source_key)
-        item.current_round_id, item.received_count = state.current_round_id, state.received_count
-    return listing
+    return await model.source_list()
 
 
 async def list_groups(limit: int = 20, cursor: str | None = None,
                       direction: Literal["next", "prev"] = "next") -> GroupList:
-    page = await model.group_page(limit, cursor, direction)
-    for row in page["list_data"]:
-        row.update((await get_collection_state(f"line:{row['group_id']}")).model_dump())
-    return GroupList.model_validate(page)
+    return GroupList.model_validate(await model.group_page(limit, cursor, direction))
 
 
 async def update_group(id: str, form: GroupUpdate) -> GroupInfo:
@@ -51,14 +43,13 @@ async def update_group(id: str, form: GroupUpdate) -> GroupInfo:
 
 
 async def _group_info(row: model.GroupTable) -> GroupInfo:
-    state = await get_collection_state(f"line:{row.group_id}")
-    return GroupInfo.model_validate({**row.to_dict(), **state.model_dump()})
+    return GroupInfo.model_validate(row.to_dict())
 
 
 async def stop_group(id: str) -> GroupInfo:
     async with transaction():
         row = ensure_found(await model.get_group(id, lock=True), LineError.NOT_FOUND)
-        await finish_collection(f"line:{row.group_id}", utc_now())
+        await complete_source(f"line:{row.group_id}")
         return await _group_info(row)
 
 

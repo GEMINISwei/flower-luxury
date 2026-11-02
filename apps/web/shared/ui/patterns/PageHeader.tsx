@@ -20,9 +20,19 @@ function headerActions(actions: PageHeaderAction[]) {
   return { visible, overflow: actions.filter((item) => !visible.includes(item)) }
 }
 
+// 重新整理後的資料從第一筆開始, 停在原本的捲動位置會看到中段而誤以為沒有更新.
+function scrollToTopOnRefresh(action: PageHeaderAction): PageHeaderAction {
+  if (!action.refresh) return action
+  return { ...action, onClick: () => {
+    window.scrollTo({ top: 0 })
+    action.onClick?.()
+  } }
+}
+
 export default function PageHeader({ title, subtitle, actions = [] }: PageHeaderProps) {
   const { visible, overflow } = headerActions(
-    (actions ?? []).filter((item): item is PageHeaderAction => Boolean(item)),
+    (actions ?? []).filter((item): item is PageHeaderAction => Boolean(item))
+      .map(scrollToTopOnRefresh),
   )
   return (
     <header className={styles.pageHeader}>

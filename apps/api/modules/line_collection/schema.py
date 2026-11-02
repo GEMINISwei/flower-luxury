@@ -49,11 +49,6 @@ class GroupUpdate(BaseModel):
     enabled: bool = Field(strict=True)
 
 
-class GroupIssue(BaseModel):
-    occurred_at: UtcDateTime
-    reason: str
-
-
 class GroupInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
@@ -63,14 +58,6 @@ class GroupInfo(BaseModel):
     joined: bool
     created_at: UtcDateTime
     review_product_id: str | None
-    collecting: bool = False
-    processing: bool = False
-    current_round_id: str | None = None
-    received_count: int = 0
-    batch_started_at: UtcDateTime | None = None
-    batch_ended_at: UtcDateTime | None = None
-    issue_count: int = 0
-    issues: list[GroupIssue] = Field(default_factory=list)
     reply_failed: bool = False
 
 
@@ -82,8 +69,6 @@ class SourceInfo(BaseModel):
     source_key: str
     name: str | None
     enabled: bool = False
-    current_round_id: str | None = None
-    received_count: int = 0
 
 
 class SourceList(BaseModel):

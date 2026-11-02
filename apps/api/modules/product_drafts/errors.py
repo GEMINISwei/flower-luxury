@@ -5,10 +5,8 @@ class DraftError(BaseError):
     INVALID_SALE_QUOTE = LangText(zh="選定的成交報價已不存在，請重新選擇。",
                                   en="The selected sale quote is unavailable. Select it again.")
 
-    NOT_READY = LangText(zh="商品仍在收集、處理中或有待確認訊息，暫時無法審核建檔。",
-                         en="Collection, processing or message review must finish before approval.")
-    INVALID_TARGET = LangText(zh="請選擇可整理的目標商品。",
-                              en="Choose an editable target draft.")
+    NOT_READY = LangText(zh="商品仍在收集、原圖尚未齊全或有待加入訊息，暫時無法審核建檔。",
+                         en="Finish collection, original photos and late messages before approval.")
     PREFILL_UNAVAILABLE = LangText(
         zh="AI 預填暫時無法使用，請確認金鑰或稍後重試。",
         en="AI prefill is unavailable. Check the API key or retry later.")
