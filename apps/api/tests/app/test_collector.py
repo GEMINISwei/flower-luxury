@@ -4,6 +4,7 @@ import signal
 import pytest
 
 from app import collector
+from shared.jobs import maintenance
 from shared.jobs.contracts import Job, TaskSpec
 from shared.module import ModuleManifest
 
@@ -49,7 +50,7 @@ async def test_collector_loads_tasks_and_disposes_engine_on_exit(monkeypatch, fa
                         lambda name, callback: signals.append((name, callback)))
 
     async def serve(tasks, stop, path):
-        assert tasks == {task.name: task}
+        assert tasks == {task.name: task, maintenance.CLEANUP_TASK.name: maintenance.CLEANUP_TASK}
         assert seen["engine"] is engine
         assert {name for name, _ in signals} == {signal.SIGINT, signal.SIGTERM}
         for _, callback in signals:
