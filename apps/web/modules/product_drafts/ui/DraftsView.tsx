@@ -14,6 +14,7 @@ import DraftFilters from "./DraftFilters"
 import styles from "./drafts.module.css"
 import { draftQueueHref, draftStage } from "../capabilities"
 import DraftQueueNotice from "./DraftQueueNotice"
+import CollectionPanel from "./CollectionPanel"
 
 type ListResult<T> = { items: T[]; meta: ApiListMeta; errorMessage: string }
 export default function DraftsView({ drafts, sources, source, seq, limit, sourceError,
@@ -44,6 +45,7 @@ export default function DraftsView({ drafts, sources, source, seq, limit, source
       open={filterOpen} onClose={() => setFilterOpen(false)} />
     <div className={styles.stack}>
       <DraftQueueNotice created={created} completed={completed} />
+      <CollectionPanel sources={sources} scope={source} />
       {processing && <p role="status">{t("queueProcessing")}</p>}
       {error && <ErrorState>{error}<Button variant="outlined"
         onClick={() => router.refresh()}>{t("retry")}</Button></ErrorState>}
@@ -60,6 +62,8 @@ export default function DraftsView({ drafts, sources, source, seq, limit, source
           <td data-label={t("actions")}>
             {draftStage(draft) === "waiting" ? <Link href={draftQueueHref(draft.id, source)}>
               <Button as="span" variant="outlined">{t("open")}</Button></Link>
+              : draftStage(draft) === "needsFinalization" ? <Link href={draftQueueHref(draft.id, source)}>
+                {t("reviewGrouping")}</Link>
               : draftStage(draft) === "needsConfirmation" ? <Link
                 href={`/product-drafts/issues?source_key=${encodeURIComponent(draft.source_key)}`}>
                 {t("reviewIssues")}</Link>

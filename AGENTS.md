@@ -83,7 +83,7 @@
 |---|---|
 | 任何程式碼 | `make check` |
 | model 的欄位、索引、約束 | `make db migration "說明"`（或併進上次發版後新增、同一個功能的那支），讀過產出，再 `make check integration` |
-| 跟資料庫互動的後端程式 | `make check integration`（`make check` 裡 integration 會 skip） |
+| 跟資料庫互動的後端程式 | `make check integration`（完整 `make check` 已使用拋棄式 PostgreSQL；快速 `make check test` 才會 skip） |
 | 登入、導向、權限、cookie、nginx、compose | `make check e2e`（`make check` 不含它） |
 | 後端 schema、權限、語系 | `make gen-types`，兩份產出一起 commit |
 | 發版（跟 tag 對齊的只有 `APP_VERSION` 與 CHANGELOG） | `make release <版號>`，不要手動改；`package.json`、`pyproject.toml`、lock 檔與 OpenAPI 的 `info.version` 不跟發版（[說明](docs/operations.md#自動部署)） |

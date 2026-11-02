@@ -25,8 +25,9 @@ export default function DraftIssues({ issues, drafts, source, seq, error }: {
   const [selected, setSelected] = useState<Record<string, string>>({})
   const [failure, setFailure] = useState("")
   const [removing, setRemoving] = useState<Issue | null>(null)
-  const targets = drafts.filter((draft) => !draft.collecting && !draft.processing)
-  function resolve(issue: Issue, action: "attach" | "discard") {
+  const targets = drafts.filter((draft) => !draft.collecting && !draft.processing
+    && !draft.finalized)
+  function resolve(issue: Issue, action: "attach" | "discard" | "new") {
     const target = targets.find((draft) => draft.id === selected[issue.id]
       && draft.source_key === issue.source_key)
     if (action === "attach" && !target) return
@@ -64,6 +65,8 @@ export default function DraftIssues({ issues, drafts, source, seq, error }: {
             }))]} />
           <Button disabled={pending || !selected[issue.id]} onClick={() => resolve(issue, "attach")}>
             {t("attach")}</Button>
+          <Button variant="outlined" disabled={pending} onClick={() => resolve(issue, "new")}>
+            {t("newGroup")}</Button>
         </>}
         <Button variant="outlined" disabled={pending} onClick={() => setRemoving(issue)}>
           {t("discard")}</Button>

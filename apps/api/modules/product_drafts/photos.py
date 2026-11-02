@@ -18,7 +18,7 @@ from shared.http.errors import LangException, ensure_found
 from shared.jobs.processes import ProcessExecutionError, run_process
 from shared.time import utc_now
 
-from . import model, storage
+from . import model, raw_photos, storage
 from .errors import DraftError
 from .rules import check_version
 from .schema import DraftInfo, MainPhoto, PhotoCompletion, PhotoOrder, StoredFile, VersionRequest
@@ -28,6 +28,9 @@ from .service import _bump, _photo_info, get_draft
 async def upload_photos(
     id: str, version: int, files: list[UploadFile], actor: CurrentUser,
 ) -> DraftInfo:
+    current = ensure_found(await model.get_draft_row(id), DraftError.NOT_FOUND)
+    if current.collection_id is not None:
+        return await raw_photos.upload_originals(id, version, files, actor)
     prepared = await read_batch(files, too_large_status=413)
     keys: list[str] = []
     try:
@@ -99,6 +102,9 @@ async def _touch_draft(row: model.PhotoTable) -> None:
     if row.draft_id:
         draft = await model.get_draft_row(str(row.draft_id))
         if draft:
+            if draft.finalized_at is not None:
+                draft.processing = any(item.status in {"pending", "stored"}
+                                       for item in await model.photos_for(str(draft.id)))
             _bump(draft)
 
 
@@ -117,8 +123,14 @@ async def mark_photo_failed(id: str | None) -> PhotoCompletion:
 
 async def read_photo(id: str, *, original: bool = False, size: PhotoSize = "full") -> StoredFile:
     row = ensure_found(await model.get_photo_row(id), DraftError.NOT_FOUND)
-    if row.status != "ready":
+    if row.status not in {"stored", "ready"}:
         raise LangException(409, DraftError.PHOTO_NOT_READY)
+    if row.status == "stored":
+        path = storage._path(ensure_found(row.original_key, DraftError.NOT_FOUND))
+        exists = await run_in_threadpool(path.is_file)
+        ensure_found(exists or None, DraftError.NOT_FOUND)
+        return StoredFile(path=path, media_type=row.media_type or "application/octet-stream",
+                          filename=row.filename or "original.bin")
     key = ensure_found(row.original_key if original else row.display_key, DraftError.NOT_FOUND)
     path = storage._path(key)
     if original:
@@ -168,6 +180,8 @@ async def set_main_photo(id: str, form: MainPhoto) -> DraftInfo:
 async def delete_photo(id: str, photo_id: str, form: VersionRequest) -> DraftInfo:
     async with transaction():
         draft, rows = await _owned(id, form.version)
+        if draft.collection_id is not None and draft.finalized_at is not None:
+            raise LangException(409, DraftError.NOT_READY)
         photo = ensure_found(next((row for row in rows if str(row.id) == photo_id), None),
                              DraftError.NOT_FOUND)
         message = ensure_found(

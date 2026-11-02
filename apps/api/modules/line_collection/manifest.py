@@ -1,17 +1,14 @@
 from shared.jobs.contracts import TaskSpec
 from shared.module import ModuleManifest
 
-from .jobs import download_photo, expire_receipt, expire_reply, refresh_group_name, send_reply
-from .model import EventReceiptTable, GroupTable, MessageLinkTable, ReplyTable
+from .jobs import download_photo, expire_receipt, refresh_group_name
+from .model import EventReceiptTable, GroupTable, MessageLinkTable
 from .router import router
 
 MODULE = ModuleManifest(
     name="line_collection", routers=(router,),
-    tables=(GroupTable, EventReceiptTable, MessageLinkTable, ReplyTable),
+    tables=(GroupTable, EventReceiptTable, MessageLinkTable),
     tasks=(TaskSpec("line_collection.download", download_photo, queue="downloads"),
            TaskSpec("line_collection.group_name", refresh_group_name),
-           TaskSpec("line_collection.expire", expire_receipt, queue="maintenance"),
-           TaskSpec("line_collection.reply", send_reply, max_attempts=1, timeout_seconds=10,
-                    queue="replies"),
-           TaskSpec("line_collection.expire_reply", expire_reply, queue="maintenance")),
+           TaskSpec("line_collection.expire", expire_receipt, queue="maintenance")),
 )

@@ -36,6 +36,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      COMPOSE_PROJECT_NAME: ${{ github.event.repository.name }}
     steps:
       - uses: actions/checkout@v7
         with:

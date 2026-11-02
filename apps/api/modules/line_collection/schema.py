@@ -65,6 +65,8 @@ class GroupInfo(BaseModel):
     review_product_id: str | None
     collecting: bool = False
     processing: bool = False
+    current_round_id: str | None = None
+    received_count: int = 0
     batch_started_at: UtcDateTime | None = None
     batch_ended_at: UtcDateTime | None = None
     issue_count: int = 0
@@ -79,6 +81,9 @@ class GroupList(PaginatedResponse[GroupInfo]):
 class SourceInfo(BaseModel):
     source_key: str
     name: str | None
+    enabled: bool = False
+    current_round_id: str | None = None
+    received_count: int = 0
 
 
 class SourceList(BaseModel):

@@ -16,6 +16,5 @@ export default function GroupBatchState({ group }: { group: GroupInfo }) {
       <ul>{(group.issues ?? []).map((issue, index) => <li key={`${issue.occurred_at}-${index}`}>
         {formatDateTime(issue.occurred_at, "Asia/Taipei")} — {issue.reason}</li>)}</ul>
     </div>}
-    {group.reply_failed && <p className={styles.notice}>{t("replyFailed")}</p>}
   </div>
 }

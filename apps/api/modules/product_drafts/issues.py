@@ -5,7 +5,7 @@ from shared.db.session import active_session
 from shared.db.transaction import transaction
 from shared.http.errors import LangException, ensure_found
 
-from . import messages, model
+from . import grouping, messages, model
 from .errors import DraftError
 from .schema import BufferedIssueInfo, BufferedIssueList, DiscardInfo, MessageMove, ResolveIssue
 from .service import _photo_info
@@ -32,12 +32,20 @@ async def resolve_issue(id: str, form: ResolveIssue, actor: CurrentUser) -> Disc
         event = ensure_found(await model.get_buffered_event(id, lock=True), DraftError.NOT_FOUND)
         if event.status != "issue":
             raise LangException(409, DraftError.NOT_READY)
-        if form.action == "attach":
+        if form.action == "new":
+            if event.message_id is None:
+                raise LangException(422, DraftError.INVALID_TARGET)
+            await model.stream_for(event.source_key)
+            message = ensure_found(await model.get_message_row(str(event.message_id), lock=True),
+                                   DraftError.NOT_FOUND)
+            collection = await grouping._collection_for_message(message)
+            await grouping._new_group([message], collection, actor)
+        elif form.action == "attach":
             if not event.message_id or not form.target_draft_id or form.target_version is None:
                 raise LangException(422, DraftError.INVALID_TARGET)
             target = ensure_found(await model.get_draft_row(form.target_draft_id),
                                   DraftError.NOT_FOUND)
-            if target.collecting or target.processing:
+            if target.collecting or target.processing or getattr(target, "finalized_at", None):
                 raise LangException(409, DraftError.NOT_READY)
             await messages.move_message(str(event.message_id), MessageMove(
                 target_draft_id=form.target_draft_id, target_version=form.target_version), actor)

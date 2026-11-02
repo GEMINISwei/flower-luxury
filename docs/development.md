@@ -71,7 +71,7 @@ make services [volumes|logs [服務]|restart|down]   # 不帶參數 = 版本與 
 make backup                                  # 資料庫與上傳檔案一起備份，期間對外服務暫停
 make db   psql|restore [檔案]|reset|migrate|migration "說明"|superuser
 make uploads restore [檔案]
-make check [lint|contract|migrate|types|test|build|integration|e2e]   # 不帶參數 = 前六項，送出前跑
+make check [lint|contract|migrate|types|test|build|integration|e2e]   # 完整檢查含拋棄式 PostgreSQL，送出前跑
 make gen-types                               # 改過後端 schema／權限／語系後必跑
 ```
 

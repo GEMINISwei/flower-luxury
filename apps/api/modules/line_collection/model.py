@@ -75,10 +75,11 @@ async def group_page(limit: int, cursor: str | None,
 
 
 async def source_list() -> SourceList:
-    rows = await active_session().execute(select(GroupTable.group_id, GroupTable.name)
+    rows = await active_session().execute(select(GroupTable.group_id, GroupTable.name,
+                                                 GroupTable.enabled)
                                           .order_by(GroupTable.created_at, GroupTable.id))
-    return SourceList(list_data=[SourceInfo(source_key=f"line:{id}", name=name)
-                                 for id, name in rows])
+    return SourceList(list_data=[SourceInfo(source_key=f"line:{id}", name=name, enabled=enabled)
+                                 for id, name, enabled in rows])
 
 
 async def receipt_exists(digest: str) -> bool:
@@ -126,11 +127,3 @@ async def clear_download_id(id: str) -> None:
     if link:
         link.external_id = None
         await active_session().flush()
-
-
-class ReplyTable(BaseTable):
-    __tablename__ = "line_command_replies"
-    group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("line_groups.id", ondelete="CASCADE"))
-    reply_token: Mapped[str] = mapped_column(String(200))
-    text: Mapped[str]
-    expires_at: Mapped[datetime]

@@ -1,7 +1,8 @@
 # 測試
 
 ```bash
-make check test                             # 前後端全部（帶覆蓋率）
+make check                                  # 完整前後端、拋棄式 PostgreSQL、migration、覆蓋率與 build
+make check test                             # 快速前後端；不啟動資料庫，不檢查完整後端覆蓋率
 make check integration                      # 起拋棄式 PostgreSQL 跑 integration + alembic check
 make check e2e                              # 起拋棄式的正式環境，用 Playwright 從瀏覽器跑過整條路
 cd apps/api && uv run pytest tests/ -k xxx  # 只跑後端某些測試
@@ -68,8 +69,8 @@ cd apps/web && npm run test:watch           # 前端 watch 模式
 - **後端單元測試**：`tests/modules/conftest.py` 的 `client` fixture 直接打 app，service 與資料表
   方法用 monkeypatch 換掉，不需要資料庫（例：`tests/modules/users/test_routes.py`）。
 - **後端 integration 測試**：標 `@pytest.mark.integration`，用 `tests/integration.py` 的
-  `require_postgres` 拿資料庫。本機沒資料庫時會 skip（`make check test` 結尾會提醒），
-  CI 上 skip 視為失敗。
+  `require_postgres` 拿資料庫。快速 `make check test` 沒資料庫時會 skip（結尾會提醒）；
+  完整 `make check` 與 `make check integration` 使用拋棄式 PostgreSQL，連線失敗視為失敗。
 - **前端**：Vitest + Testing Library。`.server.ts` 一樣能測：`server-only` 在測試裡換成空模組，
   Next 的請求上下文（`cookies`、`headers`、`redirect`）用 `vi.mock` 換掉
   （例：`tests/shared/api/request.server.test.ts`）。
@@ -148,3 +149,6 @@ PR 描述「驗證」段的每條驗收條件後面接一個測試名稱與結�
 
 覆蓋率門檻（`pyproject.toml` 的 `fail_under`、`vitest.config.ts` 的 `thresholds`）是**防退步的地板，
 不是目標**。
+
+完整 `make check` 與 `make check integration` 維持後端 74% 門檻，涵蓋真實交易與並發測試。
+快速 `make check test` 只用於開發迴圈，不取代完整驗證；前端覆蓋率門檻在兩者都保留。

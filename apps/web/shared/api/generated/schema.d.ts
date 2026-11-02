@@ -197,6 +197,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/product-drafts/collections/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current Collection Route */
+        get: operations["current_collection_route_api_product_drafts_collections_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/collections/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Collection Route */
+        post: operations["complete_collection_route_api_product_drafts_collections__id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/product-drafts/issues": {
         parameters: {
             query?: never;
@@ -276,6 +310,23 @@ export interface paths {
         put?: never;
         /** Move Message Route */
         post: operations["move_message_route_api_product_drafts_messages__id__move_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/messages/{id}/new-group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Split Message Route */
+        post: operations["split_message_route_api_product_drafts_messages__id__new_group_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -380,6 +431,23 @@ export interface paths {
         put?: never;
         /** Approve Draft Route */
         post: operations["approve_draft_route_api_product_drafts__id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/product-drafts/{id}/finalize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finalize Draft Route */
+        post: operations["finalize_draft_route_api_product_drafts__id__finalize_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1156,6 +1224,26 @@ export interface components {
             /** Total Count */
             total_count: number;
         };
+        /** CollectionInfo */
+        CollectionInfo: {
+            /** Draft Ids */
+            draft_ids?: string[];
+            /** Id */
+            id?: string | null;
+            /**
+             * Message Count
+             * @default 0
+             */
+            message_count: number;
+            /** Source Key */
+            source_key: string;
+            /**
+             * Status
+             * @default collecting
+             * @enum {string}
+             */
+            status: "collecting" | "confirmation" | "finalized";
+        };
         /** DiscardInfo */
         DiscardInfo: {
             /** Id */
@@ -1191,6 +1279,11 @@ export interface components {
              */
             created_at: string;
             fields: components["schemas"]["DraftFields"];
+            /**
+             * Finalized
+             * @default false
+             */
+            finalized: boolean;
             /** Id */
             id: string;
             /** Main Photo Id */
@@ -1221,7 +1314,7 @@ export interface components {
              * @default idle
              * @enum {string}
              */
-            prefill_status: "idle" | "disabled" | "queued" | "ready" | "failed";
+            prefill_status: "idle" | "disabled" | "queued" | "ready" | "failed" | "unknown";
             /**
              * Processing
              * @default false
@@ -1234,10 +1327,20 @@ export interface components {
              * Format: date-time
              */
             received_at: string;
+            /**
+             * Requires Finalization
+             * @default false
+             */
+            requires_finalization: boolean;
             /** Selected Quote Id */
             selected_quote_id?: string | null;
             /** Source Key */
             source_key: string;
+            /**
+             * Source Locked
+             * @default false
+             */
+            source_locked: boolean;
             /** Updated At */
             updated_at?: string | null;
             /** Version */
@@ -1276,7 +1379,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "pending" | "ready" | "failed";
+            status: "pending" | "stored" | "ready" | "failed";
             /** Url */
             url?: string | null;
         };
@@ -1319,6 +1422,11 @@ export interface components {
              */
             created_at: string;
             fields: components["schemas"]["DraftFields"];
+            /**
+             * Finalized
+             * @default false
+             */
+            finalized: boolean;
             /** Id */
             id: string;
             /** Main Photo Id */
@@ -1338,8 +1446,18 @@ export interface components {
              * Format: date-time
              */
             received_at: string;
+            /**
+             * Requires Finalization
+             * @default false
+             */
+            requires_finalization: boolean;
             /** Source Key */
             source_key: string;
+            /**
+             * Source Locked
+             * @default false
+             */
+            source_locked: boolean;
             /** Updated At */
             updated_at?: string | null;
             /** Version */
@@ -1369,6 +1487,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Current Round Id */
+            current_round_id?: string | null;
             /** Enabled */
             enabled: boolean;
             /** Group Id */
@@ -1391,6 +1511,11 @@ export interface components {
              * @default false
              */
             processing: boolean;
+            /**
+             * Received Count
+             * @default 0
+             */
+            received_count: number;
             /**
              * Reply Failed
              * @default false
@@ -1802,7 +1927,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "attach" | "discard";
+            action: "attach" | "discard" | "new";
             /** Target Draft Id */
             target_draft_id?: string | null;
             /** Target Version */
@@ -1946,8 +2071,20 @@ export interface components {
         };
         /** SourceInfo */
         SourceInfo: {
+            /** Current Round Id */
+            current_round_id?: string | null;
+            /**
+             * Enabled
+             * @default false
+             */
+            enabled: boolean;
             /** Name */
             name: string | null;
+            /**
+             * Received Count
+             * @default 0
+             */
+            received_count: number;
             /** Source Key */
             source_key: string;
         };
@@ -2557,6 +2694,68 @@ export interface operations {
             };
         };
     };
+    current_collection_route_api_product_drafts_collections_current_get: {
+        parameters: {
+            query: {
+                source_key: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_collection_route_api_product_drafts_collections__id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_issues_route_api_product_drafts_issues_get: {
         parameters: {
             query: {
@@ -2704,6 +2903,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MessageMove"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    split_message_route_api_product_drafts_messages__id__new_group_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
             };
         };
         responses: {
@@ -2978,6 +3212,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApprovalInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    finalize_draft_route_api_product_drafts__id__finalize_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
                 };
             };
             /** @description Validation Error */

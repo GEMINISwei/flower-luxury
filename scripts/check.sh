@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# 檢查與測試: make check [lint|contract|migrate|types|test|build|integration|e2e] (不帶參數 = 前六項依序全跑)
+# 檢查與測試: make check [lint|contract|migrate|types|test|build|integration|e2e]
 #
-#   make check               lint → contract → migrate → types → test → build, 前後端都跑, 不需要 Docker (送出前跑這個)
+#   make check               前後端完整檢查, 使用拋棄式 PostgreSQL (需要 Docker)
 #   make check lint          ruff + import-linter + eslint + dependency-cruiser + knip + shellcheck + compose 檔
 #   make check contract      重產契約與前端型別到暫存目錄, 確認與 repo 裡的一致 (只讀, 不改檔)
 #   make check migrate       已發版的 migration 沒有被修改或刪除 (和最近的 release tag 比對)
 #   make check types         mypy + tsc
-#   make check test          pytest + vitest (帶覆蓋率), 沒有資料庫的 integration 測試會 skip
+#   make check test          快速 pytest + vitest, 不啟動資料庫, 完整後端覆蓋率由 integration 擋
 #   make check build         前端 production build, 並確認 Next 有認到 proxy.ts
 #   make check integration   起拋棄式 PostgreSQL 跑完整後端測試, 再確認 model 與 migration 一致
 #   make check e2e           起一套拋棄式的正式環境, 用 Playwright 從瀏覽器跑過整條路 (e2e/)
@@ -52,7 +52,7 @@ warn_git_hooks() {
     echo "   或 git config core.hooksPath .githooks。"
 }
 
-# 本機沒裝工具時只提醒、不擋 (`make check` 的承諾是不需要額外安裝); CI 上 (GitHub 會設
+# 本機沒裝選用的 lint 工具時只提醒, 不擋; CI 上 (GitHub 會設
 # CI=true) 一律當成失敗, 否則整項檢查會在沒人發現的情況下消失。
 missing_tool() {
     if [ -n "${CI:-}" ]; then
@@ -114,7 +114,7 @@ run_test() {
     # 後端輸出同時留一份下來數 skip。用 tee: 測試跑的時候要看得到進度。
     local log
     log="$(mktemp)"
-    (cd apps/api && uv run pytest tests/ -q --cov --cov-report=) | tee "${log}" || coverage_hint
+    (cd apps/api && uv run pytest tests/ -q) | tee "${log}" || exit 1
     (cd apps/web && npm run --silent test:coverage)
 
     # skip 的 exit code 是 0, 不講的話「資料庫沒起來」跟「全部通過」看起來一樣。
@@ -124,7 +124,7 @@ run_test() {
     if [ -n "${skipped}" ] && [ "${skipped}" -gt 0 ]; then
         echo
         echo "⚠️  後端有 ${skipped} 個 integration 測試被 skip（本機沒有資料庫）。"
-        echo "   動到資料庫相關的程式時，跑 make check integration。"
+        echo "   完整驗證及後端覆蓋率請跑 make check 或 make check integration。"
     fi
 }
 
@@ -157,7 +157,7 @@ run_build() {
 # CI 的 integration job 跑的就是這一段 (見 .github/workflows/ci.yml)。
 run_integration() {
     require_env COMPOSE_PROJECT_NAME
-    local container="${COMPOSE_PROJECT_NAME}-test-postgres"
+    local container="${1:-${COMPOSE_PROJECT_NAME}-test-postgres}"
     require_docker
     start_throwaway_postgres "${container}"
     trap 'docker rm -f "'"${container}"'" > /dev/null 2>&1 || true' EXIT
@@ -181,6 +181,13 @@ run_integration() {
     fi
     echo "model 與 migration 一致"
 }
+
+run_full_tests() (
+    require_env COMPOSE_PROJECT_NAME
+    # 子 shell 的 EXIT trap 只清理本次資料庫, 不跨入前端 build 或其他指令.
+    run_integration "${COMPOSE_PROJECT_NAME}-check-postgres"
+    (cd apps/web && npm run --silent test:coverage)
+)
 
 # 瀏覽器 → nginx → web → api → PostgreSQL 整條路的測試 (e2e/)。跟 integration 一樣用拋棄式的
 # 環境: 另起一套 compose 專案 (`<專案>-e2e`, 自己的 port 與 volume), 跑完整套連 volume 刪掉,
@@ -249,7 +256,7 @@ run_contract() {
 }
 
 case "${1:-all}" in
-    all)         run_lint; run_contract; run_migrate; run_types; run_test; run_build ;;
+    all)         run_lint; run_contract; run_migrate; run_types; run_full_tests; run_build ;;
     lint)        run_lint ;;
     types)       run_types ;;
     test)        run_test ;;

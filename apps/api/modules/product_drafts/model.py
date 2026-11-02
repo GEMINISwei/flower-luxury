@@ -35,9 +35,29 @@ class StreamTable(BaseTable):
     buffer_until: Mapped[datetime | None]
 
 
+class CollectionRoundTable(BaseTable):
+    __tablename__ = "product_draft_collections"
+    __table_args__ = (
+        CheckConstraint("status IN ('collecting', 'confirmation', 'finalized')",
+                        name="valid_status"),
+        Index("uq_product_draft_collections_collecting_source", "source_key", unique=True,
+              postgresql_where=text("status = 'collecting'")),
+    )
+
+    source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
+    status: Mapped[str] = mapped_column(String(16), default="collecting")
+    first_event_at: Mapped[datetime]
+    last_event_at: Mapped[datetime]
+    completed_at: Mapped[datetime | None]
+
+
 class DraftTable(BaseTable):
     __tablename__ = "product_drafts"
     source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
+    collection_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("product_draft_collections.id"))
+    finalized_at: Mapped[datetime | None]
+    finalized_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     version: Mapped[int] = mapped_column(default=1)
     received_at: Mapped[datetime] = mapped_column(default=utc_now)
     fields: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
@@ -55,7 +75,8 @@ class DraftTable(BaseTable):
     __table_args__ = (
         CheckConstraint("version >= 1", name="positive_version"),
         CheckConstraint("prefill_revision >= 0", name="prefill_positive_revision"),
-        CheckConstraint("prefill_status IN ('idle', 'disabled', 'queued', 'ready', 'failed')",
+        CheckConstraint("prefill_status IN "
+                        "('idle', 'disabled', 'queued', 'ready', 'failed', 'unknown')",
                         name="prefill_valid_status"),
         Index("uq_product_drafts_collecting_source", "source_key", unique=True,
               postgresql_where=text("collecting IS TRUE")),
@@ -107,6 +128,8 @@ async def write_prefill_settings(supplement: str, revision: int, actor_id: str) 
 class MessageTable(BaseTable):
     __tablename__ = "product_draft_messages"
     source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
+    collection_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("product_draft_collections.id"))
     draft_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("product_drafts.id", ondelete="CASCADE"),
     )
@@ -136,7 +159,7 @@ class PhotoTable(BaseTable):
     message_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("product_draft_messages.id", ondelete="CASCADE"), unique=True,
     )
-    status: Mapped[Literal["pending", "ready", "failed"]] = mapped_column(
+    status: Mapped[Literal["pending", "stored", "ready", "failed"]] = mapped_column(
         String(8), default="pending",
     )
     sort_order: Mapped[int]
@@ -146,7 +169,8 @@ class PhotoTable(BaseTable):
     extension: Mapped[str | None]
     media_type: Mapped[str | None]
     __table_args__ = (
-        CheckConstraint("status IN ('pending', 'ready', 'failed')", name="valid_status"),
+        CheckConstraint("status IN ('pending', 'stored', 'ready', 'failed')", name="valid_status"),
+        CheckConstraint("status <> 'stored' OR original_key IS NOT NULL", name="stored_original"),
         CheckConstraint("status <> 'ready' OR (original_key IS NOT NULL "
                         "AND display_key IS NOT NULL "
                         "AND filename IS NOT NULL AND extension IS NOT NULL "
@@ -236,14 +260,16 @@ async def photos_for(id: str) -> list[PhotoTable]:
 async def messages_for(id: str) -> list[MessageTable]:
     batched = await active_session().scalar(select(WindowTable.id).where(
         WindowTable.draft_key == id))
-    order = ((MessageTable.occurred_at, MessageTable.sequence) if batched
+    collection = await active_session().scalar(select(DraftTable.collection_id).where(
+        DraftTable.id == parse_uuid(id)))
+    order = ((MessageTable.occurred_at, MessageTable.sequence) if batched or collection
              else (MessageTable.sequence,))
     return list(await active_session().scalars(select(MessageTable).where(
         MessageTable.draft_id == parse_uuid(id or ""),
     ).order_by(*order, MessageTable.id)))
 
 
-async def message_draft_id(id: str) -> str | None:
+async def message_draft_id(id: str | None) -> str | None:
     row = await get_message_row(id)
     return str(row.draft_id) if row and row.draft_id else None
 
@@ -279,7 +305,8 @@ async def draft_page(limit: int, cursor: str | None, direction: Literal["next", 
 
 async def next_review_row(source_key: str | None) -> DraftTable | None:
     statement = select(DraftTable).where(DraftTable.collecting.is_(False),
-        DraftTable.processing.is_(False), DraftTable.needs_confirmation.is_(False))
+        DraftTable.processing.is_(False), DraftTable.needs_confirmation.is_(False),
+        (DraftTable.collection_id.is_(None) | DraftTable.finalized_at.is_not(None)))
     if source_key:
         statement = statement.where(DraftTable.source_key == source_key)
     return await active_session().scalar(statement.order_by(

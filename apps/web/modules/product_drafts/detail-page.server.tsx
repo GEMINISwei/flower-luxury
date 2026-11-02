@@ -11,6 +11,7 @@ import { Container, ErrorState } from "@/shared/ui"
 import { draftMessages } from "./i18n"
 import { DRAFTS_ROUTE } from "./manifest"
 import DraftDetail from "./ui/DraftDetail"
+import GroupReview from "./ui/GroupReview"
 import { draftQueueHref, draftStage } from "./capabilities"
 import { reviewContinuation } from "./continuation.server"
 
@@ -39,6 +40,12 @@ export default async function DraftDetailPage({ params, searchParams }: DraftDet
     return <Container padded><ErrorState>{t("failed")}</ErrorState></Container>
   }
   const stage = draftStage(draft.data)
+  if (draft.data.requires_finalization) {
+    const peers = await apiGet({ url: "/product-drafts/", query: {
+      source_key: draft.data.source_key, limit: 100 } })
+    return <GroupReview key={`${id}-${draft.data.version}`} draft={draft.data} scope={query.source_key}
+      peers={peers.status === "success" ? peers.data.list_data : []} />
+  }
   if (stage !== "waiting") return <Container padded>
     <p role="status">{t(stage)} — {t("blockedHint")}</p>
     <Link href={draftQueueHref(undefined, query.source_key)}>{t("back")}</Link>

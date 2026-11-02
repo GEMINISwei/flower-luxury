@@ -40,6 +40,15 @@ def _committed(session: Session) -> None:
         session.info.pop("draft_created_files", None)
 
 
+def remember_created_files(paths: list[Path]) -> None:
+    session = active_session().sync_session
+    session.info.setdefault("draft_created_files", []).extend(paths)
+    if not session.info.get("draft_file_hooks"):
+        session.info["draft_file_hooks"] = True
+        event.listen(session, "after_rollback", _rolled_back)
+        event.listen(session, "after_commit", _committed)
+
+
 async def write_photo(row: PhotoTable, prepared: PreparedPhoto) -> None:
     key = uuid.uuid4().hex
     original = f"product_drafts/originals/{key}.{prepared.extension}"
@@ -51,12 +60,7 @@ async def write_photo(row: PhotoTable, prepared: PreparedPhoto) -> None:
         await run_in_threadpool(path.parent.mkdir, parents=True, exist_ok=True)
         await run_in_threadpool(path.write_bytes, prepared.original)
         await run_in_threadpool(write_photo_variants, _path(display), prepared, paths)
-        session = active_session().sync_session
-        session.info.setdefault("draft_created_files", []).extend(paths)
-        if not session.info.get("draft_file_hooks"):
-            session.info["draft_file_hooks"] = True
-            event.listen(session, "after_rollback", _rolled_back)
-            event.listen(session, "after_commit", _committed)
+        remember_created_files(paths)
         row.original_key, row.display_key = original, display
         row.filename = prepared.filename
         row.extension, row.media_type = prepared.extension, prepared.media_type
