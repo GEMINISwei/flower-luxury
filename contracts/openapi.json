@@ -798,6 +798,11 @@
             ],
             "title": "Name"
           },
+          "processing": {
+            "default": false,
+            "title": "Processing",
+            "type": "boolean"
+          },
           "reply_failed": {
             "default": false,
             "title": "Reply Failed",

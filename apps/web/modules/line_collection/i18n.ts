@@ -2,6 +2,7 @@ import { defineMessages } from "@/shared/i18n/dictionary"
 
 export const groupMessages = defineMessages({
   zh: {
+    processing: "處理中",
     title: "群組設定", subtitle: "管理 LINE 商品來源與訊息收集", name: "群組", bot: "Bot 狀態",
     status: "收集狀態", actions: "操作", joined: "已加入", left: "未加入",
     enabled: "已啟用", disabled: "已停用", enable: "啟用收集", disable: "停用收集",
@@ -16,6 +17,7 @@ export const groupMessages = defineMessages({
     refresh: "重新整理",
   },
   en: {
+    processing: "Processing",
     title: "LINE groups", subtitle: "Manage LINE product sources and message collection", name: "Group",
     bot: "Bot status", status: "Collection", actions: "Actions", joined: "Joined",
     left: "Not joined", enabled: "Enabled", disabled: "Disabled",

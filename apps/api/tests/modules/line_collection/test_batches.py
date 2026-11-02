@@ -141,9 +141,15 @@ async def test_unsafe_late_message_records_batch_issue(db, kind, second):
     await receive(message(kind, second=second).model_copy(update={"webhookEventId": "late",
         "message": {"id": "late", "type": kind, "text": "晚到內容"}}))
     assert (await get_draft_list(limit=20)).total_count == 2
-    # 區間外事件直接略過, 其他無法安全歸屬者只有中繼資料提示.
+    # 區間外事件略過, 分界衝突保留原文供人工確認, 不改寫已成立商品.
     assert (await group_info()).issue_count == (0 if second == 0 else 1)
-    assert len(list(await active_session().scalars(select(drafts.MessageTable)))) == 3
+    stored = list(await active_session().scalars(select(drafts.MessageTable)))
+    assert len([row for row in stored if row.draft_id]) == 3
+    assert len([row for row in stored if row.draft_id is None]) == (0 if second == 0 else 1)
+    if second != 0:
+        assert next(row for row in stored if row.draft_id is None).external_id == "late"
+        assert await active_session().scalar(select(drafts.BufferedEventTable.id).where(
+            drafts.BufferedEventTable.status == "issue")) is not None
     assert all("晚到內容" not in str(row.payload) for row in
                await active_session().scalars(select(JobTable)))
 
@@ -153,7 +159,10 @@ async def test_late_text_cannot_split_existing_images(db):
     await receive(message(second=1), message(second=4), message("text", second=5))
     await receive(message("text", second=2))
     assert (await group_info()).issue_count == 1
-    assert len(list(await active_session().scalars(select(drafts.MessageTable)))) == 3
+    stored = list(await active_session().scalars(select(drafts.MessageTable)))
+    assert len([row for row in stored if row.draft_id]) == 3
+    pending = [row for row in stored if row.draft_id is None]
+    assert len(pending) == 1 and pending[0].text == "說明"
 
 
 async def test_discarded_product_is_not_recreated_by_late_message(db):
@@ -165,7 +174,8 @@ async def test_discarded_product_is_not_recreated_by_late_message(db):
     await receive(message("text", second=3))
     assert (await get_draft_list(limit=20)).total_count == 0
     assert (await group_info()).issue_count == 1
-    assert await active_session().scalar(select(drafts.MessageTable.id)) is None
+    pending = list(await active_session().scalars(select(drafts.MessageTable)))
+    assert len(pending) == 1 and pending[0].draft_id is None and pending[0].text == "說明"
 
 
 async def test_out_of_order_command_does_not_rewrite_batch(db):

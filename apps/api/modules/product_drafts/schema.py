@@ -187,6 +187,7 @@ class BatchIssueInfo(BaseModel):
 
 class BatchState(BaseModel):
     collecting: bool = False
+    processing: bool = False
     batch_started_at: UtcDateTime | None = None
     batch_ended_at: UtcDateTime | None = None
     issue_count: int = 0
@@ -194,4 +195,5 @@ class BatchState(BaseModel):
 
 
 class BatchControl(BaseModel):
-    result: Literal["started", "already_collecting", "stopped", "already_stopped", "unsafe"]
+    result: Literal["started", "already_collecting", "stopped", "already_stopped", "unsafe",
+                    "queued_start", "queued_end"]
