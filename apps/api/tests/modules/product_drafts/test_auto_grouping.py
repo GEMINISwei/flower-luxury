@@ -1,24 +1,26 @@
 from datetime import timedelta
-from types import SimpleNamespace
-from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy import select
 
+from modules.brands.public import BrandTable
 from modules.product_drafts import collection, model, pending, raw_photos, review, service, storage
 from modules.product_drafts.schema import DraftFields, DraftUpdate, VersionRequest
 from shared.db.session import active_session
 from shared.http.errors import LangException
 from shared.jobs.model import JobTable
 from shared.time import utc_now
-from tests.modules.product_drafts.helpers import ACTOR, ID, image_bytes, incoming
+from tests.modules.product_drafts.helpers import ACTOR, image_bytes, incoming
 
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
 
 @pytest.fixture(autouse=True)
 def uploads(db, tmp_path, monkeypatch):
+    from modules.products import photos as product_photos
+
     monkeypatch.setattr(storage, "UPLOADS_DIR", tmp_path / "drafts")
+    monkeypatch.setattr(product_photos, "UPLOADS_DIR", tmp_path / "products")
 
 
 async def receive(kind="image", *, second, text=None, source="group-a"):
@@ -41,7 +43,8 @@ async def jobs(task_name):
 
 async def test_receipt_groups_by_original_time_without_commands():
     first, second = await two_drafts()
-    later_text = await receive("text", second=9, text="B 說明")
+    await receive("text", second=6, text="B 說明")
+    later_text = await receive("text", second=9, text="C 說明")
     assert later_text.draft_id == second and not later_text.pending
     # 晚到但仍屬收集中商品的圖片, 依原始時間切出新商品並帶走較晚的文字.
     late_image = await receive(second=7)
@@ -50,8 +53,8 @@ async def test_receipt_groups_by_original_time_without_commands():
     c = await service.get_draft(late_image.draft_id)
     assert not a.collecting and not b.collecting and c.collecting
     assert [(item.kind, item.text) for item in a.messages] == [("image", None), ("text", "A 說明")]
-    assert [item.kind for item in b.messages] == ["image"]
-    assert [(item.kind, item.text) for item in c.messages] == [("image", None), ("text", "B 說明")]
+    assert [(item.kind, item.text) for item in b.messages] == [("image", None), ("text", "B 說明")]
+    assert [(item.kind, item.text) for item in c.messages] == [("image", None), ("text", "C 說明")]
 
 
 async def test_text_outside_any_interval_is_skipped():
@@ -60,7 +63,8 @@ async def test_text_outside_any_interval_is_skipped():
     assert not list(await active_session().scalars(select(model.MessageTable)))
 
 
-async def test_closing_draft_schedules_prefill_once():
+async def test_closing_draft_schedules_prefill_once(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-only")
     first, _ = await two_drafts()
     closed = await service.get_draft(first)
     assert closed.prefill_revision == 1 and len(await jobs("product_drafts.prefill")) == 1
@@ -170,14 +174,13 @@ async def test_accept_and_ignore_pending_message():
 
 
 async def ready_fields(id):
+    brand = await BrandTable.create({"name": "brand", "is_active": True})
     draft = await service.get_draft(id)
     return await service.update_draft(id, DraftUpdate(version=draft.version, fields=DraftFields(
-        name="bag", brand_id=ID, category="包包", cost_price=0)), ACTOR)
+        name="bag", brand_id=str(brand["id"]), category="包包", cost_price=0)), ACTOR)
 
 
-async def test_approve_requires_closed_originals_and_no_pending(monkeypatch):
-    imported = AsyncMock(return_value=SimpleNamespace(id=ID, sku="LX20261028ABCDE", cost_price=0))
-    monkeypatch.setattr(review, "create_imported_product", imported)
+async def test_approve_requires_closed_originals_and_no_pending():
     first = await receive(second=1)
     await receive("text", second=2, text="A 說明")
 
@@ -199,8 +202,8 @@ async def test_approve_requires_closed_originals_and_no_pending(monkeypatch):
                                  ACTOR)
     draft = await service.get_draft(first.draft_id)
     assert draft.photos[0].status == "stored"
-    await review.approve_draft(draft.id, VersionRequest(version=draft.version), ACTOR)
-    imported.assert_awaited_once()
+    approval = await review.approve_draft(draft.id, VersionRequest(version=draft.version), ACTOR)
+    assert approval.draft_id == draft.id and approval.product_id
 
 
 async def test_next_review_skips_collecting_and_pending_drafts():

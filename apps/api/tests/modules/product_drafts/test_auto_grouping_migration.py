@@ -61,7 +61,7 @@ def message_id(number):
     return f"00000000-0000-4000-8000-{number:012d}"
 
 
-async def test_migration_converts_manual_rounds_to_auto_grouping(auto_grouping_migration):
+async def test_migration_converts_manual_rounds_to_auto_grouping(db, auto_grouping_migration):
     session = active_session()
     await legacy_tables()
     await session.execute(text(

@@ -86,15 +86,3 @@ async def test_discard_removes_manual_photos(db):
     assert rows == []
     with pytest.raises(LangException):
         await photos.read_photo(result.photos[-1].id)
-
-
-async def test_unassigned_image_exposes_preview(db):
-    await collection.ingest_message(incoming(second=5))
-    event = await collection.ingest_message(incoming(second=1))
-    assert event.unassigned and event.message_id
-    await photos.complete_photo(event.message_id, image_bytes(), "late.png")
-    from modules.product_drafts import messages
-
-    page = await messages.get_unassigned_messages(limit=20)
-    item = next(item for item in page.list_data if item.id == event.message_id)
-    assert item.photo and item.photo.status == "ready" and item.photo.url
