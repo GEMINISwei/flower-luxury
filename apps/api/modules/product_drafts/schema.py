@@ -123,6 +123,8 @@ class DraftSummary(BaseModel):
     fields: DraftFields
     main_photo_id: str | None = None
     collecting: bool
+    processing: bool = False
+    needs_confirmation: bool = False
     received_at: UtcDateTime
     created_at: UtcDateTime
     updated_at: UtcDateTime | None = None
@@ -144,6 +146,33 @@ class DraftInfo(DraftSummary):
 
 class DraftList(PaginatedResponse[DraftSummary]):
     pass
+
+
+class NextReviewInfo(BaseModel):
+    id: str | None
+
+
+class DraftProcessingInfo(BaseModel):
+    processing: bool
+
+
+class BufferedIssueInfo(BaseModel):
+    id: str
+    source_key: str
+    occurred_at: UtcDateTime
+    kind: Literal["text", "image", "start", "end"]
+    text: str | None = None
+    photo: DraftPhotoInfo | None = None
+
+
+class BufferedIssueList(PaginatedResponse[BufferedIssueInfo]):
+    pass
+
+
+class ResolveIssue(BaseModel):
+    action: Literal["attach", "discard"]
+    target_draft_id: UuidText | None = None
+    target_version: int | None = Field(default=None, ge=1)
 
 
 class PhotoCompletion(BaseModel):

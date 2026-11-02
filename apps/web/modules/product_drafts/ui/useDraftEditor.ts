@@ -36,7 +36,7 @@ function useDraftRequest(onDraft: (draft: DraftInfo) => void) {
   return { error, status, stale, pending, setError, setStatus, run }
 }
 
-export default function useDraftEditor(initial: DraftInfo) {
+export default function useDraftEditor(initial: DraftInfo, source?: string) {
   const t = useT(draftMessages)
   const [draft, setDraft] = useState(initial)
   const [values, setValues] = useState(() => draftValues(initial.fields))
@@ -68,9 +68,9 @@ export default function useDraftEditor(initial: DraftInfo) {
       const result = await saveDraft(draft.id, draft.version, draftPayload(values), manual)
       if (result.status === "success") {
         setDraft(result.data); setSaved(JSON.stringify(values)); setComparison(null); setManual([])
-        if (approving) return await approveDraft(draft.id, result.data.version)
+        if (approving) return await approveDraft(draft.id, result.data.version, source)
       } else if (approving && result.code === 404) {
-        return await approveDraft(draft.id, draft.version)
+        return await approveDraft(draft.id, draft.version, source)
       }
       return result
     }, () => setStatus(t("saved")))

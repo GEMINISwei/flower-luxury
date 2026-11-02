@@ -38,6 +38,9 @@ async def prepared_draft(*, second=0):
     event = await collection.ingest_message(incoming(second=second))
     assert event.draft_id and event.message_id
     await photos.complete_photo(event.message_id, image_bytes(), "original.png")
+    row = await collection.model.get_draft_row(event.draft_id)
+    assert row is not None
+    row.collecting = False
     brand = await BrandTable.create({"name": f"brand-{event.draft_id}", "is_active": True})
     draft = await service.get_draft(event.draft_id)
     return await service.update_draft(draft.id, DraftUpdate(
@@ -166,6 +169,9 @@ async def test_move_message_checks_both_draft_versions(db):
 
 async def test_approval_requires_complete_fields_and_ready_photos(db):
     event = await collection.ingest_message(incoming())
+    row = await collection.model.get_draft_row(event.draft_id)
+    assert row is not None
+    row.collecting = False
     draft = await service.get_draft(event.draft_id)
     with pytest.raises(LangException) as error:
         await review.approve_draft(draft.id, VersionRequest(version=draft.version), ACTOR)

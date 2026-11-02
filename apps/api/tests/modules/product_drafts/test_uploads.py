@@ -67,6 +67,9 @@ async def test_invalid_upload_keeps_draft(db):
 
 async def test_manual_upload_does_not_change_line_grouping(db):
     draft = await prepared_draft()
+    row = await collection.model.get_draft_row(draft.id)
+    assert row is not None
+    row.collecting = True
     result = await photos.upload_photos(draft.id, draft.version, [upload()], ACTOR)
     following = await collection.ingest_message(incoming(second=1))
     assert following.draft_id == result.id

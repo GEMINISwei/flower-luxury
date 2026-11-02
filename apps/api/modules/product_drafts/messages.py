@@ -12,12 +12,25 @@ from .schema import DiscardInfo, DraftInfo, MessageList, MessageMove, Withdrawal
 from .service import _bump, _photo_info, get_draft
 
 
+async def _clear_buffered_issue(message: model.MessageTable) -> None:
+    event = message.buffered_event
+    if event is None:
+        return
+    if event.status != "issue":
+        raise LangException(409, DraftError.NOT_READY)
+    await active_session().delete(event)
+    await active_session().flush()
+    await model.refresh_source_confirmation(message.source_key)
+
+
 async def get_unassigned_messages(
     limit: int, cursor: str | None = None, direction: Literal["next", "prev"] = "next",
     source_key: str | None = None,
+    issues_only: bool = False,
 ) -> MessageList:
+    listing = model.issue_page if issues_only else model.unassigned_page
     page = MessageList.model_validate(
-        await model.unassigned_page(limit, cursor, direction, source_key),
+        await listing(limit, cursor, direction, source_key),
     )
     for item in page.list_data:
         if item.kind == "image":
@@ -58,6 +71,7 @@ async def move_message(id: str | None, form: MessageMove, actor: CurrentUser) ->
         for draft in (source, target):
             if draft:
                 _bump(draft, actor)
+        await _clear_buffered_issue(message)
         await active_session().flush()
         return await get_draft(str(target.id))
 
@@ -73,6 +87,7 @@ async def withdraw_message(source_key: str, external_id: str,
                 return WithdrawalResult(product_id=receipt.approved_product_id)
             approval = await model.approval_for(draft_id) if draft_id else None
             return WithdrawalResult(product_id=str(approval.product_id) if approval else None)
+        buffered = message.buffered_event is not None
         draft = await model.get_draft_row(str(message.draft_id)) if message.draft_id else None
         photo = await model.photo_for_message(str(message.id))
         if photo:
@@ -84,6 +99,8 @@ async def withdraw_message(source_key: str, external_id: str,
         if draft:
             _bump(draft)
         await active_session().flush()
+        if buffered:
+            await model.refresh_source_confirmation(source_key)
         return WithdrawalResult(removed=True)
 
 
@@ -92,9 +109,12 @@ async def discard_legacy_message(id: str) -> DiscardInfo:
         message = ensure_found(await model.get_message_row(id, lock=True), DraftError.NOT_FOUND)
         if message.draft_id is not None:
             raise LangException(409, DraftError.STALE)
+        buffered = message.buffered_event is not None
         photo = await model.photo_for_message(id)
         if photo:
             await storage.schedule_cleanup([photo])
         await active_session().delete(message)
         await active_session().flush()
+        if buffered:
+            await model.refresh_source_confirmation(message.source_key)
         return DiscardInfo(id=id)

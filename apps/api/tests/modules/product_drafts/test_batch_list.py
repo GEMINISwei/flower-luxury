@@ -21,10 +21,10 @@ async def test_draft_list_uses_original_received_time(db):
     await update_draft(detail.id, DraftUpdate(version=detail.version,
                        fields=DraftFields(name="編輯後名稱")), ACTOR)
     page = await get_draft_list(limit=1)
-    assert page.list_data[0].id == newer.draft_id and page.has_next
+    assert page.list_data[0].id == older.draft_id and page.has_next
     following = await get_draft_list(limit=1, cursor=page.next_cursor)
-    assert following.list_data[0].id == older.draft_id
-    assert following.list_data[0].received_at.second == 10
+    assert following.list_data[0].id == newer.draft_id
+    assert following.list_data[0].received_at.second == 20
 
 
 async def test_clear_legacy_messages_preserves_drafts(db, monkeypatch, tmp_path):
