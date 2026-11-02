@@ -42,8 +42,10 @@ def test_healthchecks_only_poll_fast_during_startup():
 
 
 class Handler(BaseHTTPRequestHandler):
+    probe_status = 200
+
     def do_GET(self):
-        self.send_response(getattr(self.server, "probe_status"))
+        self.send_response(self.probe_status)
         self.end_headers()
 
     def log_message(self, format, *args):
@@ -54,7 +56,7 @@ class Handler(BaseHTTPRequestHandler):
 @pytest.mark.parametrize("status", [200, 204, 301, 401, 503])
 def test_http_probe_accepts_only_healthy_response(service, status):
     server = HTTPServer(("127.0.0.1", 0), Handler)
-    setattr(server, "probe_status", status)
+    Handler.probe_status = status
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
