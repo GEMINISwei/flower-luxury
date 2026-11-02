@@ -88,9 +88,10 @@ async def _command(group: model.GroupTable, event: LineEvent, command: str) -> b
                                 expires_at=utc_now() + timedelta(seconds=50))
         active_session().add(reply)
         await active_session().flush()
-        await enqueue_job("line_collection.reply", {"reply_id": str(reply.id)})
+        await enqueue_job("line_collection.reply", {"reply_id": str(reply.id)},
+                          queue="replies", max_attempts=1)
         await enqueue_job("line_collection.expire_reply", {"reply_id": str(reply.id)},
-                          available_at=reply.expires_at)
+                          available_at=reply.expires_at, queue="maintenance")
     return True
 
 
@@ -102,7 +103,7 @@ async def _remember(group: model.GroupTable, event: LineEvent) -> bool:
     active_session().add(row)
     await active_session().flush()
     await enqueue_job("line_collection.expire", {"id": str(row.id), "kind": "event"},
-                      available_at=row.expires_at)
+                      available_at=row.expires_at, queue="maintenance")
     return True
 
 
@@ -113,7 +114,7 @@ async def _new_link(group: model.GroupTable, external_id: str) -> model.MessageL
     active_session().add(row)
     await active_session().flush()
     await enqueue_job("line_collection.expire", {"id": str(row.id), "kind": "link"},
-                      available_at=row.expires_at)
+                      available_at=row.expires_at, queue="maintenance")
     return row
 
 
@@ -144,7 +145,7 @@ async def _collect(group: model.GroupTable, event: LineEvent) -> bool:
     # 外部 message ID 只在待下載期間保存, 工作完成或暫存移除後不再需要.
     if kind == "image" and result.message_id:
         link.external_id = external_id
-        await enqueue_job("line_collection.download", {"link_id": str(link.id)})
+        await enqueue_job("line_collection.download", {"link_id": str(link.id)}, queue="downloads")
     return not result.duplicate
 
 

@@ -15,6 +15,7 @@ from shared.auth.contracts import CurrentUser
 from shared.db.session import active_session
 from shared.db.transaction import transaction
 from shared.http.errors import LangException, ensure_found
+from shared.jobs.processes import ProcessExecutionError, run_process
 from shared.time import utc_now
 
 from . import model, storage
@@ -79,7 +80,10 @@ async def complete_photo(id: str | None, content: bytes, filename: str | None) -
                 return PhotoCompletion(accepted=False)
             if row.status != "ready":
                 validate_batch_size([len(content)])
-                prepared = await run_in_threadpool(prepare_photo, content, filename)
+                try:
+                    prepared = await run_process(prepare_photo, content, filename)
+                except ProcessExecutionError as error:
+                    raise LangException(422, DraftError.INVALID_PHOTOS) from error
                 await storage.write_photo(row, prepared)
                 keys = [key for key in (row.original_key, row.display_key) if key]
                 row.status = "ready"

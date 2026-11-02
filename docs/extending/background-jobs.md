@@ -51,6 +51,8 @@ payload 優先只存業務識別碼，不複製完整原文、圖片 bytes 或�
   `PermanentJobError` 直接進 dead，到達儲存的 `max_attempts` 也停止重試。
 - 成功立即清空 payload，保留 succeeded 紀錄供去重；dead 保留供排查，不保存 exception 字串。
   log 記工作 ID、任務名稱、嘗試次數、佇列與錯誤類別，不記原文或憑證。
+- 圖片 CPU 加工使用 spawn 子行程；逾時、取消與錯誤都等待子行程退出再回收資源。
+  同步工作執行緒無法強制停止，因此背景圖片不再只包 threadpool。
 - 寫入時發 PostgreSQL NOTIFY，提交後才叫醒 worker；獨立 LISTEN 連線斷線後重連。
   沒通知時最多 30 秒查一次，到期的延遲工作會提早喚醒，不受保底間隔延遲。
 
@@ -71,6 +73,21 @@ make services logs line-collector    # 追蹤背景程序紀錄
 Docker 在啟動期間每秒、之後每 30 秒用 shell 檢查心跳檔時間，不啟動 Python。
 缺少、過期或未來時間的心跳都判定失敗。正式環境的 collector 共用半核心 CPU 與 512M
 記憶體配額，CPU 排程權重較低，主機忙碌時優先讓給網站服務。
+下載、AI、一般工作、維運清理與目前的指令回覆各自並行一個工作；原生函式庫的執行緒上限為一。
+
+工作紀錄由同一個 worker 每小時分批清理，每批最多 500 筆：succeeded 保留 7 天、dead 保留 30 天，
+pending／running 不清理。這只清工作紀錄，不清業務原文與原圖。
+
+在主機上以 API 容器的同一份環境執行維運入口（把 `<專案>` 換成實際名稱）：
+
+```bash
+docker exec -w /app <專案>-api python -m app.jobs status
+docker exec -w /app <專案>-api python -m app.jobs retry <工作UUID>
+```
+
+`status` 輸出各佇列數量、已到期工作的最久等待時間，以及最近 50 筆死信的安全 metadata，
+不輸出 payload 或連線資訊。`retry` 只接受已啟用、可安全重試的 dead 工作；最多一次嘗試的
+AI／回覆工作拒絕重排，避免未知結果的外部呼叫被重送。重排成功後重複操作不會再排一筆。
 
 備份、還原及 migration 的停止與恢復規則見[維運文件](../operations.md#背景收集程序)。
 LINE Developers Console、Webhook、邀請 Bot 入群及群組啟用步驟見
