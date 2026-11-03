@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test"
-import { admin, login } from "./support"
 
 test("用戶設定與系統設定各自顯示所屬內容", async ({ page }) => {
-  await login(page, admin)
+  // 預設載入超管的登入狀態 (playwright.config.ts)。
+  await page.goto("/products")
   await page.getByRole("button", { name: "帳號選單", exact: true }).click()
   await page.getByRole("menuitem", { name: "用戶設定", exact: true }).click()
   await expect(page).toHaveURL("/settings")

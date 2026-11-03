@@ -1,11 +1,13 @@
 import { execFileSync } from "node:child_process"
 import { randomUUID } from "node:crypto"
+import { readFile } from "node:fs/promises"
 import { expect, test, type BrowserContext, type Page } from "@playwright/test"
-import { admin, login } from "./support"
+import { ADMIN_STATE, createUser, login, type Account } from "./support"
 import { expectHeaderFits } from "./header-layout"
 
+// 預設載入超管的登入狀態 (playwright.config.ts)。
 // Playwright replaces a failed worker, so each process needs its own disposable account.
-const staff = { username: `draft-staff-${randomUUID().slice(0, 8)}`, password: "draft-staff-password" }
+let staff: Account
 let workspaceState: Awaited<ReturnType<BrowserContext["storageState"]>> | undefined
 let managerState: Awaited<ReturnType<BrowserContext["storageState"]>> | undefined
 const workspaceTest = test.extend({
@@ -129,7 +131,8 @@ asyncio.run(run())
 `
 function fixture(options: Record<string, string>) {
   const project = process.env.COMPOSE_PROJECT_NAME
-  if (!project?.endsWith("-e2e")) throw new Error("Draft fixtures require disposable e2e stack")
+  // make check e2e 的專案名稱以 -e2e 結尾, make e2e 的是 <專案>-e2e-<checkout 代號>。
+  if (!project || !/-e2e(-\d+)?$/.test(project)) throw new Error("Draft fixtures require disposable e2e stack")
   return JSON.parse(execFileSync("docker", ["exec", `${project}-api`, "python", "-c", seedScript,
     JSON.stringify(options)], { encoding: "utf8" })) as {
     id: string; second: string; source: string; group: string; name: string; brand: string; review: string
@@ -146,23 +149,12 @@ async function fillRequired(page: Page, name: string, brand: string) {
 
 
 test.beforeAll(async ({ browser }) => {
-  const page = await browser.newPage()
-  await login(page, admin)
-  await page.goto("/admin/users")
-  await page.getByRole("button", { name: "新增員工" }).click()
-  const dialog = page.getByRole("dialog")
-  await dialog.getByLabel("暱稱").fill("暫存員工")
-  await dialog.getByLabel("帳號").fill(staff.username)
-  await dialog.getByLabel("密碼").fill(staff.password)
-  await dialog.getByRole("button", { name: "建立", exact: true }).click()
-  await expect(dialog).toBeHidden()
-  managerState = await page.context().storageState()
-  await page.close()
+  staff = await createUser(browser, "draft-staff")
+  managerState = JSON.parse(await readFile(ADMIN_STATE, "utf8")) as typeof managerState
 })
 
 test("group_settings_respect_permissions", async ({ page }) => {
   const data = seed()
-  await login(page, admin)
   await page.goto("/admin/line-groups")
   const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
   await row.getByRole("button", { name: "啟用收集", exact: true }).click()
@@ -190,7 +182,6 @@ workspaceTest("收件先保存並顯示收集中，尚未開放新商品審核",
 
 test("left_group_cannot_be_enabled and withdrawal_notice_links_to_product", async ({ page }) => {
   const data = seed()
-  await login(page, admin)
   await page.goto("/admin/line-groups")
   const row = page.getByRole("row").filter({ hasText: `${data.name} left` })
   await expect(row.getByRole("button", { name: "啟用收集" })).toBeDisabled()
@@ -235,7 +226,6 @@ test("來源篩選由視窗套用並可清除", async ({ page }) => {
 
 test("群組設定不顯示批次異常且不提供收集完成", async ({ page }) => {
   const data = fixture({ name: `Batch ${randomUUID().slice(0, 8)}`, enabled: "true" })
-  await login(page, admin)
   await page.goto("/admin/line-groups")
   const row = page.getByRole("row").filter({ hasText: data.name }).filter({ hasNotText: "left" })
   await expect(row).toContainText("收集中")

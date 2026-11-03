@@ -1,8 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
-import { admin, login } from "./support"
 
+// 預設載入超管的登入狀態 (playwright.config.ts)。
 async function prepareTrade(page: Page, name: string) {
-  await login(page, admin)
   await page.goto("/vendors")
   await page.getByRole("button", { name: "新增廠商", exact: true }).click()
   let dialog = page.getByRole("dialog")

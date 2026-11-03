@@ -1,10 +1,9 @@
-import { expect, test, type BrowserContext, type Page } from "@playwright/test"
-import { admin, login } from "./support"
+import { expect, test, type Page } from "@playwright/test"
+import { ADMIN_STATE } from "./support"
 
-test.describe.configure({ mode: "serial" })
+// 預設載入超管的登入狀態 (playwright.config.ts)。
 const prefix = "Remember Item"
 const brand = "Remember Brand"
-let sessionCookies: Awaited<ReturnType<BrowserContext["cookies"]>> = []
 
 async function openFilters(page: Page) {
   await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()
@@ -32,11 +31,16 @@ async function seedProducts(page: Page) {
   }
 }
 
-test("商品篩選在重整與同裝置重新開啟後保留且可清除", async ({ page, browser }) => {
+// 這個檔案的測試都看同一批商品: 先建好, 各測試只讀不改, 不依賴彼此的結果。
+test.beforeAll(async ({ browser }) => {
   test.setTimeout(180_000)
-  await login(page, admin)
-  sessionCookies = await page.context().cookies()
-  await seedProducts(page)
+  const context = await browser.newContext({ storageState: ADMIN_STATE })
+  try {
+    await seedProducts(await context.newPage())
+  } finally { await context.close() }
+})
+
+test("商品篩選在重整與同裝置重新開啟後保留且可清除", async ({ page, browser }) => {
   await page.goto("/products")
   let dialog = await openFilters(page)
   await dialog.getByLabel("名稱、SKU 或序號", { exact: true }).fill(prefix)
@@ -75,7 +79,6 @@ test("商品篩選在重整與同裝置重新開啟後保留且可清除", async
 
 test("手機從續載商品詳情返回時恢復條件與位置，支援上一頁及詳情重整", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.context().addCookies(sessionCookies)
   await page.goto(`/products?keyword=${encodeURIComponent(prefix)}`)
   const links = page.getByRole("link").filter({ hasText: prefix })
   await expect(links).toHaveCount(20)
@@ -105,7 +108,6 @@ test("手機從續載商品詳情返回時恢復條件與位置，支援上一�
 })
 
 test("桌面商品詳情返回時保留篩選及原分頁", async ({ page }) => {
-  await page.context().addCookies(sessionCookies)
   await page.goto(`/products?keyword=${encodeURIComponent(prefix)}`)
   await page.getByRole("link", { name: /下一頁/ }).click()
   await expect(page).toHaveURL(/seq=2/)
@@ -123,7 +125,6 @@ test("手機表單輸入文字至少十六像素且允許手動縮放", async ({
   await expect(account).toBeVisible()
   expect(await account.evaluate((input) => parseFloat(getComputedStyle(input).fontSize)))
     .toBeGreaterThanOrEqual(16)
-  await page.context().addCookies(sessionCookies)
   await page.goto("/products/new")
   for (const control of [page.getByLabel(/^名稱\*?$/),
     page.getByRole("combobox", { name: /^品牌\*?$/ }),
@@ -137,7 +138,6 @@ test("手機表單輸入文字至少十六像素且允許手動縮放", async ({
 
 test("手機從商品詳情返回後按重新整理，回到頂端且只顯示第一頁", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.context().addCookies(sessionCookies)
   await page.goto(`/products?keyword=${encodeURIComponent(prefix)}`)
   const links = page.getByRole("link").filter({ hasText: prefix })
   await expect(links).toHaveCount(20)
@@ -158,7 +158,6 @@ test("手機從商品詳情返回後按重新整理，回到頂端且只顯示�
 
 test("桌面在第二頁且返回過商品詳情時按重新整理，回到第一頁頂端", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 480 })
-  await page.context().addCookies(sessionCookies)
   await page.goto(`/products?keyword=${encodeURIComponent(prefix)}`)
   await page.getByRole("link", { name: /下一頁/ }).click()
   await expect(page).toHaveURL(/seq=2/)
@@ -175,8 +174,6 @@ test("桌面在第二頁且返回過商品詳情時按重新整理，回到第�
 })
 
 test("新增商品的名稱、型號、顏色、序號可從資料庫既有的值點選，所有輸入框關閉瀏覽器建議", async ({ page }) => {
-  // 共用第一個測試的登入狀態: 整套 E2E 從同一個 IP 登入, 次數已接近限流上限.
-  await page.context().addCookies(sessionCookies)
   const token = Date.now().toString(36)
   const brand = `Suggest Brand ${token}`
   await page.goto("/brands")

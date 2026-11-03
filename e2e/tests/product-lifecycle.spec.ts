@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises"
 import { expect, test, type Page } from "@playwright/test"
-import { admin, login, logout } from "./support"
+import { login } from "./support"
 
 const staff = { username: "lifecycle-staff", password: "lifecycle-staff-password" }
 const productName = "Lifecycle Bag"
@@ -10,8 +10,8 @@ const returnReason = "員工驗收退回後重新議價"
 const filenames = ["lifecycle-front.png", "lifecycle-back.png"]
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAABAAAAAICAIAAAB/FOjAAAAAFklEQVR4nGP8z0AaYCJRPcOoBgYiAACTUAEPHJZO1QAAAABJRU5ErkJggg==", "base64")
 
+// 預設載入超管的登入狀態 (playwright.config.ts)。
 async function prepareStaff(page: Page) {
-  await login(page, admin)
   await page.goto("/admin/users")
   await page.getByRole("button", { name: "新增員工", exact: true }).click()
   const dialog = page.getByRole("dialog")
@@ -22,7 +22,7 @@ async function prepareStaff(page: Page) {
   await expect(dialog).toBeHidden()
   await expect(page.getByRole("row").filter({ hasText: "完整流程員工" })
     .getByRole("cell", { name: "員工", exact: true })).toBeVisible()
-  await logout(page)
+  // 直接換成員工登入, 不登出超管: 登出會撤銷超管在其他 worker 的 session。
   await login(page, staff)
 }
 
