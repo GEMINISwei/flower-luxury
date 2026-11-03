@@ -146,17 +146,22 @@ environment（見下方〈新增一套系統〉），workflow 不用改。`produ
 
 1. 要部署的 tag 必須是 `v<APP_VERSION>`（`apps/api/app/config.py`），不一致就停。
 2. 列出 repo 裡屬於這些組的 environment；有任何一組找不到就停，並列出現有的組。
-3. 重跑一次 CI（`ci.yml`），沒過不部署。同時逐套讀主機資料庫的 migration revision
+3. 確認這個 commit 通過 CI（`ci.yml`）：它在 `main` 上已經跑過而且成功（push 觸發，或手動補跑的）就不再跑，
+   查不到（`main` 的 CI 還沒跑完、紀錄已過保存期限、或那次是紅的）就先跑一次，沒過不部署
+   （[理由](decisions/0012-e2e-required-in-ci.md)）。同時逐套讀主機資料庫的 migration revision
    （`migration check (<environment>)`）：任何一套的資料庫比要部署的版本新，**整組都不部署**，
    主機什麼都不動（見〈[回滾與 migration](#回滾與-migration)〉）。
 4. 建兩份 production image 推到 GHCR：`ghcr.io/<帳號>/<repo>-api:<組名>` 與 `-web:<組名>`（全小寫）。
-   只建一次，這次部署的每一組各標一個組名。image 只標組名，執行中的版本看 `APP_VERSION`
+   只建一次，這次部署的每一組各標一個組名，並記下兩份 image 的 digest。image 只標組名，執行中的版本看 `APP_VERSION`
    （設定頁顯示的就是它）；不同組用不同標籤，先行測試的組部署新版時不會蓋掉其他組的 image。
 5. **一次一套**依序部署，每套是一個獨立的 job（`deploy (<environment>)`）：檢查 secrets →
    SSH 到主機 → `make backup allow-fresh`（資料庫與上傳檔案，期間 nginx 暫停；在 checkout 之前，
    備份檔才會標上線上那一版的版號）→ `git checkout` 同一個 tag（compose 檔與 nginx 模板是從原始碼
-   bind mount 的）→ 拉 image 並重啟（`make start`）→ `make services` → 驗證實際容器版本與健康 → 清掉被取代的舊 image →
-   只留最近 `BACKUP_KEEP` 組備份。
+   bind mount 的）→ **依 digest** 拉 image 並重啟（`make start`）→ `make services` → 驗證實際容器版本與健康 → 清掉被取代的舊 image →
+   只留最近 `BACKUP_KEEP` 組備份。成功後在 Summary 寫下這套系統部署的兩個 digest，要確認主機現在跑哪一份，
+   拿它對照主機上 `docker inspect --format '{{index .RepoDigests 0}}' <容器>` 的結果。
+   重跑沿用那次建的 image（同一個 digest），不會因為組名標籤已經被之後的部署移走而拉到別版；
+   那份 image 已經被清掉時會在拉 image 那步失敗，改用 Run workflow 對同一個 tag 重新部署（會重新建置）。
    非互動命令隔離 stdin，避免讀走後續 SSH 腳本；驗證會等待服務就緒、核對 API 容器版本及 API／worker 映像一致，
    失敗時停止清理並標示部署失敗。驗證片段由 runner 傳送，重新部署既有 tag 也使用目前 workflow 的檢查。
    **一套失敗不會中斷其他套**。
@@ -310,9 +315,10 @@ tag），第一版是 `make release 0.0.1`。
 
 **部署到其他組，或重新部署某個版本（回滾）**：Actions → Deploy → **Run workflow**，branch 選 `main`，
 填一個已經存在的 tag（例如上一版的 `v0.1.0`）與 `target`（要部署的組，多組用空格分開）。
-它走同一套流程（版號檢查、CI、從那個 tag 重建這一組的 image、逐套備份與部署），只是不建新的 tag；
+它走同一套流程（版號檢查、確認 CI、從那個 tag 重建這一組的 image、逐套備份與部署），只是不建新的 tag；
 發新版仍然要走發布 release。回滾一樣是**整組一起**。GHCR 不保留舊版 image，回滾一律從 tag 重建，
-重建出來的 image 與當初不會逐 byte 相同（相依由 lock 檔固定，差異在 base image 的系統層）。
+重建出來的 image 與當初不會逐 byte 相同（相依由 lock 檔固定，差異在 base image 的系統層），digest 也不同；
+digest 代表的是「這次部署的那一份」，版本看 tag 與 `APP_VERSION`。
 也可以用指令觸發：
 
 ```bash

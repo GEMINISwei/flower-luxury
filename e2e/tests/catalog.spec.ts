@@ -1,12 +1,10 @@
 import { expect, test, type Page } from "@playwright/test"
-import { admin, login, logout } from "./support"
-
-test.describe.configure({ mode: "serial" })
+import { login, logout, useAdmin } from "./support"
 
 const staff = { username: "catalog-staff", password: "catalog-staff-password" }
 
+// 預設載入超管的登入狀態 (playwright.config.ts)。
 async function createStaff(page: Page) {
-  await login(page, admin)
   await page.goto("/admin/users")
   await page.getByRole("button", { name: "新增員工", exact: true }).click()
   const dialog = page.getByRole("dialog")
@@ -19,7 +17,7 @@ async function createStaff(page: Page) {
 
 test("員工共用品牌與廠商且取消刪除不改資料", async ({ page }) => {
   await createStaff(page)
-  await logout(page)
+  // 直接換成員工登入, 不登出超管: 登出會撤銷超管在其他 worker 的 session。
   await login(page, staff)
   await page.goto("/brands")
   await page.getByRole("button", { name: "新增品牌", exact: true }).click()
@@ -53,7 +51,7 @@ test("員工共用品牌與廠商且取消刪除不改資料", async ({ page }) 
   await expect(row.getByRole("cell", { name: "停用", exact: true })).toBeVisible()
   await logout(page)
 
-  await login(page, admin)
+  await useAdmin(page.context())
   await page.goto("/brands")
   row = page.getByRole("row").filter({ hasText: "Phase2 Brand" })
   await row.getByRole("button", { name: "刪除", exact: true }).click()
@@ -69,7 +67,6 @@ test("員工共用品牌與廠商且取消刪除不改資料", async ({ page }) 
 })
 
 test("廠商不需要國家且管理區不再有匯率設定", async ({ page }) => {
-  await login(page, admin)
   await page.goto("/admin/users")
   await expect(page.getByRole("link", { name: "匯率設定", exact: true })).toHaveCount(0)
   await page.goto("/vendors")
@@ -82,7 +79,6 @@ test("廠商不需要國家且管理區不再有匯率設定", async ({ page }) 
 
 test("手機更多可開關並提供兩種設定與管理區入口", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await login(page, admin)
   await page.goto("/brands")
   const nav = page.getByRole("navigation", { name: "手機主要導覽", exact: true })
   await expect(nav.getByRole("link", { name: "品牌", exact: true })).toBeVisible()

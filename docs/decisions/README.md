@@ -38,3 +38,5 @@
 | [0013](0013-durable-worker-ownership.md) | 背景工作以 worker 心跳與每次領取 token 保護執行權 | 採用 |
 | [0014](0014-manual-collection-finalization.md) | 收件先保存，由人工完成收集與分組定稿後才加工 | 被 0015 取代 |
 | [0015](0015-automatic-grouping-with-late-review.md) | 依 LINE 原始時間自動分組，遲到訊息由人員加入 | 採用 |
+| [0016](0016-e2e-dev-loop-locally.md) | 開發中的 E2E 用常駐的 dev 環境，正式環境 image 由 CI 驗證 | 採用 |
+| [0017](0017-e2e-failures-read-by-main-agent.md) | E2E 失敗由主 agent 自己讀，不交給子代理 | 採用 |

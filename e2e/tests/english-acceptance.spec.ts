@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises"
 import { createHash } from "node:crypto"
 import { fileURLToPath } from "node:url"
 import { expect, test, type Page } from "@playwright/test"
-import { admin } from "./support"
+import { createUser } from "./support"
 
 // 英文案例只覆寫本檔語系, 既有中文案例維持原設定.
 test.use({ locale: "en-US" })
@@ -29,8 +29,8 @@ const returnReason = "Returned for staff renegotiation"
 const filenames = ["lifecycle-front.png", "lifecycle-back.png"]
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAABAAAAAICAIAAAB/FOjAAAAAFklEQVR4nGP8z0AaYCJRPcOoBgYiAACTUAEPHJZO1QAAAABJRU5ErkJggg==", "base64")
 
+// 預設載入超管的登入狀態 (playwright.config.ts)。
 async function prepareStaff(page: Page) {
-  await login(page, admin)
   await page.goto("/admin/users")
   await page.getByRole("button", { name: "New staff member", exact: true }).click()
   const dialog = page.getByRole("dialog")
@@ -39,9 +39,11 @@ async function prepareStaff(page: Page) {
   await dialog.getByLabel(/^Password\*?$/).fill(staff.password)
   await dialog.getByRole("button", { name: "Create", exact: true }).click()
   await expect(dialog).toBeHidden()
+  // 員工列表一頁 10 筆、由舊到新; 平行跑時別的檔案也在建帳號, 用名稱篩選才不受分頁影響。
+  await page.goto(`/admin/users?name=${encodeURIComponent("English workflow staff")}`)
   await expect(page.getByRole("row").filter({ hasText: "English workflow staff" })
     .getByRole("cell", { name: "Staff", exact: true })).toBeVisible()
-  await logout(page)
+  // 直接換成員工登入, 不登出超管: 登出會撤銷超管在其他 worker 的 session。
   await login(page, staff)
 }
 
@@ -250,8 +252,10 @@ test("英文介面可完成員工商品照片與交易完整流程", async ({ pa
   })
 })
 
-test("英文系統設定切換語系後重新登入仍保留選擇", async ({ page, context }) => {
-  await login(page, admin)
+test("英文系統設定切換語系後重新登入仍保留選擇", async ({ page, context, browser }) => {
+  // 語系存在瀏覽器的 cookie, 跟帳號無關; 要登出再登入, 所以用自己的帳號, 登出超管會撤銷其他 worker 的 session。
+  const account = await createUser(browser, "locale")
+  await login(page, account)
   await page.goto("/settings/system")
   await expect(page.getByRole("heading", { name: "System settings", exact: true })).toBeVisible()
   await page.getByRole("combobox", { name: "Display language", exact: true }).selectOption("zh")
@@ -264,23 +268,24 @@ test("英文系統設定切換語系後重新登入仍保留選擇", async ({ pa
   await expect(page.getByRole("combobox", { name: "Display language", exact: true })).toHaveValue("en")
   expect((await context.cookies()).find((cookie) => cookie.name === "locale")?.value).toBe("en")
   await logout(page)
-  await page.getByRole("textbox", { name: "Username", exact: true }).fill(admin.username)
+  await page.getByRole("textbox", { name: "Username", exact: true }).fill(account.username)
   await page.getByLabel("Password", { exact: true }).fill("incorrect-english-password")
   await page.getByRole("button", { name: "Sign in", exact: true }).click()
   await expect(page.getByRole("alert").filter({ hasText: "Invalid Username or Password" }))
     .toContainText("Invalid Username or Password")
-  await login(page, admin)
+  await login(page, account)
   await page.goto("/settings/system")
   await expect(page.getByRole("heading", { name: "System settings", exact: true })).toBeVisible()
   await expect(page.getByRole("combobox", { name: "Display language", exact: true })).toHaveValue("en")
 })
 
-test("真實 HEIC 上傳可顯示且下載保留原始檔案", async ({ page }, testInfo) => {
+test("真實 HEIC 上傳可顯示且下載保留原始檔案", async ({ page, browser }, testInfo) => {
   const fixture = fileURLToPath(new URL("./fixtures/IMG_2682.heic", import.meta.url))
   const original = await readFile(fixture)
   const expectedHash = "2d9d8493696fc0054ecb4517699fec11e04bf507f1f529f6a4f293fcefdeb35e"
   expect(createHash("sha256").update(original).digest("hex")).toBe(expectedHash)
-  await login(page, admin)
+  // 最後要登出驗證原圖受保護: 用自己的帳號, 登出超管會撤銷其他 worker 的 session。
+  await login(page, await createUser(browser, "heic"))
   await createCatalog(page, "HEIC Sample Brand", "HEIC Sample Vendor")
   await page.goto("/products/new")
   await page.getByLabel(/^Name\*?$/).fill("HEIC Real Sample Bag")

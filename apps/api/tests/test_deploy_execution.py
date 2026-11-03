@@ -14,7 +14,7 @@ VERIFIER = ".github/scripts/verify-deployment.sh"
 
 def deployment_command() -> str:
     workflow = WORKFLOW.read_text()
-    step = re.search(r"^      - name: 部署到主機\n(.*?)(?=^  \S|\Z)", workflow,
+    step = re.search(r"^      - name: 部署到主機\n(.*?)(?=^      - |^  \S|\Z)", workflow,
                      flags=re.MULTILINE | re.DOTALL)
     assert step is not None
     body = step.group(1).split("        run: |\n", 1)[1]

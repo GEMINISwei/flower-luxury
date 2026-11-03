@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
-import { admin, login, logout } from "./support"
+import { login } from "./support"
+
+// 預設載入超管的登入狀態 (playwright.config.ts)。
 
 async function createBrand(page: Page, name: string) {
   await page.goto("/brands")
@@ -52,7 +54,6 @@ async function checkNewestProductsAndEmptyYear(page: Page) {
 }
 
 test("商品可建檔編輯篩選刪除且列表由新到舊並以短橫線顯示空值", async ({ page }) => {
-  await login(page, admin)
   await createBrand(page, "Phase3 Brand")
   await createProduct(page, "Phase3 Bag", "Phase3 Brand")
   const detailUrl = page.url()
@@ -98,7 +99,6 @@ test("商品可建檔編輯篩選刪除且列表由新到舊並以短橫線顯�
 })
 
 test("員工共用商品且停用品牌仍可保留於原商品", async ({ page }) => {
-  await login(page, admin)
   await createBrand(page, "Phase3 Shared")
   await createProduct(page, "Phase3 Shared Bag", "Phase3 Shared")
   const detailUrl = page.url()
@@ -120,7 +120,7 @@ test("員工共用商品且停用品牌仍可保留於原商品", async ({ page 
   await dialog.getByLabel(/^密碼\*?$/).fill("product-staff-password")
   await dialog.getByRole("button", { name: "建立", exact: true }).click()
   await expect(dialog).toBeHidden()
-  await logout(page)
+  // 直接換成員工登入, 不登出超管: 登出會撤銷超管在其他 worker 的 session。
   await login(page, { username: "product-staff", password: "product-staff-password" })
   await page.goto(detailUrl)
   await page.getByRole("button", { name: "編輯商品", exact: true }).click()
@@ -135,7 +135,6 @@ test("員工共用商品且停用品牌仍可保留於原商品", async ({ page 
 })
 
 test("手機商品列表提供卡片篩選與更多設定入口", async ({ page }) => {
-  await login(page, admin)
   await createBrand(page, "Phase3 Mobile")
   await createProduct(page, "Phase3 Mobile Item", "Phase3 Mobile")
   await page.setViewportSize({ width: 390, height: 844 })
@@ -158,7 +157,6 @@ test("手機商品列表提供卡片篩選與更多設定入口", async ({ page 
 
 
 test("商品歷程可直接開啟且不存在商品顯示找不到頁面", async ({ page }) => {
-  await login(page, admin)
   for (const id of ["not-a-product-id", "00000000-0000-4000-8000-000000000000"]) {
     await page.goto(`/products/${id}/history`)
     await expect(page.getByRole("heading", { name: "找不到頁面", exact: true })).toBeVisible()

@@ -1,11 +1,11 @@
 import { expect, test, type Page } from "@playwright/test"
-import { admin, login, logout } from "./support"
+import { createUser, login, logout } from "./support"
 
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAABAAAAAICAIAAAB/FOjAAAAAFklEQVR4nGP8z0AaYCJRPcOoBgYiAACTUAEPHJZO1QAAAABJRU5ErkJggg==", "base64")
 const photo = (name: string) => ({ name, mimeType: "image/png", buffer: png })
 
+// 沿用呼叫端的登入狀態 (預設是超管, 見 playwright.config.ts)。
 async function prepareProduct(page: Page, name: string) {
-  await login(page, admin)
   await page.goto("/brands")
   await page.getByRole("button", { name: "新增品牌", exact: true }).click()
   const dialog = page.getByRole("dialog")
@@ -19,7 +19,9 @@ async function prepareProduct(page: Page, name: string) {
   await page.getByLabel(/^成本（新臺幣）\*?$/).fill("100")
 }
 
-test("商品照片支援選檔拍照主圖刪除與登入保護的原圖下載", async ({ page }) => {
+test("商品照片支援選檔拍照主圖刪除與登入保護的原圖下載", async ({ page, browser }) => {
+  // 最後要登出驗證原圖受保護: 用自己的帳號, 登出超管會撤銷其他 worker 的 session。
+  await login(page, await createUser(browser, "photos"))
   await prepareProduct(page, "Phase4 Photos")
   await page.getByLabel("上傳", { exact: true }).setInputFiles(photo("front.png"))
   await page.getByLabel("直接拍照", { exact: true }).setInputFiles(photo("camera.png"))
@@ -78,7 +80,9 @@ test("照片失敗保留商品並可移除後補傳而不重複建檔", async ({
   await expect(page.getByRole("link").filter({ hasText: "Phase4 Retry" })).toHaveCount(1)
 })
 
-test("商品照片依顯示尺寸載入且點擊開啟限制尺寸大圖並保留原圖下載", async ({ page }) => {
+test("商品照片依顯示尺寸載入且點擊開啟限制尺寸大圖並保留原圖下載", async ({ page, browser }) => {
+  // 最後要登出驗證原圖受保護: 用自己的帳號, 登出超管會撤銷其他 worker 的 session。
+  await login(page, await createUser(browser, "photos"))
   const name = "Sized Preview Bag"
   await prepareProduct(page, name)
   const encoded = await page.evaluate(() => {

@@ -1,5 +1,9 @@
 import { expect, test, type Page } from "@playwright/test"
-import { admin, login, logout } from "./support"
+import { SIGNED_OUT, login, logout, useAdmin } from "./support"
+
+// 註冊要從未登入開始。超管的步驟用 useAdmin 載入保存的登入狀態, 換回未登入時清掉 cookie:
+// 不可以登出超管, 登出會撤銷超管在其他 worker 的 session。
+test.use({ storageState: SIGNED_OUT })
 
 const firstKey = "e2e-first-manager-key"
 const secondKey = "e2e-second-manager-key"
@@ -21,14 +25,14 @@ test("註冊碼控制店長註冊且換碼立即生效", async ({ page, context 
   await expect(page.getByRole("alert").filter({ hasText: "註冊碼錯誤或尚未設定" }))
     .toContainText("註冊碼錯誤或尚未設定")
 
-  await login(page, admin)
+  await useAdmin(context)
   await page.goto("/admin/registration")
   await expect(page.getByText("尚未設定，公開註冊目前無法使用")).toBeVisible()
   await page.getByLabel("新的註冊碼").fill(firstKey)
   await page.getByRole("button", { name: "儲存註冊碼", exact: true }).click()
   await expect(page.getByRole("status")).toContainText("註冊碼已更新")
   await expect(page.getByLabel("新的註冊碼")).toHaveValue("")
-  await logout(page)
+  await context.clearCookies()
 
   await signup(page, registered.username, firstKey)
   await expect(page.getByRole("status")).toContainText("店長帳號已建立")
@@ -48,8 +52,8 @@ test("註冊碼控制店長註冊且換碼立即生效", async ({ page, context 
   await expect(page.getByRole("status")).toContainText("店長帳號已建立")
 })
 
-test("員工不能進入註冊碼設定且店長新增員工不提供角色指派", async ({ page }) => {
-  await login(page, admin)
+test("員工不能進入註冊碼設定且店長新增員工不提供角色指派", async ({ page, context }) => {
+  await useAdmin(context)
   await page.goto("/admin/users")
   await expect(page.getByRole("link", { name: "角色", exact: true })).toHaveCount(0)
   await page.getByRole("button", { name: "新增員工", exact: true }).click()
@@ -60,9 +64,11 @@ test("員工不能進入註冊碼設定且店長新增員工不提供角色指�
   await dialog.getByLabel(/^密碼\*?$/).fill(staff.password)
   await dialog.getByRole("button", { name: "建立", exact: true }).click()
   await expect(dialog).toBeHidden()
+  // 員工列表一頁 10 筆、由舊到新; 平行跑時別的檔案也在建帳號, 用名稱篩選才不受分頁影響。
+  await page.goto(`/admin/users?name=${encodeURIComponent("註冊測試員工")}`)
   const row = page.getByRole("row").filter({ hasText: "註冊測試員工" })
   await expect(row.getByRole("cell", { name: "員工", exact: true })).toBeVisible()
-  await logout(page)
+  await context.clearCookies()
   await login(page, staff)
   await page.goto("/admin/registration")
   await expect(page).toHaveURL("/products")
