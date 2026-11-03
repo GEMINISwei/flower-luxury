@@ -20,6 +20,8 @@ async function prepareStaff(page: Page) {
   await dialog.getByLabel(/^密碼\*?$/).fill(staff.password)
   await dialog.getByRole("button", { name: "建立", exact: true }).click()
   await expect(dialog).toBeHidden()
+  // 員工列表一頁 10 筆、由舊到新; 平行跑時別的檔案也在建帳號, 用名稱篩選才不受分頁影響。
+  await page.goto(`/admin/users?name=${encodeURIComponent("完整流程員工")}`)
   await expect(page.getByRole("row").filter({ hasText: "完整流程員工" })
     .getByRole("cell", { name: "員工", exact: true })).toBeVisible()
   // 直接換成員工登入, 不登出超管: 登出會撤銷超管在其他 worker 的 session。

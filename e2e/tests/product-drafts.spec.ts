@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process"
 import { randomUUID } from "node:crypto"
 import { readFile } from "node:fs/promises"
 import { expect, test, type BrowserContext, type Page } from "@playwright/test"
-import { ADMIN_STATE, createUser, login, type Account } from "./support"
+import { ADMIN_STATE, SIGNED_OUT, createUser, login, type Account } from "./support"
 import { expectHeaderFits } from "./header-layout"
 
 // 預設載入超管的登入狀態 (playwright.config.ts)。
@@ -303,7 +303,8 @@ test("draft_photos_can_be_organized_securely", async ({ page, browser }) => {
   const response = await page.request.get(href!)
   expect(response.status()).toBe(200)
   expect(response.headers()["cache-control"]).toContain("no-store")
-  const anonymous = await browser.newContext()
+  // 明確不帶 cookie: config 預設載入超管的登入狀態, 不指定的話這個 context 是登入的。
+  const anonymous = await browser.newContext({ storageState: SIGNED_OUT })
   expect((await anonymous.request.get(href!)).status()).toBe(401)
   await anonymous.close()
   await expect(page.getByRole("button", { name: "向前移動", exact: true })).toHaveCount(0)

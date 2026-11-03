@@ -16,6 +16,8 @@ test("店長新增員工後，列表看得到該員工", async ({ page }) => {
   await dialog.getByRole("button", { name: "建立", exact: true }).click()
 
   await expect(dialog).toBeHidden()
+  // 員工列表一頁 10 筆、由舊到新; 平行跑時別的檔案也在建帳號, 用名稱篩選才不受分頁影響。
+  await page.goto(`/admin/users?name=${encodeURIComponent(nickname)}`)
   // 列表在桌面寬度下沒有帳號欄, 以暱稱辨認。
   await expect(page.getByRole("cell", { name: nickname, exact: true })).toBeVisible()
 })
