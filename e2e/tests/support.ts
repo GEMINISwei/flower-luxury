@@ -58,7 +58,8 @@ export async function createUser(browser: Browser, label: string): Promise<Accou
     username: `e2e-${label}-${id}`,
     password: `e2e-password-${id}`,
   }
-  const context = await browser.newContext({ storageState: ADMIN_STATE })
+  // 語系固定中文: browser.newContext 會繼承呼叫端檔案的 locale (例如英文案例), 下面找的是中文的按鈕與欄位。
+  const context = await browser.newContext({ storageState: ADMIN_STATE, locale: "zh-TW" })
   try {
     const page = await context.newPage()
     await page.goto("/admin/users")
