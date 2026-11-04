@@ -9,6 +9,9 @@
 - 部署時，要部署的版本若已在 `main` 通過 CI 就不再重跑一次；主機改依 digest 拉 image，重跑舊的部署也一定拿到當次建的那份，每套系統的 Summary 記下部署的 digest。
 - CI 的 E2E 沿用有快取的 image、改以 2 個 worker 平行執行，並快取前端套件；本機與 CI 的 shellcheck 固定同一版。
 - 新增 `make e2e up|test|grep|down`，開發時在常駐的 dev 環境反覆跑相關的 E2E。commit 訊息帶 CI 略過標記時會被擋下。
+- 前端的 dev 與 build 改用 Turbopack。
+- `make e2e test` 必須指定 spec，整套用 `make check e2e`。
+- 發版改走 PR：`make release` 改完版號後切到發版分支；agent 發布 release 只能用 `publish.sh`，一定先經過使用者確認。
 
 ## [0.1.4]
 
