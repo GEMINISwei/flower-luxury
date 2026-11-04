@@ -16,6 +16,7 @@ from shared.jobs.health import HEARTBEAT_PATH
 
 ROOT = Path(__file__).resolve().parents[3]
 BASH = shutil.which("bash") or "/bin/bash"
+BASE_COMPOSE = ROOT / "infra/docker/docker-compose.yml"
 
 
 def healthchecks():
@@ -94,3 +95,23 @@ def test_collector_shell_probe_checks_heartbeat_freshness(tmp_path, age, healthy
     script = command[3].replace(str(HEARTBEAT_PATH), str(path)).replace("$$", "$")
     result = subprocess.run([BASH, "-c", script], timeout=5, check=False)  # noqa: S603
     assert (result.returncode == 0) == healthy
+
+
+def _service(path: Path, name: str) -> str:
+    """回傳服務的區塊。只認 compose 檔的固定縮排 (服務 2 格、內容至少 4 格)。"""
+    text = path.read_text(encoding="utf-8")
+    block = re.search(rf"^  {name}:\n((?:(?:    .*)?\n)+)", text, flags=re.MULTILINE)
+    assert block, f"{path.name} 沒有 {name} 服務"
+    return block.group(1)
+
+
+def test_start_web_without_key_keeps_nginx_down() -> None:
+    """金鑰缺失時 web 會結束行程, 靠這幾個設定才變成明顯的重啟迴圈, 而不是半套服務上線。"""
+    web = _service(BASE_COMPOSE, "web")
+    nginx = _service(BASE_COMPOSE, "nginx")
+
+    assert "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:?}" in web
+    assert "    restart: always\n" in web
+    assert "    healthcheck:\n" in web
+    depends_on = r"^    depends_on:\n(?:      .*\n)*?"
+    assert re.search(depends_on + r"      web:\n        condition: service_healthy$", nginx, re.M)
