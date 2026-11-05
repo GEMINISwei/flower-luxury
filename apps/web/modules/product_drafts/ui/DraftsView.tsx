@@ -2,7 +2,7 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { RefreshCw, SlidersHorizontal } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import type { ApiListMeta } from "@/shared/api/response"
 import { Button, Container, ErrorState, ListTableCard, PageHeader, Pagination,
   ICON_SIZE, StatusBadge, TableRow, useActionSubmit, useListRefresh } from "@/shared/ui"
@@ -13,6 +13,7 @@ import { draftMessages } from "../i18n"
 import DraftFilters from "./DraftFilters"
 import styles from "./drafts.module.css"
 import { draftQueueHref, draftStage } from "../capabilities"
+import { draftListHref, draftStorage, saveDraftReturnPoint } from "../list-state"
 import DraftQueueNotice from "./DraftQueueNotice"
 import { completeDraft } from "../actions"
 
@@ -25,6 +26,9 @@ export default function DraftsView({ drafts, sources, source, seq, limit, source
 }) {
   const t = useT(draftMessages)
   const router = useRouter()
+  const params = useSearchParams()
+  const remember = (id: string) => saveDraftReturnPoint(draftStorage(),
+    { id, href: draftListHref(new URLSearchParams(params.toString())) })
   const [filterOpen, setFilterOpen] = useState(false)
   const [refreshing, startRefresh] = useTransition()
   const refresh = useListRefresh()
@@ -62,7 +66,7 @@ export default function DraftsView({ drafts, sources, source, seq, limit, source
           <td data-label={t("actions")}>
             {draft.collecting ? <Button variant="outlined" disabled={isPending}
               onClick={() => complete(draft)}>{t("completeCollection")}</Button>
-              : <Link href={draftQueueHref(draft.id, source)}>
+              : <Link href={draftQueueHref(draft.id, source)} onClick={() => remember(draft.id)}>
                 <Button as="span" variant="outlined">{t("open")}</Button></Link>}
           </td>
         </TableRow>)}

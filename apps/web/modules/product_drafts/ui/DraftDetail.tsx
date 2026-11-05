@@ -18,6 +18,7 @@ import PendingMessages from "./PendingMessages"
 import MessageList from "./MessageList"
 import useDraftEditor from "./useDraftEditor"
 import DraftQueueNotice from "./DraftQueueNotice"
+import { useDraftReturnHref } from "./useDraftReturnHref"
 import styles from "./drafts.module.css"
 
 export default function DraftDetail({ initial, brands, sources, vendors, scope, created }: {
@@ -26,6 +27,7 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
 }) {
   const t = useT(draftMessages)
   const editor = useDraftEditor(initial, scope)
+  const backHref = useDraftReturnHref(initial.id, draftQueueHref(undefined, scope))
   const { draft, values, pending } = editor
   const [dialog, setDialog] = useState<"approve" | "discard" | null>(null)
   const source = sources.find((item) => item.source_key === draft.source_key)
@@ -38,7 +40,7 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
   const disabled = pending || editor.stale
   const approvable = approvalCapabilities(draft).canApprove
   return <FormPageShell title={t("detail")} subtitle={source?.name ?? draft.source_key}
-    backHref={draftQueueHref(undefined, scope)} backLabel={t("back")}
+    backHref={backHref} backLabel={t("back")}
     actions={[
       { label: t("reload"), icon: <RefreshCw size={ICON_SIZE.md} />, refresh: true,
         disabled: pending, onClick: editor.reload },
