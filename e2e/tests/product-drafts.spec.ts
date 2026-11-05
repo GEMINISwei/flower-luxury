@@ -91,6 +91,9 @@ async def run():
             if arg.get("crowded"):
                 for index in range(24):
                     await message("text", index + 4, f"補充訊息 {index + 1}\n" + "商品細節\n" * 8)
+            for index in range(int(arg.get("extra", "0"))):
+                await message("image", 4 + index / 10)
+                await message("text", 4.05 + index / 10, "下一件商品")
             second = await message("image", 40)
             if arg.get("ready_second"):
                 await photos.complete_photo(second.message_id, data.getvalue(), "line-b.png")
@@ -200,6 +203,30 @@ test("暫存列表只顯示收件時間狀態來源與審核", async ({ page }) 
     .toHaveAttribute("href", `/product-drafts/${data.id}?source_key=${encodeURIComponent(data.source)}`)
   await page.getByRole("link", { name: "審核", exact: true }).first().click()
   await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
+})
+
+test("從暫存列表第二頁進入一筆再返回，重整詳情後仍回到原分頁", async ({ page }) => {
+  const data = fixture({ name: `Draft ${randomUUID().slice(0, 8)}`, extra: "20" })
+  await login(page, staff)
+  await page.goto(`/product-drafts?source_key=${encodeURIComponent(data.source)}`)
+  const reviews = page.getByRole("link", { name: "審核", exact: true })
+  await expect(reviews).toHaveCount(20)
+  await page.getByRole("link", { name: /下一頁/ }).click()
+  await expect(page).toHaveURL(/seq=2/)
+  await expect(reviews).toHaveCount(2)
+  const listUrl = page.url()
+  await reviews.first().click()
+  await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
+  const back = page.getByRole("link", { name: "返回暫存列表", exact: true })
+  await back.click()
+  await expect(page).toHaveURL(listUrl)
+  await expect(reviews).toHaveCount(2)
+  await reviews.first().click()
+  await expect(page.getByLabel("名稱", { exact: true })).toBeVisible()
+  await page.reload()
+  await back.click()
+  await expect(page).toHaveURL(listUrl)
+  await expect(reviews).toHaveCount(2)
 })
 
 test("來源篩選由視窗套用並可清除", async ({ page }) => {
