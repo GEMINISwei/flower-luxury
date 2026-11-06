@@ -158,6 +158,11 @@ class NextReviewInfo(BaseModel):
     id: str | None
 
 
+class DraftListPosition(BaseModel):
+    cursor: str | None
+    seq: int
+
+
 class PhotoCompletion(BaseModel):
     accepted: bool
     photo: DraftPhotoInfo | None = None

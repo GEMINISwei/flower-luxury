@@ -6,6 +6,7 @@ import { canAccessRoute } from "@/shared/access/permissions"
 import { fetchPaginatedList, parsePagination } from "@/shared/pagination/fetch.server"
 import { getT } from "@/shared/i18n/locale.server"
 import { DRAFTS_ROUTE } from "./manifest"
+import { DRAFT_PAGE_SIZE } from "./capabilities"
 import { draftMessages } from "./i18n"
 import DraftsView from "./ui/DraftsView"
 
@@ -22,7 +23,7 @@ export default async function DraftsPage({ searchParams }: DraftsPageProps) {
   const params = await searchParams
   const pagination = parsePagination(params)
   const t = await getT(draftMessages)
-  const options = { ...pagination, limit: 20, errorFallback: t("failed"),
+  const options = { ...pagination, limit: DRAFT_PAGE_SIZE, errorFallback: t("failed"),
     query: params.source_key ? { source_key: params.source_key } : {} }
   const [sources, drafts] = await Promise.all([
     apiGet({ url: "/line/sources" }),
@@ -30,7 +31,7 @@ export default async function DraftsPage({ searchParams }: DraftsPageProps) {
   ])
   return <DraftsView drafts={drafts}
     sources={sources.status === "success" ? sources.data.list_data : []}
-    source={params.source_key ?? ""} seq={pagination.seq} limit={20}
+    source={params.source_key ?? ""} seq={pagination.seq} limit={DRAFT_PAGE_SIZE}
     created={params.created} completed={params.completed === "1"}
     sourceError={sources.status === "success" ? "" : t("failed")} />
 }

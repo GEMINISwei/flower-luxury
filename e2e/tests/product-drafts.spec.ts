@@ -229,6 +229,19 @@ test("從暫存列表第二頁進入一筆再返回，重整詳情後仍回到�
   await expect(reviews).toHaveCount(2)
 })
 
+test("審核建檔跳到下一筆後，返回列表回到那一筆所在的分頁", async ({ page }) => {
+  const data = fixture({ name: `Draft ${randomUUID().slice(0, 8)}`, extra: "20", ready_second: "1" })
+  await login(page, staff)
+  await page.goto(`/product-drafts/${data.id}?source_key=${encodeURIComponent(data.source)}`)
+  await fillRequired(page, data.name, data.brand)
+  await page.getByRole("button", { name: "審核建檔", exact: true }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "審核建檔", exact: true }).click()
+  await expect(page).toHaveURL(new RegExp(`/product-drafts/${data.second}\\?`))
+  await page.getByRole("link", { name: "返回暫存列表", exact: true }).click()
+  await expect(page).toHaveURL(/seq=2/)
+  await expect(page.getByRole("link", { name: "審核", exact: true })).toHaveCount(1)
+})
+
 test("來源篩選由視窗套用並可清除", async ({ page }) => {
   const data = seed()
   await login(page, staff)
@@ -497,7 +510,7 @@ workspaceTest("暫存返回位於內容頂端且操作集中於頁首", async ({
   const data = seed()
   await open(page, data.id)
   const back = page.getByRole("link", { name: "返回暫存列表", exact: true })
-  await expect(back).toHaveAttribute("href", "/product-drafts")
+  await expect(back).toHaveAttribute("href", /^\/product-drafts(\?|$)/)
   expect(await back.evaluate((element) => Boolean(element.closest("header")))).toBe(false)
   const backBox = (await back.boundingBox())!
   for (const label of ["重新載入資料", "審核建檔", "操作選單"]) {
@@ -509,7 +522,7 @@ workspaceTest("暫存返回位於內容頂端且操作集中於頁首", async ({
   const photos = (await page.getByRole("region", { name: "照片整理", exact: true }).boundingBox())!
   expect(backBox.y + backBox.height).toBeLessThan(photos.y)
   await back.click()
-  await expect(page).toHaveURL("/product-drafts")
+  await expect(page).toHaveURL(/\/product-drafts(\?|$)/)
 })
 
 workspaceTest("商品資訊依指定六列排列且最多兩欄", async ({ page }) => {

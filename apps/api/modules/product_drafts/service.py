@@ -14,6 +14,7 @@ from .schema import (
     DraftFields,
     DraftInfo,
     DraftList,
+    DraftListPosition,
     DraftPhotoInfo,
     DraftUpdate,
     MessageInfo,
@@ -71,6 +72,12 @@ async def get_draft(id: str | None) -> DraftInfo:
 async def next_review(source_key: str | None = None) -> NextReviewInfo:
     row = await model.next_review_row(source_key)
     return NextReviewInfo(id=str(row.id) if row else None)
+
+
+async def get_list_position(id: str, limit: int,
+                            source_key: str | None = None) -> DraftListPosition:
+    row = ensure_found(await model.get_draft_row(id), DraftError.NOT_FOUND)
+    return DraftListPosition(**await model.draft_position(row, limit, source_key))
 
 
 async def get_draft_list(

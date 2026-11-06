@@ -6,7 +6,7 @@ import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
 import { discardDraft } from "../actions"
-import { approvalCapabilities, draftQueueHref, draftStage, draftTextMessages } from "../capabilities"
+import { approvalCapabilities, draftStage, draftTextMessages } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { DraftInfo, SourceInfo } from "../types"
 import DraftFields from "./DraftFields"
@@ -18,16 +18,15 @@ import PendingMessages from "./PendingMessages"
 import MessageList from "./MessageList"
 import useDraftEditor from "./useDraftEditor"
 import DraftQueueNotice from "./DraftQueueNotice"
-import { useDraftReturnHref } from "./useDraftReturnHref"
 import styles from "./drafts.module.css"
 
-export default function DraftDetail({ initial, brands, sources, vendors, scope, created }: {
+export default function DraftDetail({ initial, brands, sources, vendors, scope, created,
+  backHref }: {
   initial: DraftInfo; brands: BrandInfo[]; sources: SourceInfo[]; vendors: VendorInfo[];
-  scope?: string; created?: string
+  scope?: string; created?: string; backHref: string
 }) {
   const t = useT(draftMessages)
   const editor = useDraftEditor(initial, scope)
-  const backHref = useDraftReturnHref(initial.id, draftQueueHref(undefined, scope))
   const { draft, values, pending } = editor
   const [dialog, setDialog] = useState<"approve" | "discard" | null>(null)
   const source = sources.find((item) => item.source_key === draft.source_key)
