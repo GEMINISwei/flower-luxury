@@ -17,6 +17,7 @@ from .schema import (
     DiscardInfo,
     DraftInfo,
     DraftList,
+    DraftListPosition,
     DraftUpdate,
     MainPhoto,
     MessageList,
@@ -61,6 +62,14 @@ async def select_sale_route(id: UuidText, form: SaleSelection,
 async def next_review_route(source_key: str | None = None,
                             _: CurrentUser = Depends(check_user_permission())) -> NextReviewInfo:
     return await service.next_review(source_key)
+
+
+@router.get("/{id}/list-position")
+async def list_position_route(
+    id: UuidText, limit: int = Query(ge=1, le=100), source_key: str | None = None,
+    _: CurrentUser = Depends(check_user_permission()),
+) -> DraftListPosition:
+    return await service.get_list_position(id, limit, source_key)
 
 
 @router.post("/{id}/quotes")

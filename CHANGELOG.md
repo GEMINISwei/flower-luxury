@@ -13,6 +13,10 @@
 - `make e2e test` 必須指定 spec，整套用 `make check e2e`。
 - 發版改走 PR：`make release` 改完版號後切到發版分支；agent 發布 release 只能用 `publish.sh`，一定先經過使用者確認。
 
+### Fixed
+
+- 商品暫存詳情的返回連結會回到該筆在列表上所在的分頁，不再跳回第一頁；審核建檔自動跳到下一筆時也一樣。
+
 ## [0.1.4]
 
 ### Added

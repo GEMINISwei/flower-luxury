@@ -352,6 +352,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/product-drafts/{id}/list-position": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Position Route */
+        get: operations["list_position_route_api_product_drafts__id__list_position_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/product-drafts/{id}/pending/{message_id}/accept": {
         parameters: {
             query?: never;
@@ -1244,6 +1261,13 @@ export interface components {
             prev_cursor?: string | null;
             /** Total Count */
             total_count: number;
+        };
+        /** DraftListPosition */
+        DraftListPosition: {
+            /** Cursor */
+            cursor: string | null;
+            /** Seq */
+            seq: number;
         };
         /** DraftPhotoInfo */
         DraftPhotoInfo: {
@@ -2864,6 +2888,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_position_route_api_product_drafts__id__list_position_get: {
+        parameters: {
+            query: {
+                limit: number;
+                source_key?: string | null;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftListPosition"];
                 };
             };
             /** @description Validation Error */

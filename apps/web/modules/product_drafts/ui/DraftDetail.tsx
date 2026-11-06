@@ -6,7 +6,7 @@ import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
 import { discardDraft } from "../actions"
-import { approvalCapabilities, draftQueueHref, draftStage, draftTextMessages } from "../capabilities"
+import { approvalCapabilities, draftStage, draftTextMessages } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { DraftInfo, SourceInfo } from "../types"
 import DraftFields from "./DraftFields"
@@ -20,9 +20,10 @@ import useDraftEditor from "./useDraftEditor"
 import DraftQueueNotice from "./DraftQueueNotice"
 import styles from "./drafts.module.css"
 
-export default function DraftDetail({ initial, brands, sources, vendors, scope, created }: {
+export default function DraftDetail({ initial, brands, sources, vendors, scope, created,
+  backHref }: {
   initial: DraftInfo; brands: BrandInfo[]; sources: SourceInfo[]; vendors: VendorInfo[];
-  scope?: string; created?: string
+  scope?: string; created?: string; backHref: string
 }) {
   const t = useT(draftMessages)
   const editor = useDraftEditor(initial, scope)
@@ -38,7 +39,7 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
   const disabled = pending || editor.stale
   const approvable = approvalCapabilities(draft).canApprove
   return <FormPageShell title={t("detail")} subtitle={source?.name ?? draft.source_key}
-    backHref={draftQueueHref(undefined, scope)} backLabel={t("back")}
+    backHref={backHref} backLabel={t("back")}
     actions={[
       { label: t("reload"), icon: <RefreshCw size={ICON_SIZE.md} />, refresh: true,
         disabled: pending, onClick: editor.reload },

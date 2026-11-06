@@ -19,7 +19,7 @@ from sqlalchemy.dialects.postgresql import JSONB, insert
 from sqlalchemy.orm import Mapped, mapped_column
 
 from shared.db.session import active_session
-from shared.db.table import BaseTable, Condition, PagedResult, parse_uuid
+from shared.db.table import BaseTable, Condition, PagedResult, PagePosition, parse_uuid
 from shared.time import utc_now
 
 
@@ -263,11 +263,19 @@ async def approval_for(id: str | None) -> ApprovalTable | None:
     return await active_session().get(ApprovalTable, parse_uuid(id or ""))
 
 
+def _draft_filter(source_key: str | None) -> list[Condition]:
+    return [DraftTable.source_key == source_key] if source_key else []
+
+
 async def draft_page(limit: int, cursor: str | None, direction: Literal["next", "prev"],
                      source_key: str | None) -> PagedResult:
-    where = [DraftTable.source_key == source_key] if source_key else []
     return await DraftTable.get_page(limit=limit, cursor=cursor, direction=direction,
-                                     sort_field="received_at", where=where)
+                                     sort_field="received_at", where=_draft_filter(source_key))
+
+
+async def draft_position(row: DraftTable, limit: int, source_key: str | None) -> PagePosition:
+    return await DraftTable.page_position(row, limit=limit, sort_field="received_at",
+                                          where=_draft_filter(source_key))
 
 
 async def next_review_row(source_key: str | None) -> DraftTable | None:

@@ -34,11 +34,21 @@ export function approvalCapabilities(draft: {
     && draft.photos.every((photo) => photo.status === "stored" || photo.status === "ready") }
 }
 
+export const DRAFT_PAGE_SIZE = 20
+
 export function draftQueueHref(id?: string, source?: string, created?: string) {
   const query = new URLSearchParams()
   if (source) query.set("source_key", source)
   if (created) query.set("created", created)
   return `/product-drafts${id ? `/${id}` : ""}${query.size ? `?${query}` : ""}`
+}
+
+export function draftPageHref(source: string | undefined,
+  { cursor, seq }: { cursor?: string | null; seq: number }) {
+  const query = new URLSearchParams()
+  if (source) query.set("source_key", source)
+  if (cursor) { query.set("cursor", cursor); query.set("direction", "next"); query.set("seq", String(seq)) }
+  return `/product-drafts${query.size ? `?${query}` : ""}`
 }
 
 export function draftTextMessages(messages: MessageInfo[]): MessageInfo[] {

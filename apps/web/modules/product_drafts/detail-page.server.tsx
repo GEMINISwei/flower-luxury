@@ -11,6 +11,7 @@ import { draftMessages } from "./i18n"
 import { DRAFTS_ROUTE } from "./manifest"
 import DraftDetail from "./ui/DraftDetail"
 import { reviewContinuation } from "./continuation.server"
+import { DRAFT_PAGE_SIZE, draftPageHref } from "./capabilities"
 
 export type DraftDetailPageProps = { params: Promise<{ id: string }>;
   searchParams: Promise<{ source_key?: string; created?: string }> }
@@ -22,10 +23,12 @@ export default async function DraftDetailPage({ params, searchParams }: DraftDet
   if (!canAccessRoute(user.data?.permissions ?? [], DRAFTS_ROUTE)) redirect("/products")
   const { id } = await params
   const query = await searchParams
-  const [draft, brands, sources, vendors] = await Promise.all([
+  const [draft, brands, sources, vendors, position] = await Promise.all([
     apiGet({ url: "/product-drafts/{id}", params: { id } }), getBrandOptions(),
     apiGet({ url: "/line/sources" }),
     getVendorOptions(),
+    apiGet({ url: "/product-drafts/{id}/list-position", params: { id }, query: {
+      limit: DRAFT_PAGE_SIZE, ...(query.source_key ? { source_key: query.source_key } : {}) } }),
   ])
   if (draft.code === 404 || draft.code === 422) {
     if (query.created) redirect(await reviewContinuation(query.source_key, query.created, id))
@@ -38,5 +41,7 @@ export default async function DraftDetailPage({ params, searchParams }: DraftDet
   }
   return <DraftDetail key={id} initial={draft.data} brands={brands.data.list_data}
     sources={sources.data.list_data} vendors={vendors.data.list_data}
-    scope={query.source_key} created={query.created} />
+    scope={query.source_key} created={query.created}
+    backHref={draftPageHref(query.source_key,
+      position.status === "success" ? position.data : { seq: 1 })} />
 }

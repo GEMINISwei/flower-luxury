@@ -62,6 +62,11 @@ class PagedResult(TypedDict):
     total_count: int
 
 
+class PagePosition(TypedDict):
+    cursor: str | None
+    seq: int
+
+
 class PaginationError(BaseError):
     INVALID_CURSOR = LangText(zh="分頁游標無效", en="Invalid Pagination Cursor")
 
@@ -372,6 +377,36 @@ class BaseTable(DeclarativeBase):
             "has_previous": has_previous,
             "total_count": total_count,
         }
+
+    @classmethod
+    async def page_position(
+        cls,
+        row: Self,
+        *,
+        limit: int,
+        sort_field: str = "created_at",
+        where: Sequence[Condition] = (),
+        session: AsyncSession | None = None,
+    ) -> PagePosition:
+        """`row` 在升冪列表中所在的分頁: 頁碼與進入那一頁的游標。
+
+        游標取自上一頁最後一筆, 與 `get_page` 翻到那一頁時的 `next_cursor` 相同; 第一頁沒有游標。
+        """
+        db = resolve_session(session)
+        sort_column = getattr(cls, sort_field)
+        sort_value = getattr(row, sort_field)
+        before = (*where, or_(sort_column < sort_value,
+                              and_(sort_column == sort_value, cls.id < row.id)))
+        count = await db.scalar(select(func.count()).select_from(cls).where(*before)) or 0
+        pages = count // limit
+        previous = pages and await db.scalar(select(cls).where(*before)
+                                             .order_by(sort_column.asc(), cls.id.asc())
+                                             .offset(pages * limit - 1).limit(1))
+        # 查數量與取上一筆之間資料可能被刪除, 此時退回第一頁.
+        if not previous:
+            return {"cursor": None, "seq": 1}
+        cursor = _encode_cursor(getattr(previous, sort_field), str(previous.id))
+        return {"cursor": cursor, "seq": pages + 1}
 
     # ── 寫 ────────────────────────────────────────────────────────────────────
 
