@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.1.5]
+
 ### Changed
 
 - 部署時，要部署的版本若已在 `main` 通過 CI 就不再重跑一次；主機改依 digest 拉 image，重跑舊的部署也一定拿到當次建的那份，每套系統的 Summary 記下部署的 digest。
