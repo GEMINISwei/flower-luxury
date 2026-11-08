@@ -90,13 +90,10 @@ BLOCKED = [
     "cd apps && git push origin main",
     "(git push origin main)",
     'bash -c "git push origin main"',
+    # eval 跟 `bash -c` 一樣會執行參數裡的指令。
+    'eval "gh pr merge 42"',
+    "eval git push origin main",
     "gh pr merge 5 --squash",
-    "npm install --force",
-    "cd apps/web && npm i foo --legacy-peer-deps",
-    "docker compose up -d",
-    "docker --context x compose ps",
-    "docker-compose logs api",
-    "FOO=1 docker compose down -v",
     # 換行是指令的分隔: 第二行不是第一行的參數。
     "echo hi\ngit push origin main",
     "cat > x <<EOF\nhi\nEOF\ngit push origin main",
@@ -125,6 +122,9 @@ BLOCKED = [
     "bash .agents/skills/release/scripts/publish.sh 0.1.0",
     "./.agents/skills/release/scripts/publish.sh 0.1.0",
     "cd .agents/skills/release && scripts/publish.sh 0.1.0",
+    # 合併與轉 Ready 由使用者做。
+    "gh pr ready 5",
+    "gh pr merge 5 --auto --squash",
 ]
 
 ALLOWED = [
@@ -146,6 +146,9 @@ ALLOWED = [
     "git push \\\n  origin feat/x",
     # push 的 -n 是 --dry-run, 不是 --no-verify。
     "git push -n origin feat/x",
+    # dry-run 不會真的 push, 推到 main 也不擋。
+    "git push -n origin main",
+    "git push --dry-run origin main",
     "git config core.hooksPath .githooks",
     "git config set core.hooksPath .githooks",
     # 只給設定名不給值是讀取。
@@ -159,6 +162,20 @@ ALLOWED = [
     "gh release list",
     ".agents/skills/release/scripts/preview.sh 0.1.0",
     "cat .agents/skills/release/scripts/publish.sh",
+    "gh pr ready 5 --undo",
+    "gh pr view 5 --json state",
+    "gh api repos/o/r/pulls/5",
+    "gh api repos/o/r/pulls/5/merge",
+    "gh api repos/o/r/releases",
+    "gh api repos/o/r/releases/latest --jq .tag_name",
+    "gh api -X GET repos/o/r/releases -f per_page=5",
+    "gh api graphql -f query='query { viewer { login } }'",
+    # 交給 AGENTS.md 的規則, hook 不擋 (ADR 0019)。
+    "npm install --force",
+    "cd apps/web && npm i foo --legacy-peer-deps",
+    "docker compose up -d",
+    "FOO=1 docker compose down -v",
+    "gh api repos/o/r/actions/runs --jq '.workflow_runs[0].name'",
 ]
 
 
@@ -246,6 +263,15 @@ def test_claude_and_codex_hook_configs_call_the_same_scripts() -> None:
     assert not missing, f"設定呼叫了不存在的腳本: {missing}"
 
 
+def test_codex_hooks_config_has_only_hooks_at_top_level() -> None:
+    # Codex 0.142.5 遇到不認得的頂層欄位會讓整份設定解析失敗,
+    # 兩個守衛都不載入, 只在 hooks/list 留警告
+    config = json.loads(CODEX_HOOKS.read_text(encoding="utf-8"))
+    assert set(config) == {"hooks"}, (
+        f".codex/hooks.json 頂層只能有 hooks, 說明寫進文件: {sorted(config)}"
+    )
+
+
 HOOK_SCRIPTS = sorted(HOOKS_DIR.glob("*.py"))
 # macOS 內建的 python3; hook 由 PATH 上的 python3 執行, 不是 api 的虛擬環境。
 OLDEST_PYTHON = (3, 9)
@@ -259,3 +285,38 @@ def test_hook_scripts_run_on_oldest_supported_python(script: Path) -> None:
     assert "from __future__ import annotations" in source, (
         f"{script.name}: 要加 from __future__ import annotations, `str | None` 在 3.9 上才不會出錯"
     )
+
+
+# 會改 GitHub 上狀態的 API 與重跑 run: 可能合併、發布或重新部署, 一律先確認。
+# 不再逐一判斷端點 (ADR 0019): Claude 跳確認; Codex 不支援 ask, 擋下請使用者自己執行。
+CONFIRMED = {"claude": "ask", "codex": "deny"}
+
+GH_API_WRITES = [
+    "gh api -X PUT repos/o/r/pulls/5/merge",
+    "gh api repos/o/r/pulls/5/merge -f merge_method=squash",
+    "gh api --method PATCH repos/o/r/issues/1 -f state=closed",
+    "gh api -X POST repos/o/r/releases -f tag_name=v0.1.0",
+    "gh api -X DELETE repos/o/r/releases/1",
+    "gh api -X POST repos/o/r/actions/runs/1/rerun",
+    "gh api graphql -f query='mutation { mergePullRequest(input: {}) { clientMutationId } }'",
+]
+
+
+def decision(output: dict[str, Any] | None) -> str | None:
+    if output is None:
+        return None
+    hook = output["hookSpecificOutput"]
+    assert hook["permissionDecisionReason"], "擋下時要說明理由與下一步"
+    return str(hook["permissionDecision"])
+
+
+@pytest.mark.parametrize("agent", AGENTS)
+@pytest.mark.parametrize("command", GH_API_WRITES)
+def test_guard_confirms_gh_api_writes(agent: str, command: str, on_feature: Path) -> None:
+    assert decision(run_guard(agent, command, on_feature)) == CONFIRMED[agent], command
+
+
+@pytest.mark.parametrize("agent", AGENTS)
+@pytest.mark.parametrize("command", ["gh run rerun 123", "gh run rerun 123 --failed"])
+def test_guard_confirms_rerunning_runs(agent: str, command: str, on_feature: Path) -> None:
+    assert decision(run_guard(agent, command, on_feature)) == CONFIRMED[agent], command
