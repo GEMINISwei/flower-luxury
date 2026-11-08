@@ -7,16 +7,23 @@
 
 ## 寫法
 
-- 照 [`_template.md`](_template.md) 的段落，檔名是 `NNNN-kebab-case.md`，編號接著最後一號往下。
-- 寫好就不再改內容，只有狀態那一行與錯字可以改。
-- 決定被推翻時另寫一份新的，三處一起改（測試會擋）：
-  1. 新的那份在狀態下面加一行「取代：`[NNNN](NNNN-xxx.md)`」，取代多份時用「、」分隔。
-  2. 舊的那份把狀態改成「被 `[NNNN](NNNN-xxx.md)` 取代（YYYY-MM-DD）」。
-  3. 索引的狀態欄跟 ADR 的狀態一致：去掉日期，連結只留編號，例如「被 0009 取代」。
+- 照 [`_template.md`](_template.md)，檔名 `NNNN-kebab-case.md`，編號接著最後一號。一份只記一個決定。
+- 寫好不改內容，只改狀態與錯字。決定被推翻時另寫一份，三處一起改（測試會擋）：
+  新的寫「取代：`[NNNN](NNNN-xxx.md)`」；舊的狀態改成「被 `[NNNN](NNNN-xxx.md)` 取代（YYYY-MM-DD）」；
+  索引狀態欄同步（去掉日期）。部分推翻也整份取代，並更新指向舊 ADR 的文件連結。
+- 例外是討論後**維持原決定**的紀錄（例如 `project-review` skill 的反對結論），讓下次審視知道討論過什麼。
+  以最近的 `v*` tag 為界，和 [migration](../extending/migrations.md#發版之前可以整理) 一樣：
+  - **還沒有任何 tag**：直接改寫那份的「背景」或「後果」，把結論併進去，不留討論紀錄。
+  - **有 tag 之後**：在最後的 `## 後續討論` 往下追加一筆，前面的段落不動。格式：
 
-  之後也要更新描述現況的文件（`features/`、`operations.md` 等），把指向舊 ADR 的連結改到新的那份。
-- 只推翻其中一部分時也整份取代：新的那份把舊決定裡仍然有效的部分寫進來，讀者只需要讀狀態是「採用」的那一份，
-  不用把好幾份拼起來。需要部分推翻，通常代表舊的那份記了不只一個決定，之後寫 ADR 時一份只記一個決定。
+  ```markdown
+  ## 後續討論
+
+  ### YYYY-MM-DD <在哪裡提出，例如專案審視>
+  - 提出：<項目與一句摘要>
+  - 結論：維持原決定
+  - 理由：<兩三句>
+  ```
 - 模板佔用目前的編號，繼承的專案從下一號接著寫，不要重新編號。
 
 ## 索引
@@ -40,3 +47,5 @@
 | [0015](0015-automatic-grouping-with-late-review.md) | 依 LINE 原始時間自動分組，遲到訊息由人員加入 | 採用 |
 | [0016](0016-e2e-dev-loop-locally.md) | 開發中的 E2E 用常駐的 dev 環境，正式環境 image 由 CI 驗證 | 採用 |
 | [0017](0017-e2e-failures-read-by-main-agent.md) | E2E 失敗由主 agent 自己讀，不交給子代理 | 採用 |
+| [0018](0018-no-environment-reviewer-for-deploys.md) | 部署不設 environment reviewer，由發布前的確認把關 | 採用 |
+| [0019](0019-agent-guardrails-by-judgment.md) | agent 防線以判斷為主，hook 只擋確認點 | 採用 |

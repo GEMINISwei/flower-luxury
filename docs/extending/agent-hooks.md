@@ -1,109 +1,110 @@
 # AI agent 的 hooks
 
-Hook 是 agent 每次呼叫工具之前（或之後）執行的指令，可以擋下這次呼叫。這個 repo 用它擋下
-規則明文禁止、但 git 與 CI 看不到的事：agent 在 session 裡執行的指令。
-
-**它是第一道防線，不是安全機制。** 指令換個寫法就可能繞過，真正擋得住的是 git 與 CI；
-hook 的價值是讓 agent 在動手的當下就停下來，而不是等到 CI 紅了才回頭。
+Hook 在 agent 呼叫工具前後執行，可以擋下這次呼叫。這裡只擋**確認點**：不可逆、碰到 `main` 或正式環境的動作，
+而且只認常見寫法。其餘交給 agent 依 `AGENTS.md`〈高風險先問〉判斷，換寫法擋不住是已知的取捨，
+由 CI 與審查補（[ADR 0019](../decisions/0019-agent-guardrails-by-judgment.md)）。
 
 ## 結構
 
-Claude 與 Codex 的 hook 協定相同（事件名稱、stdin 收的 JSON、回傳 `permissionDecision` 的格式），
-所以邏輯只寫一份，設定各一份、只負責呼叫：
-
 ```text
-.agents/hooks/<name>.py     ← 唯一的邏輯（Python 標準函式庫，不必先裝相依）
-.claude/settings.json       ← Claude 的設定，呼叫時帶 claude
-.codex/hooks.json           ← Codex 的設定，呼叫時帶 codex
+.agents/hooks/<name>.py   ← 唯一的邏輯（Python 標準函式庫）
+.claude/settings.json     ← Claude 的設定，呼叫時帶 claude
+.codex/hooks.json         ← Codex 的設定，呼叫時帶 codex
+.codex/rules/             ← Codex 的確認（它的 hook 不支援 ask）
 ```
 
-設定檔不共用：`.claude/settings.json` 同時是 Claude 的整份專案設定（權限等），格式跟 Codex 的不同。
-兩份呼叫的事件、matcher 與腳本必須一致，只有參數不同（`apps/api/tests/test_agent_hooks.py` 擋）。
-參數留給兩家行為不同的地方，例如 Codex 的 `PreToolUse` 不支援 `ask`。
+- 兩份設定呼叫的事件、matcher、腳本要一致，只有參數不同（`test_agent_hooks.py` 擋）。
+- `.codex/hooks.json` 頂層只能有 `hooks`：多一個欄位，Codex 就整份不載入，只留警告（測試擋）。
 
 ## 目前有的 hook
 
-| 腳本 | 事件 | 擋什麼 |
+| 腳本 | 事件 | 做什麼 |
 |---|---|---|
-| `guard_commands.py` | `PreToolUse`（shell 指令） | push 到 `main`、用 `--no-verify` 略過 git hook（`commit -n` 也算）、改 `core.hooksPath`、`gh pr merge`、`npm` 的 `--force`／`--legacy-peer-deps`、直接下 `docker compose`、繞過確認自己放行測試檔、直接下 `gh release create/edit/delete` 或手動觸發 Deploy（發布只能經過 `publish.sh`，見下方） |
-| `guard_tests.py` | `PreToolUse`（改檔） | 實作開始後改測試檔，見下一節 |
+| `guard_commands.py` | `PreToolUse`（shell） | **deny**：push 到 `main`（`--dry-run` 不算）、`--no-verify`／`commit -n`、改 `core.hooksPath`、`gh pr merge`／`gh pr ready`、`gh release create/edit/delete`、`gh workflow run deploy…`、不經固定寫法執行 `publish.sh`、自己寫放行<br>**確認**：`publish.sh`、`gh api` 用 GET 以外的方法（GraphQL 看有沒有 `mutation`）、`gh run rerun`、有開著的 PR 時開新分支 |
+| `guard_tests.py` | `PreToolUse`（改檔工具） | **確認**：實作開始後改測試檔、改防線檔案；**deny**：直接改放行檔 |
+| `require_check.py` | `Stop` | 改過的程式還沒跑過 `make check` 就要求先跑 |
+| `session_context.py` | `SessionStart` | 不擋，把分支、開著的 PR、測試鎖狀態加進上下文 |
 
-### Codex 版本相容性
+`bash -c`、`eval` 的內容會展開來看，heredoc 的內容當成資料不看。
 
-本專案以 Codex 0.142.5 的實際載入結果驗證。這個版本的 `hooks.json` 頂層只接受 `hooks`，
-加入非必要的 `description` 會讓整份設定解析失敗，因此此處保留最小格式。
-官方文件的 [hook 介面](https://learn.chatgpt.com/docs/hooks) 可能涵蓋較新版的功能；
-設定存在與腳本測試通過，都不能取代實際載入及攔截驗證。
-
-## 測試鎖定
-
-把 [`testing.md`](../testing.md#改程式不改測試)〈改程式不改測試〉變成 agent 動手當下的檢查：
-
-- **測試檔**：`apps/*/tests/**`、`e2e/tests/**`，輔助檔與資料也算（判斷在 `.agents/hooks/test_lock.py`）。
-- **實作開始了**：分支相對 `origin/main` 的差異（含還沒 commit 與沒追蹤的）有 `apps/`、`e2e/` 底下的非測試檔案。
-  只改文件或設定不算。不需要任何人標記，從 git 推導。
-- **之後改測試檔要使用者同意**，兩家的方式不同：
-
-| | 攔下 | 使用者怎麼同意 |
-|---|---|---|
-| Claude | hook 回 `ask` | 直接在這次修改的確認上按允許 |
-| Codex | hook 回 `deny`（不支援 `ask`），理由裡請 agent 先說明再申請 | agent 執行 `python3 .agents/hooks/approve_test_edit.py <測試檔>`，`.codex/rules/approve-test-edit.rules` 讓它一定跳確認，按允許後再改就放行 |
-
-放行寫在 `.git/agent-approved-test-edits`（不進版控），**只對列出的檔案、只在目前的 HEAD 上有效**，有新的 commit
-就失效。申請指令的寫法固定：直接寫放行檔、換寫法執行申請指令都會被 `guard_commands.py` 擋下，否則就繞過了確認。
-Claude 也能用同一個申請指令（`.claude/settings.json` 的 `permissions.ask` 讓它一樣要確認），但直接按允許比較方便。
-
-測試鎖定只涵蓋改檔工具。shell 寫檔路徑（例如 `sed -i`、重新導向，或在 `exec_command` 中執行
-`apply_patch`）不會被這個 hook 攔下；仍須遵守「改程式不改測試」與不得繞過守衛的規範。
-
-## 發布 release
-
-發布會直接部署，所以 agent 只能用固定寫法的 `.agents/skills/release/scripts/publish.sh`，而且一定跳確認：
+## 確認的方式
 
 | | 怎麼確認 |
 |---|---|
-| Claude | `guard_commands.py` 回 `ask`，`.claude/settings.json` 的 `permissions.ask` 也列了它 |
-| Codex | hook 不支援 `ask`，由 `.codex/rules/publish-release.rules` 的 `prompt` 跳確認 |
+| Claude | hook 回 `ask`，畫面直接跳確認 |
+| Codex | hook 回 `deny`。要放行的（測試檔、防線檔案、插隊的分支）由 agent 說明後執行 `python3 .agents/hooks/approve.py <test\|protected\|branch> <路徑或分支…>`，`.codex/rules/approve.rules` 讓它跳確認；其餘（`gh api` 寫入、重跑 run）請使用者自己執行 |
 
-`gh release create/edit/delete`、`gh workflow run deploy…` 與換寫法呼叫 `publish.sh`（`bash …`、`./…`）
-兩家都擋下，否則就繞過了確認。這跟測試檔放行的申請指令是同一種做法。
+放行寫在 `.git/agent-approvals`（不進版控）：測試檔與防線檔案的放行**只在目前的 HEAD 有效**，有新 commit 就失效；
+分支的放行針對名稱，之後開 PR 不再問。直接寫放行檔、換寫法執行 `approve.py` 會被擋。
+
+## 測試鎖定
+
+[`testing.md`](../testing.md#改程式不改測試)〈改程式不改測試〉在 agent 這一側的檢查：
+
+- **測試檔**：`apps/*/tests/**`、`e2e/tests/**`，輔助檔與資料也算（`test_lock.py`）。
+- **實作開始了**：分支相對 `origin/main`（含未 commit 與未追蹤）改了 `apps/`、`e2e/`、`.agents/hooks/`、
+  `.github/scripts/`、`scripts/` 底下的非測試、非 Markdown 檔案。CI 的 `pr` 用同一個判斷。
+- 只攔改檔工具。用 shell 改測試檔不攔，由 CI 的 `pr` 要求在「驗證」段寫出改過的測試檔。
+
+## 防線檔案
+
+決定其他檢查擋不擋得住的檔案，用改檔工具改之前一律確認，不分實作前後（清單在 `protected_files.py`）：
+
+| 類別 | 路徑 |
+|---|---|
+| agent 的 hook 與設定 | `.agents/hooks/`、`.claude/`（含 `settings.local.json`）、`.codex/` |
+| git hook | `.githooks/` |
+| CI | `.github/workflows/`、`.github/scripts/` |
+| 檢查的設定 | `apps/api/pyproject.toml`、`apps/web/package.json`、`eslint.config.mjs`、`.dependency-cruiser.cjs`、`knip.ts`、`tsconfig.json`、`vitest.config.ts` |
+| 檢查的入口 | `scripts/check.sh`、`Makefile` |
+
+- 改了不會有檢查變紅（刪掉 CI 步驟照樣綠燈、`disableAllHooks` 讓 hook 安靜失效），所以要讓使用者看到。
+- 用 shell 改不攔；CI 的 `pr` 要求動到的防線檔案列進 PR 的「檢查」段。
+- 刻意不保護：`AGENTS.md`、`docs/`、`.agents/skills/`、PR 模板（CI 一樣要求列進「檢查」段）。
+
+## 一次一個 PR
+
+[`workflow.md`](../workflow.md#一次一個-pr)〈一次一個 PR〉：還有自己開著的 PR（`gh pr list --author @me`）時，
+開新分支（`git switch -c`、`git checkout -b`、`git branch <名稱>`）、`git worktree add`、`gh pr create` 要確認。
+查不到 PR（沒網路、沒登入）時放行。
+
+## 收尾前的 make check
+
+`make check`（不帶參數）全部通過時，`scripts/check.sh` 呼叫 `check_stamp.py record`，把工作目錄的內容
+（不含 Markdown）記成 git tree。收尾時分支有非 Markdown 的改動、而且內容跟紀錄不同，就要求先跑 `make check`。
+同一輪被要求過一次就放行（`stop_hook_active`），agent 停下來可能只是要問問題。
+
+## 開工時的現況
+
+開新 session、恢復或壓縮上下文後，把目前分支、開著的 PR、測試鎖狀態與插隊放行的分支加進上下文。
+
+## 發布 release
+
+發布會直接部署，只能用固定寫法 `.agents/skills/release/scripts/publish.sh`，兩家都一定跳確認
+（Claude 的 `permissions.ask` 與 hook、Codex 的 `.codex/rules/publish-release.rules`）。GitHub 端刻意不設
+environment reviewer，這裡是部署前唯一的確認（[ADR 0018](../decisions/0018-no-environment-reviewer-for-deploys.md)）。
 
 ## 新增一個 hook
 
-1. 先在 `apps/api/tests/test_agent_hooks.py` 寫測試：用 subprocess 餵 JSON 進腳本，兩家各跑一次。
-2. 在 `.agents/hooks/` 寫腳本，**要能在 Python 3.9 上跑**（由 PATH 上的 `python3` 執行，macOS 內建的是 3.9）：
-   開頭加 `from __future__ import annotations`，`.agents/hooks/ruff.toml` 把語法目標設在 3.9。
-   放行就什麼都不印；要擋就印出
-   `{"hookSpecificOutput": {"hookEventName": …, "permissionDecision": "deny", "permissionDecisionReason": …}}`。
-   理由寫成 agent 看得懂、知道下一步該怎麼做的句子，它會照著做。
-3. 兩份設定各加一段，呼叫寫法固定為
-   `python3 "$(git rev-parse --show-toplevel)/.agents/hooks/<name>.py" <claude|codex>`。
+1. 先在 `apps/api/tests/` 寫測試：用 subprocess 餵 JSON 進腳本，兩家各跑一次。
+2. 腳本要能在 Python 3.9 上跑（PATH 上的 `python3`，macOS 內建 3.9）：加 `from __future__ import annotations`。
+   放行什麼都不印；要擋就印 `hookSpecificOutput.permissionDecision`，理由寫成 agent 知道下一步的句子。
+3. 兩份設定各加一段：`python3 "$(git rev-parse --show-toplevel)/.agents/hooks/<name>.py" <claude|codex>`。
 
-只放守**這個模板本身的規則**、很少誤擋、跑得快的 hook。格式化、自動跑檢查這類偏好，由繼承的專案自己加。
+只放確認點、很少誤擋、跑得快的 hook。格式化、自動跑檢查這類偏好由繼承的專案自己加。
 
 ## 啟用與停用
 
-開新專案（或換一台電腦）時照這份做一次。每一項少了都**不會報錯**，只是那一層檢查安靜地不生效。
-標「init 檢查」的由 `make init dev` 擋下或提醒（`scripts/lib/agent_setup.sh`），其餘讀不到狀態，init 結束時會印出來提醒。
-部署主機（`make init prod`）不跑 agent，不需要這些。
+少了任何一項都**不會報錯**，只是那一層安靜地不生效。標「init 檢查」的由 `make init dev` 擋下或提醒。
 
+- [ ] **`make init dev`**：把 `core.hooksPath` 設成 `.githooks`，commit-msg 才會檢查 `Co-authored-by`。
+- [ ] **PATH 上有 `python3` 3.9 以上**（init 檢查）：沒有的話 hook 只顯示錯誤、照常執行，等於沒有守衛。
+- [ ] **Claude**：信任專案，`.claude/settings.json` 與 `.claude/skills` 才會載入。Claude Code 自己會設 `AI_AGENT`。
+- [ ] **Codex**（init 檢查）：信任專案的 `.codex/`，`config.toml`（設 `AI_AGENT`）、`hooks.json`、`rules/` 才會載入；
+  用 `/hooks` 逐一確認，hook 改了要重新確認。
+- [ ] **Windows**：先 `git config --global core.symlinks true` 再 clone，`.claude/skills` 才是 symlink（init 檢查）。
 
-- [ ] **`make init dev`**（init 設定）：把 `core.hooksPath` 設成 `.githooks`，commit-msg 才會檢查 `Co-authored-by`。
-  已經 clone 的重跑一次即可；沒設時 `make check` 會提醒。
-- [ ] **PATH 上有 `python3` 3.9 以上**（init 檢查，沒有就擋）：hook 直接用它執行（macOS 內建的 3.9 即可）。
-  沒有的話 Claude 只顯示 hook 錯誤、照常執行指令，等於沒有守衛。
-- [ ] **Claude**：第一次開啟專案時確認信任，`.claude/settings.json` 的 hook 與權限、`.claude/skills` 才會載入。
-  Claude Code 自己會設 `AI_AGENT`，不用另外設定。
-- [ ] **Codex**（init 檢查：裝了 Codex 卻還沒信任時提醒）：信任專案的 `.codex/`，`config.toml`（設定 `AI_AGENT`）、`hooks.json` 與 `rules/` 才會載入；
-  再用 `/hooks` 逐一確認每個 hook。hook 內容改了要重新確認。
-- [ ] **Windows**：先 `git config --global core.symlinks true`（並開啟開發人員模式）再 clone，
-  `.claude/skills` 才會是 symlink；否則 Claude 讀不到任何 skill（init 檢查，不是 symlink 就擋）。
+裝好後請 agent 執行 `gh pr merge 0` 確認被擋下（hook 沒生效時它也只會因為找不到 PR 而失敗）。
 
-驗收請使用新啟動的 session，讓專案設定、hook 與 `AI_AGENT` 一起載入；既有聊天不能只憑
-`/hooks` 的信任狀態推定已套用新設定。
-
-裝好之後，請 agent 執行 `docker compose version` 確認會被指令守衛擋下。
-選這個指令是因為 hook 沒生效時它也只是印出版本，不會造成任何影響。
-
-要關掉：Claude 在 `.claude/settings.local.json`（不進版控）設 `"disableAllHooks": true`；
-Codex 在自己的設定 `[features]` 設 `hooks = false`。git hook 用 `git config --unset core.hooksPath`。
+要關掉：Claude 在 `.claude/settings.local.json` 設 `"disableAllHooks": true`；Codex 在設定的 `[features]` 設
+`hooks = false`；git hook 用 `git config --unset core.hooksPath`。

@@ -12,19 +12,17 @@ cd apps/web && npm run test:watch           # 前端 watch 模式
 
 ## 測試放哪裡
 
-**一律放該 app 的 `tests/`，與原始碼同構**：`tests/modules/users/` 對 `modules/users/`、
-`tests/shared/auth/test_passwords.py` 對 `shared/auth/passwords.py`、
-`tests/shared/access/permissions.test.ts` 對 `shared/access/permissions.ts`。
-放在 `tests/` 以外的測試不會執行，也不會報錯；`tests/` 裡對不上原始碼目錄的子目錄由架構測試擋。
+**一律放該 app 的 `tests/`，與原始碼同構**（`tests/modules/users/` 對 `modules/users/`、
+`tests/shared/auth/test_passwords.py` 對 `shared/auth/passwords.py`）。`tests/` 以外的測試不會執行也不報錯；
+對不上原始碼目錄的子目錄由架構測試擋。
 
 - **依賴專案啟用清單的測試**（註冊表、權限覆蓋、每張已註冊資料表的慣例）放後端 `tests/app/`、
   前端 `tests/` 根目錄或 `tests/config/`。
-- **一個模組的測試只放在它自己的目錄**，不要在 `tests/modules/` 根目錄寫同時測好幾個模組的檔案：
-  刪模組時是整包刪 `tests/modules/<name>/`，跨模組的測試會留下來並因為引用不到而失敗。
-- **`tests/shared/` 不綁專案目前有的端點與權限**：測執行期行為時用與專案無關的路徑
-  （例：`tests/shared/api/request.server.test.ts`），刪掉模組時這批測試才不會跟著壞。
-- **從公開函式進入**，不直接測 `_` 開頭的私有函式：規則有兩個入口時，只測輔助函式證明不了
-  兩邊都有套用（例：`tests/modules/users/test_service.py` 的停用規則）。
+- **一個模組的測試只放它自己的目錄**：刪模組是整包刪 `tests/modules/<name>/`，跨模組的測試會留下來因引用不到而失敗。
+- **`tests/shared/` 不綁專案目前的端點與權限**，用與專案無關的路徑（`tests/shared/api/request.server.test.ts`），
+  刪模組時才不會跟著壞。
+- **從公開函式進入**，不直接測 `_` 開頭的函式：規則有兩個入口時，只測輔助函式證明不了兩邊都套用
+  （`tests/modules/users/test_service.py` 的停用規則）。
 
 | 要 test-first | 不寫執行期測試 |
 |---|---|
@@ -32,26 +30,21 @@ cd apps/web && npm run test:watch           # 前端 watch 模式
 | 前端 `capabilities.ts`、`validation.ts`、`proxy.ts` | 前端 `modules/*/ui/*.tsx`（畫面組裝） |
 | 後端 service、router、權限 | route adapter（由 `route-adapters.test.ts` 靜態守住） |
 
-畫面裡真的有分支時，**抽進 `capabilities.ts` 再測**（例：`modules/users/capabilities.ts`）。
-不要為了覆蓋率數字補測試。
+畫面有分支時**抽進 `capabilities.ts` 再測**（`modules/users/capabilities.ts`）。不為覆蓋率數字補測試。
 
-**不寫的測試**（寫了只是維護成本，帶到新專案就是技術債）：
+**不寫的測試**（只增加維護成本，帶到新專案就是技術債）：
 
-- 只驗框架或語言本身的行為：React 會渲染 children、`onClick` 會被呼叫、set 不會重複。
-- 型別系統或啟動檢查已經保證的：必填欄位有沒有寫、回傳值是不是某個 enum、enum 與權限
-  metadata 是否一一對應（`app.registry` 載入時就驗了）。
-- 把常數再寫一次的：`assert UNLOGGED_PATHS == {"/health"}` 這類，改值就得同步改測試，
-  卻擋不住任何錯；改測它造成的行為。
-- 寫死專案目前內容的：「管理區是 `/admin/users`、`/admin/roles`」、「身分來源是 users 模組」。新增或移除
-  模組時它會紅，但什麼都沒壞。從啟用清單推導（例：`tests/config/routes.test.ts`）。
-- 同一個行為在另一層已經測過的：薄包裝（只是把 A 接到 B）不再各測一次。
+- 只驗框架或語言的行為：React 會渲染 children、`onClick` 會被呼叫。
+- 型別或啟動檢查已保證的：必填欄位、回傳值是某個 enum、enum 與權限 metadata 一一對應（`app.registry` 載入時驗）。
+- 把常數再寫一次的（`assert UNLOGGED_PATHS == {"/health"}`）：改值就要同步改，卻擋不住錯；改測它造成的行為。
+- 寫死專案目前內容的（「管理區是 `/admin/users`」）：增刪模組時紅了但沒東西壞。從啟用清單推導（`tests/config/routes.test.ts`）。
+- 另一層已測過的：薄包裝不再各測一次。
 
 ## E2E（`e2e/`）
 
-`make check e2e` 另起一套 compose 專案（`<專案>-e2e`，port 預設 3900，可用 `E2E_PORT` 換），
-用**正式環境的 image 與 nginx 模板**，以 CLI 建一個隨機密碼的超管，跑完 Playwright 後連 volume 一起刪掉，
-開發中的那套不受影響。第一次跑會下載 Chromium（幾百 MB），之後沿用。CI 是獨立的 `e2e` job，
-與其他 job 平行跑；失敗時到該次執行的 Artifacts 下載 `playwright-report`，trace 用
+`make check e2e` 另起一套 compose 專案（`<專案>-e2e`，port 預設 3900，`E2E_PORT` 可換），用**正式環境的 image 與
+nginx 模板**，以 CLI 建隨機密碼的超管，跑完 Playwright 連 volume 一起刪，不動開發中的那套。第一次會下載 Chromium
+（幾百 MB）。CI 是獨立平行的 `e2e` job；失敗時到 Artifacts 下載 `playwright-report`，trace 用
 `npx playwright show-trace <zip>` 打開。
 
 **開發中用 `make e2e`，不必每次跑 `make check e2e`**（[理由](decisions/0016-e2e-dev-loop-locally.md)）：
@@ -140,10 +133,14 @@ cd apps/web && npm run test:watch           # 前端 watch 模式
 | `APP_VERSION` 與 CHANGELOG 的版號一致 | `apps/api/tests/test_version.py` |
 | 文件的相對連結與錨點有效、原始碼寫的 `docs/….md` 路徑存在、`extending/`、`features/` 與 ADR 都列在索引、`features/` 的開頭與結尾段落、ADR 的取代關係兩邊一致 | `apps/api/tests/test_docs.py`、`test_doc_features.py`、`test_doc_decisions.py`、`test_doc_decision_supersession.py` |
 | skills 只有 `.agents/skills/` 一份、`.claude/skills` 是指向它的 symlink、內文不用某一家專屬的工具、只能手動呼叫的兩家設定一致 | `apps/api/tests/test_agent_skills.py` |
-| hook 腳本擋下該擋的指令、不誤擋一般指令、`.claude/settings.json` 與 `.codex/hooks.json` 呼叫同樣的腳本 | `apps/api/tests/test_agent_hooks.py` |
-| 實作開始後改測試檔要使用者同意、放行只對列出的檔案且有新 commit 就失效、agent 不能繞過確認自己放行 | `apps/api/tests/test_agent_test_guard.py` |
+| hook 擋下確認點、不誤擋一般指令、`.claude/settings.json` 與 `.codex/hooks.json` 呼叫同樣的腳本 | `apps/api/tests/test_agent_hooks.py` |
+| 實作開始後用改檔工具改測試檔要使用者同意、放行只對列出的檔案且有新 commit 就失效、不能自己寫放行 | `apps/api/tests/test_agent_test_guard.py` |
+| 有開著的 PR 時開新分支要使用者同意、放行針對分支名稱 | `apps/api/tests/test_agent_one_pr.py` |
+| 改防線檔案（hook、agent 設定、CI、檢查的設定）一律要使用者同意、清單裡的路徑都存在 | `apps/api/tests/test_agent_protected_files.py` |
+| agent 收尾前改過的程式要跑過 `make check`、開工時提示現況、每個 hook 用 `PATH` 上的 `python3` 跑得起來 | `apps/api/tests/test_agent_session_hooks.py` |
 | AI agent 的 commit 帶寫到模型與版本的 `Co-authored-by`、Codex 執行的指令帶 `AI_AGENT` | `.githooks/commit-msg`（`apps/api/tests/test_githooks.py`） |
 | PR 標題是 Conventional Commits、描述有摘要／驗證／檢查三段且不是模板原樣 | CI 的 `pr`（`.github/scripts/check-pr.sh`、`apps/api/tests/test_pr_checks.py`） |
+| 實作後改的測試檔在「驗證」段寫出路徑與理由、防線檔案與 agent 說明列進「檢查」、新增的抑制註解有理由 | CI 的 `pr`（`.github/scripts/check-pr-changes.py`、`apps/api/tests/test_pr_change_checks.py`） |
 | `make init dev` 擋下缺少 `python3` 3.9 以上、`.claude/skills` 不是 symlink，裝了 Codex 卻沒信任專案時提醒；`make init prod` 不做這些 | `apps/api/tests/test_init_agent_setup.py` |
 | lock 檔與 `make gen-types` 的產出列在 `.ignore`（AI agent 的搜尋不撞進去） | `apps/api/tests/test_search_ignore.py` |
 
@@ -151,18 +148,17 @@ cd apps/web && npm run test:watch           # 前端 watch 模式
 
 ## 改程式不改測試
 
-理解需求後先把測試寫好，再開始實作。測試是需求的定義，實作期間改測試等於改需求，所以由人決定。
-**單元測試、integration 與 `e2e/` 的 E2E 測試一律適用**，測試用的輔助檔與資料（例如 `e2e/tests/support.ts`、
-測試沙盒要複製的檔案清單）也算測試檔：
+先寫測試再實作。測試是需求的定義，實作期間改測試等於改需求，由人決定。單元、integration、E2E 都適用，
+輔助檔與資料（`e2e/tests/support.ts`、測試沙盒要複製的檔案清單）也算測試檔：
 
 1. 測試變紅時預設它是對的，先改實作讓它變綠。
 2. 真的覺得測試要改（介面改名、斷言本來就寫錯、漏了情境要補）時，**先停下來說明**那個測試驗證的條件、
    沒過的原因，以及為什麼是測試而不是實作要改。
-3. 得到同意後才動測試檔，並在 PR 描述寫明**原本那個斷言為什麼是錯的**。
+3. 得到同意後才動測試檔，並在 PR 描述的「驗證」段寫一行：測試檔的路徑，同一行寫明**原本那個斷言為什麼是錯的**
+   （CI 的 `pr` 檢查這一行在不在，寫得對不對靠審查）。
 
-AI agent 由 hook 強制這一條：分支相對 `origin/main` 已經改了 `apps/`、`e2e/` 底下的非測試檔案（實作開始了），
-再改測試檔就會停下來等使用者同意（Claude 直接跳確認；Codex 由 agent 執行申請指令、跳確認）。
-做法見 [`agent-hooks.md`](extending/agent-hooks.md#測試鎖定)。
+AI agent 這一側：實作開始後用改檔工具改測試檔，hook 會停下來等使用者同意；用 shell 改不攔，靠 agent 自律與
+CI 的 `pr`（[做法](extending/agent-hooks.md#測試鎖定)）。
 
 紅燈階段用單項指令跑（`uv run pytest tests/ -k xxx`、`npm run test -- -t "名稱"`），
 `make check` 要等實作完成、全部轉綠才會過。
@@ -174,11 +170,13 @@ PR 描述「驗證」段的每條驗收條件後面接一個測試名稱與結�
 - 前端與 E2E：讀得通的中文句子（`未登入導向 /login`、`登出後其他已登入的裝置也會被登出`）
 - 後端：`test_<動作>_<條件>_<結果>`（`test_get_users_without_permission_returns_403`）
 
-驗收條件只寫在 PR，不另寫一份文件或 spec：PR 是動手前討論方向的地方，合併後留下來的是測試名稱，
-它會跟著程式一起被執行，文件則會在下一次改動時悄悄過時。
+AI agent 寫完驗收條件要**先列給使用者確認才寫測試**，方向已在對話談定也一樣：從「要做什麼」轉成「怎麼證明做到」
+最容易漏情境、多加條件或擴大範圍。這時改幾行字就好，寫完才發現就是整個 PR 重來；測試鎖只保證測試沒被偷改，
+保證不了一開始就寫對。
 
-覆蓋率門檻（`pyproject.toml` 的 `fail_under`、`vitest.config.ts` 的 `thresholds`）是**防退步的地板，
-不是目標**。
+驗收條件只寫在 PR，不另寫 spec：合併後留下的是測試名稱，會跟著程式被執行，文件則會悄悄過時。
+
+覆蓋率門檻（`pyproject.toml` 的 `fail_under`、`vitest.config.ts` 的 `thresholds`）是**防退步的地板，不是目標**。
 
 完整 `make check` 與 `make check integration` 維持後端 74% 門檻，涵蓋真實交易與並發測試。
 快速 `make check test` 只用於開發迴圈，不取代完整驗證；前端覆蓋率門檻在兩者都保留。

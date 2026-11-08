@@ -38,7 +38,7 @@ step() { printf '\n── %s ─────────────────
 run_lint() {
     step "lint"
     # .agents/hooks/ 的 hook 腳本不在 api 的 import root 裡, 但同樣是 Python, 套用 api 的 ruff 設定。
-    (cd apps/api && uv run ruff check . ../../.agents/hooks && uv run lint-imports --no-logo)
+    (cd apps/api && uv run ruff check . ../../.agents/hooks ../../.github/scripts && uv run lint-imports --no-logo)
     (cd apps/web && npm run --silent lint)
     lint_shell
     lint_compose
@@ -266,8 +266,13 @@ run_contract() {
     echo "契約與前端型別是最新的"
 }
 
+# 全部通過才記錄內容, 避免失敗或只跑單項的狀態被 Stop hook 當成已驗證.
+record_check_pass() {
+    python3 .agents/hooks/check_stamp.py record || echo "⚠️  沒有記下這次的檢查結果（agent 收尾時會再要求跑一次）"
+}
+
 case "${1:-all}" in
-    all)         run_lint; run_contract; run_migrate; run_types; run_full_tests; run_build ;;
+    all)         run_lint; run_contract; run_migrate; run_types; run_full_tests; run_build; record_check_pass ;;
     lint)        run_lint ;;
     types)       run_types ;;
     test)        run_test ;;
