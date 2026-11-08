@@ -86,3 +86,51 @@ test("停用再啟用帳號後，舊登入仍失效且可重新登入", async ({
     await device.close()
   }
 })
+
+
+test("新增與編輯使用者及重設密碼的錯誤顯示在欄位", async ({ page, browser }) => {
+  const account = await createUser(browser, "field-errors")
+  await page.goto(`/admin/users?name=${encodeURIComponent(account.nickname)}`)
+  await page.getByRole("button", { name: "新增員工", exact: true }).click()
+  let dialog = page.getByRole("dialog")
+  await dialog.getByRole("button", { name: "建立", exact: true }).click()
+  for (const label of [/^暱稱/, /^帳號/, /^密碼/]) {
+    await expect(dialog.getByLabel(label)).toHaveAttribute("aria-invalid", "true")
+  }
+  await dialog.getByLabel(/^暱稱/).fill("測試")
+  await dialog.getByLabel(/^帳號/).fill("not-submitted")
+  await dialog.getByLabel(/^密碼/).fill("short")
+  await dialog.getByRole("button", { name: "建立", exact: true }).click()
+  await expect(dialog.getByLabel(/^密碼/)).toHaveAttribute("aria-invalid", "true")
+  await dialog.getByRole("button", { name: "取消", exact: true }).click()
+
+  const row = page.getByRole("row").filter({ hasText: account.nickname })
+  await row.getByRole("button", { name: "操作選單" }).click()
+  await page.getByRole("menuitem", { name: "編輯", exact: true }).click()
+  dialog = page.getByRole("dialog")
+  await dialog.getByLabel(/^暱稱/).fill(" ")
+  await dialog.getByRole("button", { name: "儲存", exact: true }).click()
+  await expect(dialog.getByLabel(/^暱稱/)).toHaveAttribute("aria-invalid", "true")
+  await dialog.getByRole("button", { name: "取消", exact: true }).click()
+
+  await row.getByRole("button", { name: "操作選單" }).click()
+  await page.getByRole("menuitem", { name: "重設密碼", exact: true }).click()
+  dialog = page.getByRole("dialog")
+  await dialog.getByLabel(/^新密碼/).fill("short")
+  await dialog.getByRole("button", { name: "重設密碼", exact: true }).click()
+  await expect(dialog.getByLabel(/^新密碼/)).toHaveAttribute("aria-invalid", "true")
+})
+
+test("新增使用者與重設密碼的密碼欄位標成新密碼", async ({ page, browser }) => {
+  const account = await createUser(browser, "autocomplete")
+  await page.goto(`/admin/users?name=${encodeURIComponent(account.nickname)}`)
+  await page.getByRole("button", { name: "新增員工", exact: true }).click()
+  let dialog = page.getByRole("dialog")
+  await expect(dialog.getByLabel(/^密碼/)).toHaveAttribute("autocomplete", "new-password")
+  await dialog.getByRole("button", { name: "取消", exact: true }).click()
+  await page.getByRole("row").filter({ hasText: account.nickname })
+    .getByRole("button", { name: "操作選單" }).click()
+  await page.getByRole("menuitem", { name: "重設密碼", exact: true }).click()
+  dialog = page.getByRole("dialog")
+  await expect(dialog.getByLabel(/^新密碼/)).toHaveAttribute("autocomplete", "new-password")
+})

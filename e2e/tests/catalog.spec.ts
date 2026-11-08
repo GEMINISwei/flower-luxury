@@ -103,3 +103,18 @@ test("手機更多可開關並提供兩種設定與管理區入口", async ({ pa
   await dialog.getByRole("button", { name: "管理後台", exact: true }).click()
   await expect(page).toHaveURL("/admin/users")
 })
+
+
+for (const entry of [
+  { path: "/brands", create: "新增品牌", error: "請輸入品牌名稱" },
+  { path: "/vendors", create: "新增廠商", error: "請填寫廠商名稱" },
+]) {
+  test(`${entry.create}的空白名稱由應用驗證阻擋`, async ({ page }) => {
+    await page.goto(entry.path)
+    await page.getByRole("button", { name: entry.create, exact: true }).click()
+    const dialog = page.getByRole("dialog")
+    await dialog.getByRole("button", { name: "儲存", exact: true }).click()
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText(entry.error, { exact: true })).toBeVisible()
+  })
+}
