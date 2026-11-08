@@ -54,3 +54,35 @@ test.describe("一般帳號", () => {
     await deviceB.close()
   })
 })
+
+
+test("停用再啟用帳號後，舊登入仍失效且可重新登入", async ({ browser, page }) => {
+  const account = await createUser(browser, "reactivate")
+  const device = await browser.newContext({ storageState: SIGNED_OUT })
+  try {
+    const memberPage = await device.newPage()
+    await login(memberPage, account)
+    await page.goto(`/admin/users?name=${encodeURIComponent(account.nickname)}`)
+    const row = page.getByRole("row").filter({ hasText: account.nickname })
+
+    for (const status of ["disabled", "active"]) {
+      await row.getByRole("button", { name: "操作選單" }).click()
+      await page.getByRole("menuitem", { name: "編輯", exact: true }).click()
+      const dialog = page.getByRole("dialog")
+      await dialog.getByLabel("狀態").selectOption(status)
+      await dialog.getByRole("button", { name: "儲存", exact: true }).click()
+      await expect(dialog).toBeHidden()
+      await expect(row.getByText(status === "disabled" ? "已停用" : "啟用中", { exact: true }))
+        .toBeVisible()
+    }
+
+    // 啟用之後才使用舊 cookie, 才能區分撤銷 session 與單純拒絕停用中的帳號.
+    await memberPage.goto("/settings")
+    await expect(memberPage).toHaveURL(/\/login/)
+    await login(memberPage, account)
+    await memberPage.goto("/settings")
+    await expect(memberPage).toHaveURL("/settings")
+  } finally {
+    await device.close()
+  }
+})

@@ -1,4 +1,5 @@
 import pytest
+from pydantic import BaseModel
 
 from shared.auth.permissions import BasePermission, PermissionResolver
 
@@ -75,3 +76,15 @@ def test_covers_tolerates_unknown_permission_strings():
 
     assert resolver.covers(["a", "gone:read"], ["a"]) is True
     assert resolver.covers(["a"], ["gone:read"]) is False
+
+
+def test_known_permissions_drops_unknown_strings():
+    """停用模組或改名權限後, 資料庫裡的舊字串不在 enum 裡; 回應時濾掉, 不能讓驗證變成 500。"""
+    from shared.auth.permissions import KnownPermissions
+
+    class Response(BaseModel):
+        permissions: KnownPermissions[FakePerm]
+
+    result = Response.model_validate({"permissions": ["a", "gone:read", "b"]})
+
+    assert result.permissions == [FakePerm.A, FakePerm.B]
