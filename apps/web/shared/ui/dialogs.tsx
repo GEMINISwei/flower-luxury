@@ -2,6 +2,7 @@
 
 import type { FormEvent, ReactNode } from "react"
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { X } from "lucide-react"
 import { useT } from "@/shared/i18n/context"
 import { FOCUSABLE_SELECTOR, ICON_SIZE } from "./internals"
@@ -56,7 +57,9 @@ function OpenModal({ title, children, width, onOpenChange }: Omit<ModalProps, "o
     }
   }, [previousFocus])
 
-  return (
+  // 外層的 transform, filter 或 backdrop-filter 會限制 fixed 遮罩範圍, 因此直接掛到 body.
+  // 對話框由使用者操作後開啟, 不在 server 端渲染.
+  return createPortal(
     <div className={styles.overlay} role="presentation" onMouseDown={() => onOpenChange?.(false)}>
       <section
         ref={dialogRef}
@@ -76,7 +79,8 @@ function OpenModal({ title, children, width, onOpenChange }: Omit<ModalProps, "o
         </div>
         <div className={styles.modalBody}>{children}</div>
       </section>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

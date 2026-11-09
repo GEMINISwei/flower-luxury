@@ -4,6 +4,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* 避免雙擊放大畫面, 同時保留平移與瀏覽器允許的雙指縮放. */
+html { touch-action: manipulation; }
+
 html, body {
   margin: 0;
   height: 100%;
@@ -33,7 +36,8 @@ a:hover { color: var(--color-primary-hover); }
 ::placeholder { color: var(--color-text-muted); }
 :focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
-/* iPhone Safari 會放大字級過小的輸入欄位, 包含登入與彈窗中的欄位. */
+/* iPhone Safari 會放大字級過小的輸入欄位, 包含登入與彈窗中的欄位.
+   Safari 分頁會忽略 viewport 的縮放限制, 字級仍需保底 (見 ADR 0020). */
 @media (max-width: 720px), (hover: none) and (pointer: coarse) {
   :root body :is(input, select, textarea) {
     font-size: max(var(--fs-input-mobile), 1em);
