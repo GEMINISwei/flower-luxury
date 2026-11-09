@@ -1,6 +1,7 @@
 import secrets
 import string
 import uuid
+from collections.abc import Sequence
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -19,11 +20,10 @@ from sqlalchemy import (
     select,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
-from sqlalchemy.sql.base import ExecutableOption
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Mapped, mapped_column
 
-from modules.brands.public import BrandTable
-from modules.vendors.public import VendorTable
+from modules.brands.public import find_brand_names
 from shared.db.query import ilike_contains
 from shared.db.session import active_session
 from shared.db.table import BaseTable, Condition, parse_uuid
@@ -53,7 +53,6 @@ class ProductTable(BaseTable):
     created_by: Mapped[str]
     updated_by: Mapped[str | None]
     deleted_at: Mapped[datetime | None]
-    brand_record: Mapped[BrandTable] = relationship(lazy="raise")
 
     __table_args__ = (
         CheckConstraint("cost_price >= 0", name="product_cost_nonnegative"),
@@ -64,11 +63,11 @@ class ProductTable(BaseTable):
     )
 
     @classmethod
-    def detail_loaders(cls) -> tuple[ExecutableOption, ...]:
-        return (selectinload(cls.brand_record),)
-
-    def to_detail(self) -> dict[str, Any]:
-        return {**self.to_dict(), "brand": self.brand_record.name}
+    async def to_details(
+        cls, rows: Sequence[ProductTable], _session: AsyncSession,
+    ) -> list[dict]:
+        names = await find_brand_names([str(row.brand_id) for row in rows])
+        return [{**row.to_dict(), "brand": names[str(row.brand_id)]} for row in rows]
 
 
 class ProductHistoryTable(BaseTable):
@@ -193,7 +192,6 @@ class ProductQuoteTable(BaseTable):
     revision: Mapped[int] = mapped_column(default=1)
     created_by: Mapped[str]
     updated_by: Mapped[str | None]
-    vendor_record: Mapped[VendorTable] = relationship(lazy="raise")
 
     __table_args__ = (
         Index("uq_product_quotes_product_vendor", "product_id", "vendor_id", unique=True),
@@ -265,7 +263,7 @@ async def quote_rows(id: str) -> list[tuple[ProductQuoteTable, bool]]:
     used = exists().where(ProductSaleTable.quote_id == ProductQuoteTable.id).label("has_sales")
     statement = select(ProductQuoteTable, used).where(
         ProductQuoteTable.product_id == parse_uuid(id),
-    ).options(selectinload(ProductQuoteTable.vendor_record)).order_by(
+    ).order_by(
         ProductQuoteTable.created_at, ProductQuoteTable.id,
     )
     rows = (await active_session().execute(statement)).all()

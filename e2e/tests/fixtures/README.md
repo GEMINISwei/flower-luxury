@@ -8,4 +8,4 @@
 - 授權：素材為 public domain，見同 revision 的 [README](https://github.com/immich-app/test-assets/blob/ec56cc6c1d76c45bc9615dc6ea232470a2b0a3a1/README.md)。儲存庫根目錄的 AGPL 授權與 README 對影像素材的 public domain 聲明分開適用。
 - SHA-256：`2d9d8493696fc0054ecb4517699fec11e04bf507f1f529f6a4f293fcefdeb35e`
 
-測試執行時不下載素材。原始 bytes 與 EXIF 均保留，以驗證原圖下載；請以公開樣本本身的內容與中繼資料作為測試資料，不改用私人照片。對應案例見 [`english-acceptance.spec.ts`](../english-acceptance.spec.ts)。
+測試執行時不下載素材。原始 bytes 與 EXIF 均保留，以驗證原圖下載；請以公開樣本本身的內容與中繼資料作為測試資料，不改用私人照片。對應案例見 [`english-acceptance.spec.ts`](../layout/english.spec.ts)。

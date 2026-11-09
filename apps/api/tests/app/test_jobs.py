@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app import jobs
+from shared import platform
 from shared.jobs import maintenance
 
 pytestmark = pytest.mark.asyncio
@@ -19,9 +20,9 @@ async def test_status_command_reports_only_safe_queue_metadata(monkeypatch, caps
         yield
 
     monkeypatch.setenv("POSTGRES_URL", "postgresql+asyncpg://private-credential/test")
-    monkeypatch.setattr(jobs, "create_engine", lambda _url: Engine())
-    monkeypatch.setattr(jobs, "configure_session_factory", lambda _engine: None)
-    monkeypatch.setattr(jobs, "session_scope", scope)
+    monkeypatch.setattr(platform, "create_engine", lambda _url: Engine())
+    monkeypatch.setattr(platform, "configure_session_factory", lambda _engine: None)
+    monkeypatch.setattr(platform, "session_scope", scope)
     monkeypatch.setattr(jobs, "job_overview", AsyncMock(return_value=maintenance.JobOverview(
         queues=[maintenance.QueueReport(queue="images", pending=2, ready=1,
                                          oldest_wait_seconds=60)])))

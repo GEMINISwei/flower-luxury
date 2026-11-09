@@ -527,6 +527,16 @@ def test_backup_restarts_nginx_on_failure(box: Sandbox) -> None:
     assert not box.called(" -cf ")
 
 
+def test_backup_fails_when_uploads_are_unavailable(box: Sandbox) -> None:
+    running_production(box)
+    box.volumes(f"{PROJECT}_production_postgres_data")
+    box.fail("tar")
+    result = box.run("backup")
+    assert result.returncode != 0
+    assert box.called(" -cf ")
+    assert box.first(f"stop {NGINX}") < box.last(f"start {NGINX}")
+
+
 def test_backup_leaves_stopped_nginx_alone(box: Sandbox) -> None:
     # 還原時外層已經停了 nginx; 裡面的備份不能在還原之前就把它開回來。
     running_production(box)

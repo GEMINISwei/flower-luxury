@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from sqlalchemy import delete, select, update
 
-from modules.brands.public import BrandTable
+from modules.brands.model import BrandTable
 from modules.product_drafts import collection, messages, photos, review, service, storage
 from modules.product_drafts.model import DraftTable, MessageTable, ReceiptTable
 from modules.product_drafts.schema import (

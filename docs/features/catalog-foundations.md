@@ -29,4 +29,4 @@
 - 廠商：[`service.py`](../../apps/api/modules/vendors/service.py)、
   [`test_model.py`](../../apps/api/tests/modules/vendors/test_model.py)
 - 舊暫存匯率轉換：[`test_quote_rate_migration.py`](../../apps/api/tests/modules/product_drafts/test_quote_rate_migration.py)
-- 瀏覽器流程：[`catalog.spec.ts`](../../e2e/tests/catalog.spec.ts)
+- 瀏覽器流程：[`catalog.spec.ts`](../../e2e/tests/catalog/manage.spec.ts)

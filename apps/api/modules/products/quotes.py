@@ -1,6 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 
-from modules.vendors.public import VendorError, lock_vendor
+from modules.vendors.public import VendorError, find_vendor_names, lock_vendor, mark_vendor_quoted
 from shared.auth.contracts import CurrentUser
 from shared.db.session import active_session
 from shared.db.table import is_unique_violation
@@ -26,8 +26,9 @@ async def quote_info(row: ProductQuoteTable) -> QuoteInfo:
 async def get_quotes(id: str) -> QuoteList:
     await get_product(id)
     rows = await quote_rows(id)
+    names = await find_vendor_names([str(row.vendor_id) for row, _ in rows])
     return QuoteList(list_data=[QuoteInfo.model_validate({
-        **row.to_dict(), "vendor_name": row.vendor_record.name, "has_sales": has_sales,
+        **row.to_dict(), "vendor_name": names[str(row.vendor_id)], "has_sales": has_sales,
     }) for row, has_sales in rows], count=len(rows))
 
 
@@ -46,8 +47,7 @@ async def create_quote(id: str, form_data: QuoteCreate, actor: CurrentUser) -> Q
                 "product_id": id,
                 "created_by": actor["id"],
             })
-            vendor.has_quotes, vendor.updated_at = True, utc_now()
-            await active_session().flush()
+            await mark_vendor_quoted(form_data.vendor_id)
             return await quote_info(await load_quote(id, data["id"]))
     except IntegrityError as error:
         if not is_unique_violation(error):

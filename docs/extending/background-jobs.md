@@ -1,9 +1,16 @@
 # 背景工作
 
 背景工作使用獨立的 `line-collector` 容器，與 API 共用 image、PostgreSQL 及 uploads volume，
-不另外引入 Redis（[ADR 0006](../decisions/0006-postgres-job-queue.md)）。
+不另外引入 Redis（[ADR starter/0005](../starter/0005-postgres-job-queue.md)）。
 目前已註冊商品暫存清理、到期摘要、LINE 圖片下載、群組名稱查詢、圖片加工與一次 AI 預填任務。
 LINE 功能兩項金鑰都留空即可停用，群組預設不收集，見 [LINE 商品收集](../features/line-collection.md)。
+
+## 平台入口與模組事件
+
+CLI 與 worker 由 `platform_scope()` 安裝 session factory 與模組事件訂閱表。
+常駐 worker 使用 `transactional=False`，框架仍為領取、每個工作、心跳與重試各開獨立的 `session_scope()`；
+不把整個常駐程序包在同一筆交易。事件處理函式與目前工作共用交易，外部副作用仍由持久佇列處理。
+詳見 [模組事件](module-events.md) 與 [跨模組指南](cross-module.md)。
 
 ## 宣告與排入任務
 

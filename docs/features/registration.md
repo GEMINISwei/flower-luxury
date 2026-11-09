@@ -1,7 +1,7 @@
 # 店長註冊
 
 共用註冊碼是建立店長的授權憑證，功能沿用舊系統，接線遵循新版模組架構。
-採用原因見 [ADR 0009](../decisions/0009-manager-registration-code.md)。
+採用原因見 [ADR 0001](../decisions/0001-manager-registration-code.md)。
 
 ## 啟用與使用
 
@@ -28,4 +28,4 @@
   [`test_model.py`](../../apps/api/tests/modules/registration/test_model.py)
 - 權限與限流：[`test_routes.py`](../../apps/api/tests/modules/registration/test_routes.py)
 - 表單驗證：[`validation.test.ts`](../../apps/web/tests/modules/registration/validation.test.ts)
-- 瀏覽器流程：[`registration.spec.ts`](../../e2e/tests/registration.spec.ts)
+- 瀏覽器流程：[`registration.spec.ts`](../../e2e/tests/registration/signup.spec.ts)
