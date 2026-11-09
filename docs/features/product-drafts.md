@@ -131,7 +131,7 @@
 - 補上傳圖片：[`test_uploads.py`](../../apps/api/tests/modules/product_drafts/test_uploads.py)
 - 前端狀態、建檔條件、欄位與複製規則：[`auto-grouping.test.ts`](../../apps/web/tests/modules/product_drafts/auto-grouping.test.ts)、
   [`capabilities.test.ts`](../../apps/web/tests/modules/product_drafts/capabilities.test.ts)
-- 群組與暫存瀏覽器流程：[`product-drafts.spec.ts`](../../e2e/tests/product-drafts.spec.ts)
+- 群組與暫存瀏覽器流程：[`product-drafts.spec.ts`](../../e2e/tests/product-drafts/review.spec.ts)
 - 預填規則與背景處理：[`prefill.py`](../../apps/api/modules/product_drafts/prefill.py)、
   [`test_prefill_integration.py`](../../apps/api/tests/modules/product_drafts/test_prefill_integration.py)
 - 手動詢價與建檔回滾：[`draft_quotes.py`](../../apps/api/modules/product_drafts/draft_quotes.py)、

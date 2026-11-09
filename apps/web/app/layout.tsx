@@ -11,7 +11,7 @@ import "./theme.css"
 import "@/shared/ui/styles/base.css"
 import "@/shared/ui/styles/message-page.css"
 
-// 手機上限制縮放以減少固定導覽與對話框位移; 取捨見 docs/decisions/0020-lock-mobile-zoom.md.
+// 手機上限制縮放以減少固定導覽與對話框位移; 取捨見 docs/starter/0012-lock-mobile-zoom.md.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

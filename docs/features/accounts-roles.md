@@ -1,7 +1,7 @@
 # 帳號、角色與密碼
 
 本專案使用店長／員工兩種身分，底層沿用模板的角色與權限機制。註冊的授權決策見
-[ADR 0009](../decisions/0009-manager-registration-code.md)，註冊碼規則見[店長註冊](registration.md)。
+[ADR 0001](../decisions/0001-manager-registration-code.md)，註冊碼規則見[店長註冊](registration.md)。
 
 ## 帳號
 

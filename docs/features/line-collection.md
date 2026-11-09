@@ -89,6 +89,6 @@ Log 僅提供工作識別與錯誤類別，不輸出 LINE 錯誤內容或金鑰�
 - 下載與重試：[`jobs.py`](../../apps/api/modules/line_collection/jobs.py)
 - 收件、併發、撤回與回滾：[`test_integration.py`](../../apps/api/tests/modules/line_collection/test_integration.py)
 - 簽章與設定：[`test_rules.py`](../../apps/api/tests/modules/line_collection/test_rules.py)
-- nginx 實際入口：[`line-webhook.spec.ts`](../../e2e/tests/line-webhook.spec.ts)
+- nginx 實際入口：[`line-webhook.spec.ts`](../../e2e/tests/line-collection/webhook.spec.ts)
 
 - 自動分組與遲到訊息：[`test_auto_grouping.py`](../../apps/api/tests/modules/product_drafts/test_auto_grouping.py)

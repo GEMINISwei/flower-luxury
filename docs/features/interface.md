@@ -13,7 +13,7 @@
   桌面帳號選單與手機「更多」共用這兩個入口。
 - 刪除等操作需明確確認，取消、關閉與 Escape 不執行操作；送出期間防止重複確認。
 - 手機版透過 viewport 限制縮放，根元素以 `touch-action: manipulation` 避免雙擊放大；
-  iOS Safari 分頁仍可能允許雙指縮放，取捨見 [ADR 0020](../decisions/0020-lock-mobile-zoom.md)。
+  iOS Safari 分頁仍可能允許雙指縮放，取捨見 [ADR starter/0012](../starter/0012-lock-mobile-zoom.md)。
 - 手機與觸控裝置的輸入欄位至少使用 16px 字級，避免 iPhone Safari 聚焦自動放大。
 - 觸控裝置忽略文字與選擇欄位的 `autoFocus`，保留手動聚焦與桌面的自動聚焦行為。
 - 共用對話框的 Tab／Shift+Tab 留在視窗內，關閉後還原觸發元素的焦點；選單方向鍵在可用項目間循環，Escape 關閉並還原焦點。
@@ -34,10 +34,10 @@
 - 底部彈窗：[`BottomSheet.tsx`](../../apps/web/shared/ui/BottomSheet.tsx)、
   [`bottom-sheet.test.tsx`](../../apps/web/tests/shared/ui/bottom-sheet.test.tsx)
 - 確認視窗：[`confirm-dialog.test.tsx`](../../apps/web/tests/shared/ui/confirm-dialog.test.tsx)
-- 手機縮放與輸入欄位：[`mobile-inputs.spec.ts`](../../e2e/tests/mobile-inputs.spec.ts)
+- 手機縮放與輸入欄位：[`mobile-inputs.spec.ts`](../../e2e/tests/layout/inputs.spec.ts)
 - 對話框掛載位置：[`ui.test.tsx`](../../apps/web/tests/shared/ui/ui.test.tsx)
 - 共用對話框與選單鍵盤操作：[`dialog-keyboard.test.tsx`](../../apps/web/tests/shared/ui/dialog-keyboard.test.tsx)、
   [`menu-keyboard.test.tsx`](../../apps/web/tests/shared/ui/menu-keyboard.test.tsx)
 - 使用者欄位驗證：[`validation.test.ts`](../../apps/web/tests/modules/users/validation.test.ts)
 - 日期格式：[`date-time.test.ts`](../../apps/web/tests/shared/i18n/date-time.test.ts)
-- 瀏覽器流程：[`catalog.spec.ts`](../../e2e/tests/catalog.spec.ts)
+- 瀏覽器流程：[`catalog.spec.ts`](../../e2e/tests/catalog/manage.spec.ts)

@@ -1,6 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 
-from modules.roles.public import RoleTable
+from modules.roles.public import get_super_admin_role_id
 from shared.auth import passwords
 from shared.db.session import release_connection
 from shared.db.table import is_unique_violation
@@ -18,7 +18,7 @@ async def create_manager(form_data: SuperAdminCreate) -> UserOperate:
 
     await release_connection()
     password_hash = await passwords.hash_password_async(form_data.password)
-    role_ids = [await RoleTable.get_super_admin_role_id()]
+    role_ids = [await get_super_admin_role_id()]
 
     try:
         created = await UserTable.create(

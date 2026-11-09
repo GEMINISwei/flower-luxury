@@ -6,11 +6,11 @@ import os
 import signal
 import sys
 
-from shared.db.session import configure_session_factory, create_engine
 from shared.jobs.health import HEARTBEAT_PATH, is_healthy
 from shared.jobs.maintenance import CLEANUP_TASK
 from shared.jobs.registry import collect_tasks
 from shared.jobs.worker import serve
+from shared.platform import platform_scope
 
 from .registry import ENABLED_MODULES
 
@@ -20,17 +20,13 @@ async def run() -> None:
     if not url.startswith("postgresql+asyncpg://"):
         raise SystemExit("line-collector 需要 POSTGRES_URL (見 .env / .env.example)")
     tasks = {**collect_tasks(ENABLED_MODULES), CLEANUP_TASK.name: CLEANUP_TASK}
-    engine = create_engine(url)
-    configure_session_factory(engine)
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for name in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(name, stop.set)
     logging.info("line-collector started registered_tasks=%d", len(tasks))
-    try:
+    async with platform_scope(ENABLED_MODULES, url, transactional=False):
         await serve(tasks, stop, HEARTBEAT_PATH)
-    finally:
-        await engine.dispose()
 
 
 if __name__ == "__main__":

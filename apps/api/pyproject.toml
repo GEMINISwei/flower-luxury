@@ -38,6 +38,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "mypy>=2.4.0",
     "import-linter==2.15",
+    "pytest-xdist>=3.8.0",
 ]
 
 [tool.pytest.ini_options]

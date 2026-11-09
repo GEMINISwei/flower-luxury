@@ -189,7 +189,7 @@ async def test_unsend_after_approval_requires_manual_review(db, monkeypatch):
 
 
 async def test_unsend_after_moving_and_approval_requires_manual_review(db):
-    from modules.brands.public import BrandTable
+    from modules.brands.model import BrandTable
     from modules.product_drafts import messages
     from modules.product_drafts import service as drafts
     from modules.product_drafts.schema import DraftFields, DraftUpdate, MessageMove

@@ -2,10 +2,10 @@ import asyncio
 from dataclasses import dataclass
 
 import pytest
-from shared.events import Event, EventHandler, publish
 
 from app import collector
 from shared.db.session import active_session, session_scope
+from shared.events import Event, EventHandler, publish
 from shared.module import ModuleManifest
 
 

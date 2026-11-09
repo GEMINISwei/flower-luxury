@@ -21,7 +21,7 @@ from modules.product_drafts.prefill_schema import (
 )
 from modules.product_drafts.quote_schema import DraftQuoteUpdate
 from modules.product_drafts.schema import DraftFields, DraftUpdate, MessageMove
-from modules.vendors.public import VendorTable
+from modules.vendors.model import VendorTable
 from shared.db.session import active_session
 from shared.jobs.contracts import Job
 from shared.jobs.model import JobTable

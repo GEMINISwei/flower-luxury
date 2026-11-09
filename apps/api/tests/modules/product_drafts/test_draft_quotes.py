@@ -7,7 +7,7 @@ from modules.product_drafts import collection, draft_quotes, photos, review, ser
 from modules.product_drafts.quote_schema import DraftQuoteUpdate
 from modules.product_drafts.schema import VersionRequest
 from modules.products import quotes
-from modules.vendors.public import VendorTable
+from modules.vendors.model import VendorTable
 from shared.http.errors import LangException
 from tests.modules.product_drafts.helpers import ACTOR, image_bytes, incoming
 from tests.modules.product_drafts.test_integration import count_products, prepared_draft

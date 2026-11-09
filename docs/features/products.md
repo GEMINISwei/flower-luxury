@@ -41,4 +41,4 @@
   [`test_rules.py`](../../apps/api/tests/modules/products/test_rules.py)
 - 表單與畫面分支：[`capabilities.test.ts`](../../apps/web/tests/modules/products/capabilities.test.ts)
 - 手機續載：[`useMobileProducts.test.tsx`](../../apps/web/tests/modules/products/ui/useMobileProducts.test.tsx)
-- 瀏覽器流程：[`products.spec.ts`](../../e2e/tests/products.spec.ts)
+- 瀏覽器流程：[`products.spec.ts`](../../e2e/tests/products/manage.spec.ts)
