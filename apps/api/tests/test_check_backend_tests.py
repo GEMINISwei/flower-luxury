@@ -54,13 +54,14 @@ def test_check_api_test_runs_parallel_without_integration_tests(box: Sandbox) ->
     assert call.endswith(" REQUIRE_INTEGRATION=1")
 
 
-def test_check_integration_runs_only_integration_tests_without_coverage(box: Sandbox) -> None:
+def test_check_integration_collects_coverage_for_combined_gate(box: Sandbox) -> None:
     result = box.run("check", "integration")
 
     assert result.returncode == 0, result.stderr
     [call] = pytest_calls(box)
     assert " -m integration " in f" {call} "
-    assert "--cov" not in call
+    assert " --cov " in f" {call} "
+    assert "--cov-fail-under=0" in call
     assert call.endswith(" REQUIRE_INTEGRATION=1")
     assert box.called("uv run alembic check")
 
