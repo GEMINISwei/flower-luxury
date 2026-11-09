@@ -53,30 +53,30 @@ case "$*" in *describe*) exit 1 ;; *hooksPath*) echo .githooks ;; esac
     return sandbox
 
 
-def test_full_check_uses_disposable_database_and_cleans_container(checks):
-    result = checks.run("check")
+def test_integration_uses_disposable_database_and_cleans_container(checks):
+    result = checks.run("check", "integration")
     assert result.returncode == 0, result.stdout + result.stderr
     calls = checks.calls()
-    assert any(call.startswith("run -d --name my-app-check-postgres") for call in calls)
-    assert sum(call == "rm -f my-app-check-postgres" for call in calls) == 2
+    assert any(call.startswith("run -d --name my-app-test-postgres") for call in calls)
+    assert sum(call == "rm -f my-app-test-postgres" for call in calls) == 2
     commands = (checks.state / "uv").read_text()
-    assert "run pytest tests/ -q --cov --cov-report=" in commands
+    assert "run pytest tests/ -q -m integration" in commands
     assert "db=postgresql+asyncpg://test:test@127.0.0.1:54321/test|required=1" in commands
     assert "alembic upgrade head" in commands and "alembic check" in commands
-    assert "test:coverage" in (checks.state / "npm").read_text()
+    assert not (checks.state / "npm").exists()
 
 
 @pytest.mark.parametrize("failure", ["pytest", "migration"])
-def test_full_check_failure_stops_build_and_cleans_container(checks, failure):
+def test_integration_failure_cleans_container(checks, failure):
     checks.fail(failure)
-    result = checks.run("check")
+    result = checks.run("check", "integration")
     assert result.returncode != 0
-    assert checks.calls()[-1] == "rm -f my-app-check-postgres"
-    assert "build" not in (checks.state / "npm").read_text()
+    assert checks.calls()[-1] == "rm -f my-app-test-postgres"
+    assert not (checks.state / "npm").exists()
 
 
 def test_quick_tests_do_not_start_database(checks):
     result = checks.run("check", "test")
     assert result.returncode == 0, result.stdout + result.stderr
     assert checks.calls() == []
-    assert "required=1" not in (checks.state / "uv").read_text()
+    assert "required=1" in (checks.state / "uv").read_text()

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises"
 import { createHash } from "node:crypto"
 import { fileURLToPath } from "node:url"
 import { expect, test, type Page } from "@playwright/test"
-import { createUser } from "./support"
+import { createUser } from "../support"
 
 // 英文案例只覆寫本檔語系, 既有中文案例維持原設定.
 test.use({ locale: "en-US" })
@@ -280,7 +280,7 @@ test("英文系統設定切換語系後重新登入仍保留選擇", async ({ pa
 })
 
 test("真實 HEIC 上傳可顯示且下載保留原始檔案", async ({ page, browser }, testInfo) => {
-  const fixture = fileURLToPath(new URL("./fixtures/IMG_2682.heic", import.meta.url))
+  const fixture = fileURLToPath(new URL("../fixtures/IMG_2682.heic", import.meta.url))
   const original = await readFile(fixture)
   const expectedHash = "2d9d8493696fc0054ecb4517699fec11e04bf507f1f529f6a4f293fcefdeb35e"
   expect(createHash("sha256").update(original).digest("hex")).toBe(expectedHash)

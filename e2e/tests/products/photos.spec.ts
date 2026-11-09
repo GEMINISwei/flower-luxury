@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
-import { createUser, login, logout } from "./support"
+import { createUser, login, logout } from "../support"
 
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAABAAAAAICAIAAAB/FOjAAAAAFklEQVR4nGP8z0AaYCJRPcOoBgYiAACTUAEPHJZO1QAAAABJRU5ErkJggg==", "base64")
 const photo = (name: string) => ({ name, mimeType: "image/png", buffer: png })

@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test"
-import { test } from "./support"
+import { test } from "../support"
 
 test("對話框 Tab 循環且 Escape 還原新增按鈕焦點", async ({ page }) => {
   await page.goto("/admin/users")

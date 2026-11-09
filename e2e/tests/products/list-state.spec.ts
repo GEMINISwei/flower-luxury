@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
-import { ADMIN_STATE } from "./support"
+import { ADMIN_STATE } from "../support"
 
 // 預設載入超管的登入狀態 (playwright.config.ts)。
 const prefix = "Remember Item"
@@ -77,8 +77,7 @@ test("商品篩選在重整與同裝置重新開啟後保留且可清除", async
   } finally { await reopened.close() }
 })
 
-test("手機從續載商品詳情返回時恢復條件與位置，支援上一頁及詳情重整", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
+test("手機從續載商品詳情返回時恢復條件與位置，支援上一頁及詳情重整 @mobile-only", async ({ page }) => {
   await page.goto(`/products?keyword=${encodeURIComponent(prefix)}`)
   const links = page.getByRole("link").filter({ hasText: prefix })
   await expect(links).toHaveCount(20)
@@ -118,8 +117,7 @@ test("桌面商品詳情返回時保留篩選及原分頁", async ({ page }) => 
   await expect(page.getByRole("link").filter({ hasText: prefix })).toHaveCount(3)
 })
 
-test("手機表單輸入文字至少十六像素且 viewport 限制縮放", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
+test("手機表單輸入文字至少十六像素且 viewport 限制縮放 @mobile-only", async ({ page }) => {
   await page.goto("/login")
   const account = page.getByLabel("帳號", { exact: true })
   await expect(account).toBeVisible()
@@ -138,8 +136,7 @@ test("手機表單輸入文字至少十六像素且 viewport 限制縮放", asyn
   expect(directives).toContain("user-scalable=no")
 })
 
-test("手機從商品詳情返回後按重新整理，回到頂端且只顯示第一頁", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
+test("手機從商品詳情返回後按重新整理，回到頂端且只顯示第一頁 @mobile-only", async ({ page }) => {
   await page.goto(`/products?keyword=${encodeURIComponent(prefix)}`)
   const links = page.getByRole("link").filter({ hasText: prefix })
   await expect(links).toHaveCount(20)

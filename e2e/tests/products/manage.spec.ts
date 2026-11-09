@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
-import { login } from "./support"
+import { login } from "../support"
 
 // 預設載入超管的登入狀態 (playwright.config.ts)。
 

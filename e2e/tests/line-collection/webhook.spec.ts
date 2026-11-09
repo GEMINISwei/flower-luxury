@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { SIGNED_OUT } from "./support"
+import { SIGNED_OUT } from "../support"
 
 // 驗證的是未登入的外部呼叫, 不載入預設的超管登入狀態。
 test.use({ storageState: SIGNED_OUT })

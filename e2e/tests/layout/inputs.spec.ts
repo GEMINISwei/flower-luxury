@@ -1,9 +1,8 @@
 import { expect } from "@playwright/test"
-import { test } from "./support"
+import { test } from "../support"
 
-test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
 
-test("viewport 設定 maximum-scale=1 與 user-scalable=no", async ({ page }) => {
+test("viewport 設定 maximum-scale=1 與 user-scalable=no @mobile-only", async ({ page }) => {
   await page.goto("/settings")
 
   const content = await page.locator("meta[name=viewport]").getAttribute("content")
@@ -13,7 +12,7 @@ test("viewport 設定 maximum-scale=1 與 user-scalable=no", async ({ page }) =>
   expect(directives).toContain("user-scalable=no")
 })
 
-test("根元素使用 manipulation 避免雙擊放大", async ({ page }) => {
+test("根元素使用 manipulation 避免雙擊放大 @mobile-only", async ({ page }) => {
   await page.goto("/settings")
 
   const touchAction = await page.evaluate(() => getComputedStyle(document.documentElement).touchAction)
@@ -21,7 +20,7 @@ test("根元素使用 manipulation 避免雙擊放大", async ({ page }) => {
   expect(touchAction).toBe("manipulation")
 })
 
-test("觸控裝置開啟表單不自動聚焦且輸入字級至少 16px", async ({ page }) => {
+test("觸控裝置開啟表單不自動聚焦且輸入字級至少 16px @mobile-only", async ({ page }) => {
   await page.goto("/admin/users")
   await page.getByRole("button", { name: "新增員工", exact: true }).click()
   const dialog = page.getByRole("dialog")

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises"
 import { expect, test, type Page } from "@playwright/test"
-import { login } from "./support"
+import { login } from "../support"
 
 const staff = { username: "lifecycle-staff", password: "lifecycle-staff-password" }
 const productName = "Lifecycle Bag"

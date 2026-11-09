@@ -4,6 +4,7 @@ import signal
 import pytest
 
 from app import collector
+from shared import platform
 from shared.jobs import maintenance
 from shared.jobs.contracts import Job, TaskSpec
 from shared.module import ModuleManifest
@@ -21,7 +22,7 @@ async def test_collector_rejects_missing_or_invalid_database_setting(monkeypatch
     def create_engine(value):
         pytest.fail("invalid configuration must not create an engine")
 
-    monkeypatch.setattr(collector, "create_engine", create_engine)
+    monkeypatch.setattr(platform, "create_engine", create_engine)
     with pytest.raises(SystemExit, match="POSTGRES_URL") as error:
         await collector.run()
     assert "private-credential" not in str(error.value)
@@ -42,8 +43,8 @@ async def test_collector_loads_tasks_and_disposes_engine_on_exit(monkeypatch, fa
     engine = Engine()
     monkeypatch.setenv("POSTGRES_URL", "postgresql+asyncpg://test:test@localhost/test")
     monkeypatch.setattr(collector, "ENABLED_MODULES", (ModuleManifest("example", tasks=(task,)),))
-    monkeypatch.setattr(collector, "create_engine", lambda _url: engine)
-    monkeypatch.setattr(collector, "configure_session_factory",
+    monkeypatch.setattr(platform, "create_engine", lambda _url: engine)
+    monkeypatch.setattr(platform, "configure_session_factory",
                         lambda value: seen.update(engine=value))
     signals = []
     monkeypatch.setattr(asyncio.get_running_loop(), "add_signal_handler",

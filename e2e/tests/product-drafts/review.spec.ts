@@ -2,8 +2,8 @@ import { execFileSync } from "node:child_process"
 import { randomUUID } from "node:crypto"
 import { readFile } from "node:fs/promises"
 import { expect, test, type BrowserContext, type Page } from "@playwright/test"
-import { ADMIN_STATE, SIGNED_OUT, createUser, login, type Account } from "./support"
-import { expectHeaderFits } from "./header-layout"
+import { ADMIN_STATE, SIGNED_OUT, createUser, login, type Account } from "../support"
+import { expectHeaderFits } from "../header-layout"
 
 // 預設載入超管的登入狀態 (playwright.config.ts)。
 // Playwright replaces a failed worker, so each process needs its own disposable account.

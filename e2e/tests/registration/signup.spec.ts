@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
-import { SIGNED_OUT, login, logout, useAdmin } from "./support"
+import { SIGNED_OUT, login, logout, useAdmin } from "../support"
 
 // 註冊要從未登入開始。超管的步驟用 useAdmin 載入保存的登入狀態, 換回未登入時清掉 cookie:
 // 不可以登出超管, 登出會撤銷超管在其他 worker 的 session。

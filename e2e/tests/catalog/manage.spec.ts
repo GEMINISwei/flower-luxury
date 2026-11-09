@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
-import { login, logout, useAdmin } from "./support"
+import { login, logout, useAdmin } from "../support"
 
 const staff = { username: "catalog-staff", password: "catalog-staff-password" }
 
