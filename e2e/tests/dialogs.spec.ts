@@ -23,7 +23,7 @@ test("帳號選單支援方向鍵與 Escape 焦點還原", async ({ page }) => {
   await page.goto("/products")
   const trigger = page.getByRole("button", { name: "帳號選單", exact: true })
   await trigger.click()
-  const first = page.getByRole("menuitem", { name: "用戶設定", exact: true })
+  const first = page.getByRole("menuitem").first()
   await expect(first).toBeFocused()
   await page.keyboard.press("ArrowUp")
   await expect(page.getByRole("menuitem", { name: "登出", exact: true })).toBeFocused()
