@@ -41,6 +41,7 @@
 | [0003](0003-manual-collection-finalization.md) | 收件先保存，由人工完成收集與分組定稿後才加工 | 被 0004 取代 |
 | [0004](0004-automatic-grouping-with-late-review.md) | 依 LINE 原始時間自動分組，收集結束後的遲到訊息交由人員加入 | 採用 |
 | [0005](0005-worker-platform-scope.md) | 常駐 worker 共用平台環境，每個工作保留獨立交易 | 採用 |
+| [0006](0006-combined-backend-coverage.md) | 分開執行後端測試，合併覆蓋率後維持原門檻 | 採用 |
 
 ## 推翻的模板決定
 

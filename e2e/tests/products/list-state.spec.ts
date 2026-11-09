@@ -1,9 +1,11 @@
+import { randomUUID } from "node:crypto"
 import { expect, test, type Page } from "@playwright/test"
 import { ADMIN_STATE } from "../support"
 
 // 預設載入超管的登入狀態 (playwright.config.ts)。
-const prefix = "Remember Item"
-const brand = "Remember Brand"
+const fixtureId = randomUUID().slice(0, 8)
+const prefix = `Remember Item ${fixtureId}`
+const brand = `Remember Brand ${fixtureId}`
 
 async function openFilters(page: Page) {
   await page.locator("header").getByRole("button", { name: "操作選單", exact: true }).click()

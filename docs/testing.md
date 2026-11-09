@@ -199,5 +199,6 @@ AI agent 寫完驗收條件要**先列給使用者確認才寫測試**，方向�
 
 覆蓋率門檻（`pyproject.toml` 的 `fail_under`、`vitest.config.ts` 的 `thresholds`）是**防退步的地板，不是目標**。
 
-完整 `make check` 與 `make check integration` 維持後端 74% 門檻，涵蓋真實交易與並發測試。
-快速 `make check test` 只用於開發迴圈，不取代完整驗證；前端覆蓋率門檻在兩者都保留。
+後端單元與 integration 分開執行並各自產生覆蓋率資料，由 CI 的 `api-coverage` 合併後以原有 74% 門檻判定。
+兩份資料缺一不可，這個 job 也納入 `ci-gate`；理由見 [專案決策 0006](decisions/0006-combined-backend-coverage.md)。
+單獨一組的比例不代表完整後端覆蓋率。前端仍由 `web-test` 判定自己的門檻。

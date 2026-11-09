@@ -79,13 +79,13 @@ GitHub 端設定一次，流程才不靠自覺：
 
 CI（`.github/workflows/ci.yml`）每個檢查項目各自一個 job、平行跑，跑的就是本機的 `make check <項目>`：
 `lint`、`contract`、`migrate`、`types`、`web-test`、`build`、`api-test`、`api-integration`（`make check integration`）、
-`e2e`（另外確認 web image 沒有真的 Server Action 金鑰）。最後由 `ci-gate` 等全部 job 跑完再判定，
+`api-coverage`（合併兩組後端覆蓋率）、`e2e`（另外確認 web image 沒有真的 Server Action 金鑰）。最後由 `ci-gate` 等全部 job 跑完再判定，
 ruleset 只要求它（`.github/scripts/ci-gate.sh`）。**完整的檢查只在 CI 跑**：本機在寫測試時只跑單項，
 push 之後等 CI 的結果，有錯就修正再 push（新的 commit 會取消還在跑的舊 run）。
 部署由 `deploy.yml` 在 Publish release 時執行（[說明](operations.md#自動部署)）。
 
 **docs 模式**：PR 改的檔案全部是 Markdown 時，只跑 `api-test` 與 `web-test`（文件的連結與格式檢查在裡面），
-其餘 job 跳過，`ci-gate` 照樣通過。有任何一個非 `.md` 檔，或不是 PR（push `main`、部署、手動執行）就跑全部
+其餘 job 跳過，`ci-gate` 照樣通過。有任何一個非 `.md` 檔，或不是 PR（push `main`、部署）就跑全部
 （`.github/scripts/ci-mode.sh`）。
 
 為了省時間，CI 有三處與本機不同，檢查內容不變：

@@ -35,7 +35,7 @@ from datetime import timedelta
 from io import BytesIO
 from PIL import Image
 from app.server import app
-from modules.brands.public import BrandTable
+from modules.brands.model import BrandTable
 from modules.line_collection.model import discover_group
 from modules.product_drafts import collection, model as draft_model, photos, service
 from modules.product_drafts.schema import IncomingMessage, DraftUpdate, DraftFields, VersionRequest
@@ -119,7 +119,7 @@ async def run():
                 from unittest.mock import AsyncMock, patch
                 from modules.product_drafts import prefill
                 from modules.product_drafts.prefill_schema import PrefillContent, PrefillResult
-                from modules.vendors.public import VendorTable
+                from modules.vendors.model import VendorTable
                 from shared.jobs.contracts import Job
                 vendor = await VendorTable.create({"name": arg["name"] + " buyer", "is_active": True, "has_quotes": False})
                 draft = await service.get_draft(first.draft_id)
