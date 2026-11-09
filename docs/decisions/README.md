@@ -49,3 +49,4 @@
 | [0017](0017-e2e-failures-read-by-main-agent.md) | E2E 失敗由主 agent 自己讀，不交給子代理 | 採用 |
 | [0018](0018-no-environment-reviewer-for-deploys.md) | 部署不設 environment reviewer，由發布前的確認把關 | 採用 |
 | [0019](0019-agent-guardrails-by-judgment.md) | agent 防線以判斷為主，hook 只擋確認點 | 採用 |
+| [0020](0020-lock-mobile-zoom.md) | 手機上限制畫面縮放，減少固定導覽與對話框位移 | 採用 |
