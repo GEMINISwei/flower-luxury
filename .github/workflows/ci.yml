@@ -293,7 +293,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      COVERAGE_INPUTS: ${{ runner.temp }}/api-coverage
+      COVERAGE_INPUTS: ${{ github.workspace }}/coverage-inputs
     steps:
       - uses: actions/checkout@v7
         with:
