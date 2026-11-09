@@ -1,5 +1,17 @@
 // UI kit 的內部工具; 版面元件直接使用 `as`、`className` 與 `style`。
 
+/** 鍵盤可聚焦的元素; 對話框在這些元素之間循環。 */
+export const FOCUSABLE_SELECTOR = [
+  "a[href]", "button:not(:disabled)", "input:not(:disabled):not([type='hidden'])",
+  "select:not(:disabled)", "textarea:not(:disabled)", "[tabindex]:not([tabindex='-1']):not(:disabled)",
+].join(", ")
+
+/** 手機與平板由使用者點欄位才輸入, 避免開啟對話框就跳出鍵盤。 */
+export function isCoarsePointer() {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function"
+    && window.matchMedia("(pointer: coarse)").matches
+}
+
 export function cls(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ")
 }
