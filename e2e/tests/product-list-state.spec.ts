@@ -118,7 +118,7 @@ test("桌面商品詳情返回時保留篩選及原分頁", async ({ page }) => 
   await expect(page.getByRole("link").filter({ hasText: prefix })).toHaveCount(3)
 })
 
-test("手機表單輸入文字至少十六像素且允許手動縮放", async ({ page }) => {
+test("手機表單輸入文字至少十六像素且 viewport 限制縮放", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto("/login")
   const account = page.getByLabel("帳號", { exact: true })
@@ -133,7 +133,9 @@ test("手機表單輸入文字至少十六像素且允許手動縮放", async ({
       .toBeGreaterThanOrEqual(16)
   }
   const viewport = await page.locator('meta[name="viewport"]').getAttribute("content")
-  expect(viewport).not.toMatch(/user-scalable\s*=\s*(no|0)|maximum-scale\s*=\s*1(?:\D|$)/)
+  const directives = (viewport ?? "").split(",").map((part) => part.trim().replace(/\s+/g, ""))
+  expect(directives).toContain("maximum-scale=1")
+  expect(directives).toContain("user-scalable=no")
 })
 
 test("手機從商品詳情返回後按重新整理，回到頂端且只顯示第一頁", async ({ page }) => {
