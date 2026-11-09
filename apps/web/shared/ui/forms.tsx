@@ -6,7 +6,7 @@ import type { HTMLInputTypeAttribute, ReactNode } from "react"
 import { useId } from "react"
 import { ChevronDown } from "lucide-react"
 import { useT } from "@/shared/i18n/context"
-import { cls, ICON_SIZE, NO_BROWSER_SUGGESTIONS } from "./internals"
+import { cls, ICON_SIZE, isCoarsePointer, NO_BROWSER_SUGGESTIONS } from "./internals"
 import styles from "./styles/primitives.module.css"
 import { uiMessages } from "./i18n"
 
@@ -86,7 +86,7 @@ export function TextInput({
   const generatedId = useId()
   const inputId = id ?? generatedId
   const errorId = error ? `${inputId}-error` : undefined
-  const { onChange, ...inputProps } = props
+  const { onChange, autoFocus, ...inputProps } = props
   const accessibility = {
     id: inputId,
     name,
@@ -108,6 +108,7 @@ export function TextInput({
             error && styles.inputError,
           )}
           onChange={(event) => onChange?.(event.target.value)}
+          autoFocus={autoFocus && !isCoarsePointer()}
           {...accessibility}
           {...(browserSuggestions ? {} : NO_BROWSER_SUGGESTIONS)}
           {...inputProps}
@@ -155,7 +156,7 @@ export function SelectInput({
   const generatedId = useId()
   const inputId = id ?? generatedId
   const errorId = error ? `${inputId}-error` : undefined
-  const { onChange, ...selectProps } = props
+  const { onChange, autoFocus, ...selectProps } = props
   return (
     <label className={styles.field}>
       <FieldLabel label={label} required={selectProps.required} />
@@ -168,6 +169,7 @@ export function SelectInput({
           aria-invalid={error ? true : undefined}
           aria-describedby={errorId}
           onChange={(event) => onChange?.(event.target.value)}
+          autoFocus={autoFocus && !isCoarsePointer()}
           {...selectProps}
         >
           {options.map((option) => (

@@ -47,6 +47,43 @@ type MenuProps = {
 
 type Position = { left: number; top?: number; bottom?: number }
 
+function handleMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>, close: () => void) {
+  if (event.key === "Escape") {
+    event.preventDefault()
+    close()
+    return
+  }
+  if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return
+  event.preventDefault()
+  const items = [...event.currentTarget.querySelectorAll<HTMLElement>("[role='menuitem']:not(:disabled)")]
+  if (!items.length) return
+  const current = items.indexOf(document.activeElement as HTMLElement)
+  const next = current < 0 ? (event.key === "ArrowDown" ? 0 : items.length - 1)
+    : (current + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length
+  items[next]?.focus()
+}
+
+function MenuItems({ items, itemClassName, onClose }: {
+  items: MenuItem[]; itemClassName: string; onClose: () => void
+}) {
+  return items.map((item, index) => (
+    <button
+      key={index}
+      type="button"
+      role="menuitem"
+      disabled={item.disabled}
+      className={cls(itemClassName, item.color === "error" && styles.itemError)}
+      onClick={() => {
+        onClose()
+        item.onClick()
+      }}
+    >
+      {item.icon && <span className={styles.itemIcon}>{item.icon}</span>}
+      {item.label}
+    </button>
+  ))
+}
+
 export default function Menu({
   items,
   trigger,
@@ -59,6 +96,8 @@ export default function Menu({
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState<Position>({ top: 0, left: 0 })
   const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
   const visibleItems = items.filter((item): item is MenuItem => Boolean(item))
 
   function toggleOpen() {
@@ -99,30 +138,25 @@ export default function Menu({
     }
   }, [open, sheetTitle])
 
-  function renderItems(itemClassName: string | undefined) {
-    return visibleItems.map((item, index) => (
-      <button
-        key={index}
-        type="button"
-        role="menuitem"
-        disabled={item.disabled}
-        className={cls(itemClassName, item.color === "error" && styles.itemError)}
-        onClick={() => {
-          setOpen(false)
-          item.onClick()
-        }}
-      >
-        {item.icon && <span className={styles.itemIcon}>{item.icon}</span>}
-        {item.label}
-      </button>
-    ))
+  useEffect(() => {
+    if (!open || sheetTitle !== undefined) return
+    listRef.current?.querySelector<HTMLElement>("[role='menuitem']:not(:disabled)")?.focus()
+  }, [open, sheetTitle])
+
+  function closeAndRestoreFocus() {
+    setOpen(false)
+    triggerRef.current?.focus({ preventScroll: true })
   }
 
   if (visibleItems.length === 0) return null
 
   return (
-    <div ref={ref} className={cls(styles.wrapper, fullWidth && styles.wrapperFull)}>
+    <div ref={ref} className={cls(styles.wrapper, fullWidth && styles.wrapperFull)}
+      onKeyDown={(event) => {
+        if (open && sheetTitle === undefined) handleMenuKeyDown(event, closeAndRestoreFocus)
+      }}>
       <button
+        ref={triggerRef}
         type="button"
         className={triggerClassName ?? styles.trigger}
         onClick={toggleOpen}
@@ -134,15 +168,17 @@ export default function Menu({
         {trigger}
       </button>
       {open && sheetTitle === undefined && (
-        <div className={styles.dropdown} role="menu" style={position}>
-          {renderItems(styles.item)}
+        <div ref={listRef} className={styles.dropdown} role="menu" style={position}>
+          <MenuItems items={visibleItems} itemClassName={styles.item}
+            onClose={closeAndRestoreFocus} />
         </div>
       )}
       {/* 觸發點可能在有 backdrop-filter 的外層 (底部導覽) 裡, 它會變成 fixed 的定位基準, 遮罩就蓋不滿畫面。 */}
       {open && sheetTitle !== undefined && createPortal(
         <Modal title={sheetTitle} open onOpenChange={setOpen}>
           <div className={styles.sheetList} role="menu">
-            {renderItems(cls(styles.item, styles.sheetItem))}
+            <MenuItems items={visibleItems} itemClassName={cls(styles.item, styles.sheetItem)}
+              onClose={closeAndRestoreFocus} />
           </div>
         </Modal>,
         document.body,

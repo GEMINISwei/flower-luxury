@@ -3,10 +3,10 @@
 import { type FormEvent, useState } from "react"
 import { FormDialog, TextInput, useActionSubmit } from "@/shared/ui"
 import { useLocale, useT } from "@/shared/i18n/context"
-import { validateNewPassword } from "@/modules/auth/public.client"
 import { createActionFormData } from "@/shared/api/action-form-data"
 import { usersMessages } from "../i18n"
 import { createUser } from "../actions"
+import { validateCreateUserValues } from "../validation"
 
 type CreateUserDialogProps = {
   open: boolean
@@ -26,12 +26,14 @@ export default function CreateUserDialog({
   const [username, setUsername] = useState("")
   const [nickname, setNickname] = useState("")
   const [password, setPassword] = useState("")
+  const [errors, setErrors] = useState<ReturnType<typeof validateCreateUserValues>>({})
   const { isPending, submit, fieldError, clearFieldErrors } = useActionSubmit()
 
   function resetState() {
     setUsername("")
     setNickname("")
     setPassword("")
+    setErrors({})
     clearFieldErrors()
   }
 
@@ -42,11 +44,9 @@ export default function CreateUserDialog({
 
   function submitCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const passwordError = validateNewPassword(password, locale)
-    if (!username.trim() || !nickname.trim() || passwordError) {
-      onError(passwordError ?? t("usernameNicknameRequired"))
-      return
-    }
+    const nextErrors = validateCreateUserValues({ username, nickname, password }, locale)
+    setErrors(nextErrors)
+    if (Object.values(nextErrors).some(Boolean)) return
 
     submit(
       () => createUser(createActionFormData({
@@ -67,9 +67,9 @@ export default function CreateUserDialog({
 
   return (
     <FormDialog title={t("create")} open={open} isPending={isPending} submitText={t("createSubmit")} pendingText={t("createPending")} onClose={handleClose} onSubmit={submitCreate}>
-      <TextInput label={t("colNickname")} value={nickname} error={fieldError("nickname")} required disabled={isPending} autoFocus onChange={setNickname} />
-      <TextInput label={t("colUsername")} value={username} error={fieldError("username")} required disabled={isPending} onChange={setUsername} />
-      <TextInput label={t("password")} type="password" value={password} error={fieldError("password")} required disabled={isPending} onChange={setPassword} />
+      <TextInput label={t("colNickname")} value={nickname} error={errors.nickname ?? fieldError("nickname")} required disabled={isPending} autoFocus onChange={setNickname} />
+      <TextInput label={t("colUsername")} autoComplete="off" value={username} error={errors.username ?? fieldError("username")} required disabled={isPending} onChange={setUsername} />
+      <TextInput label={t("password")} type="password" autoComplete="new-password" value={password} error={errors.password ?? fieldError("password")} required disabled={isPending} onChange={setPassword} />
 
     </FormDialog>
   )
