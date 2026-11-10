@@ -7,6 +7,7 @@
 ### Changed
 
 - 後端覆蓋率改在 `make check integration` 合併單元與 integration 後判定，不再另設 `api-coverage` job；CI 的 Summary 列出前後端的覆蓋率實測值與門檻，前端門檻只看 lines 與 branches。
+- 覆蓋率門檻依合併計算後的實測值往下留 5 個百分點重訂：後端 74% → 89%，前端 lines 89% → 92%、branches 79% → 87%。
 
 ## [0.1.6]
 
