@@ -53,8 +53,8 @@ export default defineConfig({
       // 幾乎重複, functions 被呼叫過的函式裡的行也會算進 lines。branches 比 lines 低是正常的:
       // coverage-v8 會數到 JSX 條件渲染的每一個 `&&` 與三元, 而畫面分支刻意不寫執行期測試。
       thresholds: {
-        lines: 89,
-        branches: 79,
+        lines: 92,
+        branches: 87,
       },
     },
   },

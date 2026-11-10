@@ -178,7 +178,7 @@ trace 用 `npx playwright show-trace <zip>` 打開。
   前端由 vitest 檢查（`vitest.config.ts` 的 `thresholds`）。理由見 [專案決策 0007](decisions/0007-coverage-in-integration.md)。
 - **起點是當時的實測值往下留 5 個百分點**（取整數往下），之後調高或放寬在 commit 寫明原因
   （例：刪掉某個模組、某段改由 integration 測）。門檻是防線檔案，AI agent 要先問。
-  目前的數字沿用改成合併計算之前的值，還沒依合併後的實測值重訂。
+  目前的數字依 2026-11-10 改成合併計算後的實測值訂出（api 94.27%、web lines 97.8%、branches 92.92%）。
 - **前端只看 lines 與 branches**：lines 看有沒有跑到，branches 看每條路有沒有走過；statements 與 lines
   幾乎重複，functions 的資訊也包含在 lines 裡。branches 比 lines 低是正常的，JSX 的條件渲染也算分岔。
 - **新增 app（例如背景 worker）要設門檻並列進下表**：沒設、設成 0、或表與設定對不上，
@@ -188,9 +188,9 @@ trace 用 `npx playwright show-trace <zip>` 打開。
 
 | app | 指標 | 門檻 |
 |---|---|---|
-| api | statements | 74% |
-| web | lines | 89% |
-| web | branches | 79% |
+| api | statements | 89% |
+| web | lines | 92% |
+| web | branches | 87% |
 
 ## 改程式不改測試
 
