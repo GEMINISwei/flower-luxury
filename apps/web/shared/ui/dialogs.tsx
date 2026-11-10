@@ -87,9 +87,9 @@ function OpenModal({ title, children, width, onOpenChange }: Omit<ModalProps, "o
 function keepTabInside(container: HTMLElement, event: KeyboardEvent) {
   const elements = [...container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)]
     .filter((element) => element.tabIndex >= 0 && !element.closest("[hidden], [inert]"))
+  // 標題列的關閉按鈕一定在, 所以至少有一個可聚焦元素。
   const first = elements[0]
-  const last = elements.at(-1)
-  if (!first || !last) return
+  const last = elements[elements.length - 1]
   const active = document.activeElement
   const outside = active === container || !container.contains(active)
   if (event.shiftKey && (outside || active === first)) {

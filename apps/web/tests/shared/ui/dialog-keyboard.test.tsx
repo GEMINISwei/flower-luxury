@@ -28,6 +28,59 @@ it("Tab 與 Shift+Tab 不會跑到背景", async () => {
   expect(last).toHaveFocus()
 })
 
+it("剛開啟、焦點還在對話框本身時按 Shift+Tab 會跳到最後一個", async () => {
+  render(
+    <Modal title="測試" open onOpenChange={() => {}}>
+      <Button>確定</Button>
+    </Modal>,
+  )
+  expect(screen.getByRole("dialog")).toHaveFocus()
+
+  await userEvent.tab({ shift: true })
+
+  expect(screen.getByRole("button", { name: "確定" })).toHaveFocus()
+})
+
+it("焦點不在最後一個元素時按 Tab 照常移到下一個", async () => {
+  render(
+    <Modal title="測試" open onOpenChange={() => {}}>
+      <Button>確定</Button>
+    </Modal>,
+  )
+
+  screen.getByRole("button", { name: "關閉" }).focus()
+  await userEvent.tab()
+
+  expect(screen.getByRole("button", { name: "確定" })).toHaveFocus()
+})
+
+it("FormDialog 送出中時按鈕停用並顯示 pendingText，沒給時顯示預設的處理中", () => {
+  const props = { title: "新增", open: true, submitText: "送出", onClose: () => {}, onSubmit: () => {} }
+  const { rerender } = render(
+    <FormDialog {...props} isPending pendingText="建立中"><TextInput label="名稱" /></FormDialog>,
+  )
+  expect(screen.getByRole("button", { name: "建立中" })).toBeDisabled()
+
+  rerender(<FormDialog {...props} isPending><TextInput label="名稱" /></FormDialog>)
+  expect(screen.getByRole("button", { name: "處理中" })).toBeDisabled()
+
+  rerender(<FormDialog {...props} isPending={false}><TextInput label="名稱" /></FormDialog>)
+  expect(screen.getByRole("button", { name: "送出" })).toBeEnabled()
+})
+
+it("FormDialog 按右上角的關閉鈕會呼叫 onClose", async () => {
+  const onClose = vi.fn()
+  render(
+    <FormDialog title="新增" open isPending={false} submitText="送出" onClose={onClose} onSubmit={() => {}}>
+      <TextInput label="名稱" />
+    </FormDialog>,
+  )
+
+  await userEvent.click(screen.getByRole("button", { name: "關閉" }))
+
+  expect(onClose).toHaveBeenCalledOnce()
+})
+
 it("含自動聚焦欄位的對話框關閉後還原焦點", async () => {
   function Harness() {
     const [open, setOpen] = useState(false)

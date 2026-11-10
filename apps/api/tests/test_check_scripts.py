@@ -13,6 +13,8 @@ def checks(tmp_path):
     compose = sandbox.repo / "infra/docker/docker-compose.yml"
     compose.parent.mkdir(parents=True)
     shutil.copy(REPO_ROOT / "infra/docker/docker-compose.yml", compose)
+    # integration 跑完會從 pyproject 讀覆蓋率門檻, 再跟假 uv 回傳的總計比對。
+    shutil.copy(REPO_ROOT / "apps/api/pyproject.toml", sandbox.repo / "apps/api")
     for relative in ("contracts/openapi.json", "apps/web/shared/api/generated/schema.d.ts"):
         path = sandbox.repo / relative
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -32,6 +34,7 @@ case "$*" in
     *pytest*)
         [ -e "$state/fail-pytest" ] && exit 1
         echo '1 passed' ;;
+    *'coverage report --format=total'*) echo 100.00 ;;
     *'alembic check'*) [ ! -e "$state/fail-migration" ] || exit 1 ;;
     *export_openapi*) for last in "$@"; do :; done; printf '{{}}\\n' > "$last" ;;
 esac

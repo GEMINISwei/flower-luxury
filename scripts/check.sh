@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# 檢查與測試: make check <lint|contract|migrate|types|test|api-test|api-coverage|web-test|build|integration|e2e>
+# 檢查與測試: make check <lint|contract|migrate|types|test|api-test|web-test|build|integration|e2e>
 #
 # 完整的檢查在 CI 跑 (每個 job 跑其中一項, 見 .github/workflows/ci.yml), 本機只在需要時跑單項。
 # 不帶參數時只印用法並失敗: 不再有「本機一次全跑」, 照舊習慣執行的人不會以為檢查都過了。
@@ -10,11 +10,11 @@
 #   make check migrate       已發版的 migration 沒有被修改或刪除 (和最近的 release tag 比對)
 #   make check types         mypy + tsc
 #   make check test          api-test + web-test
-#   make check api-test      pytest (平行、產生覆蓋率資料), 不含 integration 測試
-#   make check api-coverage  合併 COVERAGE_INPUTS 內兩組資料, 檢查原有覆蓋率門檻
-#   make check web-test      vitest (帶覆蓋率)
+#   make check api-test      pytest (平行), 不含需要資料庫的 integration 測試, 不算覆蓋率
+#   make check web-test      vitest (帶覆蓋率門檻)
 #   make check build         前端 production build, 並確認 Next 有認到 proxy.ts
-#   make check integration   起拋棄式 PostgreSQL 跑 integration 測試, 再確認 model 與 migration 一致
+#   make check integration   起拋棄式 PostgreSQL 跑全部後端測試, 合併兩段的覆蓋率檢查門檻,
+#                            再確認 model 與 migration 一致
 #   make check integration <檔案…>   只跑指定的 integration 測試, 不跑 alembic check
 #                                    (要用 -k 時直接執行 scripts/check.sh integration -k 名稱)
 #   make check e2e           起一套拋棄式的正式環境, 用 Playwright 從瀏覽器跑過整條路 (e2e/)
@@ -101,42 +101,79 @@ run_types() {
     (cd apps/web && npm run --silent typecheck)
 }
 
-# `--cov-report=` 不印逐檔的覆蓋率表格, 只留 pytest-cov 的總計與門檻那一行: 通過時表格用不到,
-# 每跑一次就是一大段要讀進 AI 上下文的輸出。沒過時才告訴人去哪裡看 (表格照 pyproject 的設定略過全綠的檔案)。
-coverage_hint() {
-    echo "如果是覆蓋率沒過，看哪些檔案、哪幾行沒測到：cd apps/api && uv run coverage report -m" >&2
-    exit 1
+# 覆蓋率門檻 (防退步的地板, 訂法見 docs/testing.md〈覆蓋率門檻〉)。
+#
+# 在 CI 上 (GitHub Actions 設了 GITHUB_STEP_SUMMARY) 把這次的實測值與門檻寫進 job 的 Summary:
+# 沒過時一眼看得出差多少, 要調整門檻時也有數字可以引用。低於門檻時照樣寫, 再讓檢查失敗。
+coverage_meets() {
+    awk -v actual="$1" -v floor="$2" 'BEGIN { exit !(actual + 0 >= floor + 0) }'
+}
+
+coverage_summary_header() {
+    [ -n "${GITHUB_STEP_SUMMARY:-}" ] || return 0
+    printf '| app | 指標 | 實測 | 門檻 | 結果 |\n|---|---|---|---|---|\n' >> "${GITHUB_STEP_SUMMARY}"
+}
+
+# 用法: coverage_summary_row <app> <指標> <實測> <門檻>
+coverage_summary_row() {
+    [ -n "${GITHUB_STEP_SUMMARY:-}" ] || return 0
+    local mark="❌"
+    coverage_meets "$3" "$4" && mark="✅"
+    printf '| %s | %s | %s%% | %s%% | %s |\n' "$1" "$2" "$3" "$4" "${mark}" >> "${GITHUB_STEP_SUMMARY}"
 }
 
 # 需要資料庫的測試 (`integration` 標記) 不在這裡跑, 由 run_integration 負責。
 # `REQUIRE_INTEGRATION=1`: 有標記的已經被 `-m` 排除, 還去連資料庫的就是忘了標記;
 # 讓它失敗而不是 skip, 否則那批測試會在 CI 上安靜地消失 (見 tests/integration.py)。
-# 平行跑 (`-n auto`): 大部分時間花在子行程, 不平行時 CPU 多半在等。
-# 比例由 run_api_coverage 合併 integration 後判定, 這裡的 0 只讓分組可以先產生資料。
+# 平行跑 (`-n auto`): 大部分時間花在子行程 (hook 與 script 的測試), 不平行時 CPU 多半在等。
+# 不算覆蓋率: 這裡缺了存取資料庫的那一段, 算出來的比例沒有意義; 門檻在 run_integration。
 run_api_test() {
     step "api-test"
-    (cd apps/api && COVERAGE_FILE=.coverage.unit REQUIRE_INTEGRATION=1 \
-        uv run pytest tests/ -q -n auto -m "not integration" \
-        --cov --cov-report= --cov-fail-under=0)
+    (cd apps/api && REQUIRE_INTEGRATION=1 uv run pytest tests/ -q -n auto -m "not integration")
 }
 
-run_api_coverage() {
-    step "api-coverage"
-    require_env COVERAGE_INPUTS
-    local group
-    for group in unit integration; do
-        [ -s "${COVERAGE_INPUTS}/.coverage.${group}" ] || {
-            echo "缺少 ${COVERAGE_INPUTS}/.coverage.${group}，不能判定完整覆蓋率" >&2
-            exit 1
-        }
-    done
-    (cd apps/api && uv run coverage combine --keep "${COVERAGE_INPUTS}" \
-        && uv run coverage report -m) || coverage_hint
+# 兩段 pytest 的覆蓋率合併之後才檢查: 門檻只看 pyproject 的 `fail_under`, 由這裡比對。
+# pytest 那兩段帶 `--cov-fail-under=0`, 不然 pytest-cov 會拿同一個門檻去擋只跑了一半的那段。
+check_api_coverage() {
+    step "integration：覆蓋率（單元 + integration 合併）"
+    local total threshold
+    total="$(cd apps/api && uv run coverage report --format=total --precision=2 --fail-under=0)"
+    threshold="$(sed -n 's/^fail_under = //p' apps/api/pyproject.toml)"
+    coverage_summary_header
+    coverage_summary_row api statements "${total}" "${threshold}"
+    if ! coverage_meets "${total}" "${threshold}"; then
+        echo "後端覆蓋率 ${total}% 低於門檻 ${threshold}%。" >&2
+        echo "看哪些檔案、哪幾行沒測到：cd apps/api && uv run coverage report -m" >&2
+        exit 1
+    fi
+    echo "後端覆蓋率 ${total}%（門檻 ${threshold}%）"
+}
+
+# 門檻由 vitest 自己擋 (vitest.config.ts 的 thresholds); 這裡只把結果寫進 CI 的 Summary。
+# 數字取自 json-summary reporter 第一行的 total, 門檻取自設定檔, 不另抄一份。
+web_coverage_summary() {
+    [ -n "${GITHUB_STEP_SUMMARY:-}" ] || return 0
+    local summary=apps/web/coverage/coverage-summary.json
+    [ -f "${summary}" ] || return 0
+    local total entry metric threshold actual
+    total="$(head -1 "${summary}")"
+    coverage_summary_header
+    while IFS= read -r entry; do
+        metric="${entry%%:*}"
+        threshold="${entry#*:}"
+        actual="$(printf '%s' "${total}" \
+            | sed -nE "s/.*\"${metric}\": ?\{[^}]*\"pct\": ?([0-9.]+).*/\1/p")"
+        coverage_summary_row web "${metric}" "${actual}" "${threshold}"
+    done < <(awk '/thresholds: \{/ { inside = 1; next } inside && /\}/ { exit }
+        inside { gsub(/[ ,]/, ""); if ($0 != "") print }' apps/web/vitest.config.ts)
 }
 
 run_web_test() {
     step "web-test"
-    (cd apps/web && npm run --silent test:coverage)
+    local status=0
+    (cd apps/web && npm run --silent test:coverage) || status=$?
+    web_coverage_summary
+    return "${status}"
 }
 
 run_test() {
@@ -167,8 +204,9 @@ run_build() {
 
 # 兩段都需要真的資料庫, 用拋棄式容器而不是 `make start` 那個: 跑一次就會把開發資料洗掉。
 #
-# 1. 只跑 `integration` 標記的測試, 其餘由 run_api_test 跑。依序跑: 這批測試共用同一個資料庫。
-#    各組只產生覆蓋率資料, run_api_coverage 合併後才判定原有門檻, 不重複跑測試。
+# 1. 全部後端測試分兩段跑, 覆蓋率合併後才檢查門檻 (check_api_coverage): 只算其中一段的話,
+#    存取資料庫的程式碼永遠顯示成沒測到, 退步了也看不出來。不需要資料庫的那段平行跑
+#    (同 run_api_test); `integration` 標記的依序跑, 這批測試共用同一個資料庫。
 #    `REQUIRE_INTEGRATION=1` 把「連不上就 skip」變成「連不上就 fail」。
 # 2. `alembic check` 擋「改了 model 卻沒寫 migration」—— 測試資料庫是從 model 現建的,
 #    那種錯測試永遠抓不到, 只有部署之後第一次讀寫那個欄位才炸。
@@ -192,9 +230,15 @@ run_integration() {
         return
     fi
 
-    step "integration：需要資料庫的後端測試"
-    (cd apps/api && COVERAGE_FILE=.coverage.integration REQUIRE_INTEGRATION=1 \
-        uv run pytest tests/ -q -m integration --cov --cov-report= --cov-fail-under=0)
+    step "integration：不需要資料庫的後端測試（記錄覆蓋率）"
+    (cd apps/api && REQUIRE_INTEGRATION=1 uv run pytest tests/ -q -n auto -m "not integration" \
+        --cov --cov-report= --cov-fail-under=0)
+
+    step "integration：需要資料庫的後端測試（累加覆蓋率）"
+    (cd apps/api && REQUIRE_INTEGRATION=1 uv run pytest tests/ -q -m integration \
+        --cov --cov-append --cov-report= --cov-fail-under=0)
+
+    check_api_coverage
 
     step "integration：model 與 migration 一致（alembic check）"
     # 先清掉測試留下的表, 讓結構完全由 migration 建出來。
@@ -299,7 +343,6 @@ case "${1:-}" in
     types)       run_types ;;
     test)        run_test ;;
     api-test)    run_api_test ;;
-    api-coverage) run_api_coverage ;;
     web-test)    run_web_test ;;
     build)       run_build ;;
     integration) shift; run_integration "$@" ;;

@@ -78,8 +78,8 @@ GitHub 端設定一次，流程才不靠自覺：
   要略過檢查就寫成 workflow 的條件。
 
 CI（`.github/workflows/ci.yml`）每個檢查項目各自一個 job、平行跑，跑的就是本機的 `make check <項目>`：
-`lint`、`contract`、`migrate`、`types`、`web-test`、`build`、`api-test`、`api-integration`（`make check integration`）、
-`api-coverage`（合併兩組後端覆蓋率）、`e2e`（另外確認 web image 沒有真的 Server Action 金鑰）。最後由 `ci-gate` 等全部 job 跑完再判定，
+`lint`、`contract`、`migrate`、`types`、`web-test`、`build`、`api-test`、`api-integration`（`make check integration`，含後端覆蓋率門檻）、
+`e2e`（另外確認 web image 沒有真的 Server Action 金鑰）。最後由 `ci-gate` 等全部 job 跑完再判定，
 ruleset 只要求它（`.github/scripts/ci-gate.sh`）。**完整的檢查只在 CI 跑**：本機在寫測試時只跑單項，
 push 之後等 CI 的結果，有錯就修正再 push（新的 commit 會取消還在跑的舊 run）。
 部署由 `deploy.yml` 在 Publish release 時執行（[說明](operations.md#自動部署)）。

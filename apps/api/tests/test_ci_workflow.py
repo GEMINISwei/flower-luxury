@@ -40,7 +40,6 @@ CHECK_JOBS = {
     "build": "build",
     "api-test": "api-test",
     "api-integration": "integration",
-    "api-coverage": "api-coverage",
     "e2e": "e2e",
 }
 UNIT_TEST_JOBS = {"api-test", "web-test"}
@@ -132,18 +131,6 @@ def test_ci_gate_needs_every_other_job() -> None:
 def test_ci_gate_runs_even_when_needed_jobs_fail() -> None:
     # 預設上游失敗時會跳過, 被跳過的 required check 在 GitHub 上算通過。
     assert _job_key(_ci_job(GATE), "if") == "always()"
-
-
-def test_api_coverage_combines_both_groups_before_the_gate() -> None:
-    job = _ci_job("api-coverage")
-    assert _needs(job) == {"changes", "api-test", "api-integration"}
-    assert "pattern: api-coverage-*" in job
-    assert "merge-multiple: true" in job
-    for name, group in (("api-test", "unit"), ("api-integration", "integration")):
-        producer = _ci_job(name)
-        assert f"name: api-coverage-{group}" in producer
-        assert f"path: apps/api/.coverage.{group}" in producer
-        assert "include-hidden-files: true" in producer
 
 
 def test_full_only_jobs_run_when_mode_is_full() -> None:

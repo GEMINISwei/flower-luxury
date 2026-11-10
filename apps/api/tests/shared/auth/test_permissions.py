@@ -1,7 +1,7 @@
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
-from shared.auth.permissions import BasePermission, PermissionResolver
+from shared.auth.permissions import BasePermission, KnownPermissions, PermissionResolver
 
 
 # 繼承 BasePermission 而非裸 StrEnum: `PermissionResolver[PermissionT: BasePermission]`
@@ -80,7 +80,6 @@ def test_covers_tolerates_unknown_permission_strings():
 
 def test_known_permissions_drops_unknown_strings():
     """停用模組或改名權限後, 資料庫裡的舊字串不在 enum 裡; 回應時濾掉, 不能讓驗證變成 500。"""
-    from shared.auth.permissions import KnownPermissions
 
     class Response(BaseModel):
         permissions: KnownPermissions[FakePerm]
@@ -88,3 +87,33 @@ def test_known_permissions_drops_unknown_strings():
     result = Response.model_validate({"permissions": ["a", "gone:read", "b"]})
 
     assert result.permissions == [FakePerm.A, FakePerm.B]
+
+
+class _NotAnEnum:
+    pass
+
+
+@pytest.mark.parametrize(
+    ("permissions", "dependencies", "message"),
+    [
+        (_NotAnEnum, None, "must be subclass of StrEnum"),
+        (FakePerm, {FakePerm.A: [FakePerm.B]}, "dependencies must be set"),
+        (FakePerm, {FakePerm.A: {"b"}}, "is not valid dependency"),
+    ],
+)
+def test_permission_dependency_validation_rejects_invalid_definitions(
+    permissions, dependencies, message
+):
+    """權限定義寫錯要在組裝時就擋下, 不要等到某次展開權限時才算錯。"""
+    with pytest.raises(TypeError, match=message):
+        PermissionResolver(permissions, dependencies)
+
+
+def test_known_permissions_rejects_a_non_list():
+    """只有「清單裡有不認得的字串」才濾掉; 整個值不是清單時照樣是驗證錯誤。"""
+
+    class Holder(BaseModel):
+        permissions: KnownPermissions[FakePerm]
+
+    with pytest.raises(ValidationError):
+        Holder.model_validate({"permissions": "a"})

@@ -57,6 +57,14 @@ describe("Flex 的版面契約", () => {
 
     expect(screen.getByText("內容").getAttribute("style")).toContain("var(--space-4)")
   })
+
+  it("gap 可以直接給 CSS 字串，沒帶 gap 時不寫進 style", () => {
+    const { rerender } = render(<Flex gap="1.5rem">內容</Flex>)
+    expect(screen.getByText("內容").getAttribute("style")).toContain("--flex-gap: 1.5rem")
+
+    rerender(<Flex>內容</Flex>)
+    expect(screen.getByText("內容").getAttribute("style") ?? "").not.toContain("--flex-gap")
+  })
 })
 
 describe("Container", () => {
@@ -70,6 +78,13 @@ describe("Container", () => {
 })
 
 describe("TextInput", () => {
+  it("只給 ariaLabel 時不顯示可見標籤，輸入框仍然有名稱", () => {
+    render(<TextInput ariaLabel="帳號" />)
+
+    expect(screen.getByRole("textbox", { name: "帳號" })).toBeInTheDocument()
+    expect(screen.queryByText("帳號")).not.toBeInTheDocument()
+  })
+
   it("label 會和輸入框關聯，讀螢幕與測試都能靠標籤找到它", () => {
     render(<TextInput label="暱稱" />)
 
@@ -111,6 +126,22 @@ describe("欄位標籤", () => {
 
     expect(screen.getByText("帳號").textContent).toBe("帳號*")
     expect(screen.getByText("語系").textContent).toBe("語系")
+  })
+})
+
+describe("SelectInput", () => {
+  it("欄位錯誤會顯示並標記選單，讀螢幕念得到錯誤訊息", () => {
+    render(<SelectInput label="狀態" options={[{ value: "a", label: "A" }]} error="請選擇狀態" />)
+
+    const select = screen.getByRole("combobox", { name: /狀態/ })
+    expect(select).toHaveAttribute("aria-invalid", "true")
+    expect(select).toHaveAccessibleDescription("請選擇狀態")
+  })
+
+  it("選項只給 text 時用它當顯示文字", () => {
+    render(<SelectInput label="語系" options={[{ value: "zh", text: "中文" }]} />)
+
+    expect(screen.getByRole("option", { name: "中文" })).toBeInTheDocument()
   })
 })
 
