@@ -25,6 +25,9 @@ export async function uploadDraftPhotos(id: string, version: number, data: FormD
 export async function reloadDraft(id: string) {
   return apiGet({ url: "/product-drafts/{id}", params: { id } })
 }
+export async function retryDraftPrefill(id: string, version: number) {
+  return apiPost({ url: "/product-drafts/{id}/prefill/retry", params: { id }, data: { version } })
+}
 export async function saveDraft(id: string, version: number, fields: DraftFields,
   manual_fields: (keyof DraftFields)[] = []) {
   return apiPatch({ url: "/product-drafts/{id}", params: { id },

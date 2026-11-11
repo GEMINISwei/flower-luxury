@@ -82,12 +82,15 @@ async def complete_job(job: Job) -> bool:
 async def fail_job(
     job: Job, *, max_attempts: int | None = None, permanent: bool = False,
     error_code: str = "temporary",
+    retry_delay_seconds: float | None = None,
 ) -> bool:
     # 儲存固定分類而非 exception 字串, 避免原文或憑證進入維運紀錄。
     now = utc_now()
     exhausted = permanent or job.attempts >= min(max_attempts or job.max_attempts,
                                                 job.max_attempts)
-    delay = min(30 * 2 ** min(job.attempts - 1, 5), 900) + random.uniform(0, 10)  # noqa: S311
+    delay = retry_delay_seconds
+    if delay is None:
+        delay = min(30 * 2 ** min(job.attempts - 1, 5), 900) + random.uniform(0, 10)  # noqa: S311
     result = await active_session().execute(update(JobTable).where(_owned_claim(job)).values(
         status="dead" if exhausted else "pending",
         available_at=now + timedelta(seconds=delay), worker_id=None, lease_token=None,

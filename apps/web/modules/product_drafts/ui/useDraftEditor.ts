@@ -84,7 +84,7 @@ export default function useDraftEditor(initial: DraftInfo, source?: string) {
         setSaved(JSON.stringify(draftValues(result.data.fields)))
       }
       return result
-    }, () => setStatus(t("reloaded")))
+    })
   }
   function set(key: keyof DraftValues, value: string) {
     setValues((current) => ({ ...current, [key]: value })); setStatus("")

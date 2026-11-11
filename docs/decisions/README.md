@@ -71,7 +71,7 @@
 | 0012 | [docs/starter/0009-e2e-strategy.md](../starter/0009-e2e-strategy.md) |
 | 0013 | [docs/decisions/0002-durable-worker-ownership.md](0002-durable-worker-ownership.md) |
 | 0014 | [docs/decisions/0003-manual-collection-finalization.md](0003-manual-collection-finalization.md) |
-| 0015 | [docs/decisions/0004-automatic-grouping-with-late-review.md](0004-automatic-grouping-with-late-review.md) |
+| 0015 | [docs/decisions/0008-ai-prefill-retries.md](0008-ai-prefill-retries.md) |
 | 0016 | [docs/starter/0009-e2e-strategy.md](../starter/0009-e2e-strategy.md) |
 | 0017 | [docs/testing.md](../testing.md) |
 | 0018 | [docs/starter/0010-no-environment-reviewer-for-deploys.md](../starter/0010-no-environment-reviewer-for-deploys.md) |

@@ -27,7 +27,7 @@ async def heartbeat(
         async with session_scope():
             if not await beat_worker(worker_id):
                 raise RuntimeError("worker heartbeat ownership lost")
-            await recover_workers()
+            await recover_workers(tasks)
             await schedule_tasks(tasks or {})
         await asyncio.to_thread(path.touch)
         await asyncio.sleep(5)
@@ -64,10 +64,10 @@ async def _drain(consumers: list[asyncio.Task], pulse: asyncio.Task, seconds: fl
     await asyncio.gather(drained, return_exceptions=True)
 
 
-async def _retire(worker_id: UUID) -> None:
+async def _retire(worker_id: UUID, tasks: Mapping[str, TaskSpec]) -> None:
     try:
         async with session_scope():
-            await retire_worker(worker_id)
+            await retire_worker(worker_id, tasks)
     except Exception as error:
         logger.warning("worker retirement failed error_type=%s", type(error).__name__)
 
@@ -102,5 +102,5 @@ async def serve(
         for task in running:
             task.cancel()
         await asyncio.gather(*running, return_exceptions=True)
-        await _retire(worker_id)
+        await _retire(worker_id, tasks)
         await asyncio.to_thread(heartbeat_path.unlink, missing_ok=True)

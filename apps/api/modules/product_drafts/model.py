@@ -33,7 +33,7 @@ class StreamTable(BaseTable):
 class DraftTable(BaseTable):
     __tablename__ = "product_drafts"
     source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
-    # 結束收集的時間點與當時的原文, AI 預填只讀這份, 之後才加入的內容不重跑.
+    # 舊版人工定稿的快照仍供 AI 讀取, 自動分組的暫存使用已加入的訊息.
     finalized_at: Mapped[datetime | None]
     finalized_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     version: Mapped[int] = mapped_column(default=1)
@@ -43,6 +43,7 @@ class DraftTable(BaseTable):
     quotes: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     selected_quote_id: Mapped[str | None] = mapped_column(String(200))
     prefill_revision: Mapped[int] = mapped_column(default=0)
+    prefill_attempts: Mapped[int] = mapped_column(default=0)
     prefill_status: Mapped[str] = mapped_column(String(16), default="idle")
     collecting: Mapped[bool] = mapped_column(default=True)
     has_text: Mapped[bool] = mapped_column(default=False)
@@ -51,6 +52,7 @@ class DraftTable(BaseTable):
     __table_args__ = (
         CheckConstraint("version >= 1", name="positive_version"),
         CheckConstraint("prefill_revision >= 0", name="prefill_positive_revision"),
+        CheckConstraint("prefill_attempts BETWEEN 0 AND 3", name="prefill_attempt_limit"),
         CheckConstraint("prefill_status IN "
                         "('idle', 'disabled', 'queued', 'ready', 'failed', 'unknown')",
                         name="prefill_valid_status"),

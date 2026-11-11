@@ -471,6 +471,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/product-drafts/{id}/prefill/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Prefill Route */
+        post: operations["retry_prefill_route_api_product_drafts__id__prefill_retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/product-drafts/{id}/quotes": {
         parameters: {
             query?: never;
@@ -3127,6 +3144,41 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["VersionRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_prefill_route_api_product_drafts__id__prefill_retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
             };
         };
         responses: {

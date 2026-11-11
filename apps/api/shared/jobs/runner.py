@@ -19,7 +19,7 @@ async def _retry(job: Job, task: TaskSpec, *, permanent: bool = False,
                  error_code: str = "temporary") -> None:
     async with session_scope():
         await fail_job(job, max_attempts=task.max_attempts, permanent=permanent,
-                       error_code=error_code)
+                       error_code=error_code, retry_delay_seconds=task.retry_delay_seconds)
 
 
 async def run_once(tasks: Mapping[str, TaskSpec], *, worker_id: UUID) -> bool:

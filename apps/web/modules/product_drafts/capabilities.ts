@@ -1,4 +1,8 @@
-import type { DraftFields, DraftValues, MessageInfo } from "./types"
+import type { DraftFields, DraftInfo, DraftValues, MessageInfo } from "./types"
+
+export function canRetryPrefill(draft: Pick<DraftInfo, "collecting" | "prefill_status">) {
+  return !draft.collecting && draft.prefill_status === "failed"
+}
 
 type SaleQuote = { id: string; original_amount: string | number; exchange_rate: string | number }
 
