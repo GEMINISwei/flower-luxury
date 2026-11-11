@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from sqlalchemy import String, and_, cast, or_, select
+from sqlalchemy import String, and_, cast, select
 
 from shared.db.session import active_session
 from shared.jobs.contracts import Job
@@ -10,40 +10,28 @@ from shared.time import utc_now
 
 from . import model
 from .prefill_config import get_env
+from .prefill_schema import PrefillState
 
 TASK_NAME = "product_drafts.prefill"
 MAX_ATTEMPTS = 3
 RETRY_SECONDS = 60
 
 
-def job_key(row: model.DraftTable) -> str:
-    return f"prefill:{row.id}:{row.prefill_revision}"
-
-
-async def current_job(row: model.DraftTable) -> JobTable | None:
-    return await active_session().scalar(select(JobTable).where(
-        JobTable.task_name == TASK_NAME,
-        or_(JobTable.idempotency_key == job_key(row), and_(
-            JobTable.payload["draft_id"].astext == str(row.id),
-            JobTable.payload["revision"].astext == str(row.prefill_revision),
-        )),
-    ).order_by(JobTable.created_at.desc(), JobTable.id.desc()).limit(1))
-
-
 async def enqueue_prefill(row: model.DraftTable, *, delay: int = 2) -> Job:
     return await enqueue_job(TASK_NAME, {
         "draft_id": str(row.id), "revision": row.prefill_revision,
-    }, idempotency_key=job_key(row), available_at=utc_now() + timedelta(seconds=delay),
+    }, idempotency_key=f"prefill:{row.id}:{row.prefill_revision}",
+        available_at=utc_now() + timedelta(seconds=delay),
         queue="ai", max_attempts=MAX_ATTEMPTS)
 
 
-async def prefill_status(row: model.DraftTable) -> str:
-    if row.collecting or row.prefill_status == "ready":
-        return row.prefill_status or "idle"
-    queued = await current_job(row)
+async def prefill_status(row: model.DraftTable) -> PrefillState:
+    if row.collecting or row.prefill_status in {None, "idle", "disabled", "ready"}:
+        return PrefillState(status=row.prefill_status or "idle")
+    queued = await model.get_prefill_job(row)
     if queued is None:
-        return row.prefill_status or "idle"
-    return "queued" if queued.status in {"pending", "running"} else "failed"
+        return PrefillState(status=row.prefill_status or "idle")
+    return PrefillState(status="queued" if queued.status in {"pending", "running"} else "failed")
 
 
 def _set_status(row: model.DraftTable, status: str) -> None:
@@ -54,7 +42,7 @@ def _set_status(row: model.DraftTable, status: str) -> None:
 
 
 async def _recover(row: model.DraftTable) -> None:
-    queued = await current_job(row)
+    queued = await model.get_prefill_job(row)
     if queued is None:
         if row.prefill_attempts >= MAX_ATTEMPTS:
             _set_status(row, "failed")
@@ -67,7 +55,7 @@ async def _recover(row: model.DraftTable) -> None:
         return
     # 舊工作沒有去重鍵且只允許一次, 接手後仍沿用已消耗的次數.
     if queued.idempotency_key is None:
-        queued.idempotency_key = job_key(row)
+        queued.idempotency_key = f"prefill:{row.id}:{row.prefill_revision}"
         queued.max_attempts = MAX_ATTEMPTS
     row.prefill_attempts = max(row.prefill_attempts, queued.attempts)
     if queued.status in {"dead", "succeeded"}:

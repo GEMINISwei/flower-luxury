@@ -63,7 +63,7 @@ async def get_draft(id: str | None) -> DraftInfo:
                         "manual_fields": row.manual_fields or [], "quotes": row.quotes or [],
                         "prefill_revision": row.prefill_revision or 0,
                         "prefill_configured": get_env().prefill_configured,
-                        "prefill_status": await prefill_status(row),
+                        "prefill_status": (await prefill_status(row)).status,
                         "processing": any(photo.status not in {"stored", "ready"}
                                           for photo in photos),
                         "pending_count": len(late)},

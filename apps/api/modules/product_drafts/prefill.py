@@ -13,7 +13,7 @@ from . import model, prefill_settings
 from .collection_schema import FinalizedSnapshot
 from .errors import DraftError
 from .prefill_config import get_env
-from .prefill_jobs import current_job, enqueue_prefill
+from .prefill_jobs import enqueue_prefill
 from .prefill_prompt import BASE_PROMPT
 from .prefill_rules import build_input, merge_prefill, output_schema, parse_prefill
 from .prefill_schema import PrefillApplication, PrefillResult
@@ -38,7 +38,7 @@ async def retry_prefill(id: str, form: VersionRequest, actor: CurrentUser) -> Dr
         check_version(row.version, form.version)
         if row.collecting:
             raise LangException(409, DraftError.NOT_READY)
-        queued = await current_job(row)
+        queued = await model.get_prefill_job(row)
         if row.prefill_status == "ready" or (queued and queued.status in {"pending", "running"}):
             return await get_draft(id)
         row.prefill_revision += 1

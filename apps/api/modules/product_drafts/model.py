@@ -10,8 +10,10 @@ from sqlalchemy import (
     Index,
     String,
     Text,
+    and_,
     delete,
     func,
+    or_,
     select,
     text,
 )
@@ -20,6 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from shared.db.session import active_session
 from shared.db.table import BaseTable, Condition, PagedResult, PagePosition, parse_uuid
+from shared.jobs.model import JobTable
 from shared.time import utc_now
 
 
@@ -73,6 +76,16 @@ class PrefillSettingsTable(BaseTable):
         CheckConstraint("key = 'global'", name="prefill_global_only"),
         CheckConstraint("revision >= 1", name="prefill_settings_positive_revision"),
     )
+
+
+async def get_prefill_job(row: DraftTable) -> JobTable | None:
+    return await active_session().scalar(select(JobTable).where(
+        JobTable.task_name == "product_drafts.prefill",
+        or_(JobTable.idempotency_key == f"prefill:{row.id}:{row.prefill_revision}", and_(
+            JobTable.payload["draft_id"].astext == str(row.id),
+            JobTable.payload["revision"].astext == str(row.prefill_revision),
+        )),
+    ).order_by(JobTable.created_at.desc(), JobTable.id.desc()).limit(1))
 
 
 async def prefill_settings_row(*, lock: bool = False) -> PrefillSettingsTable | None:

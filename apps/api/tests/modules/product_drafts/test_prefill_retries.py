@@ -76,6 +76,7 @@ async def test_prefill_recovery_respects_attempt_limit_and_completed_results(db)
     queued.max_attempts, queued.attempts, queued.status = 1, 1, "dead"
     failed_at = queued.finished_at = utc_now()
     row = await model.get_draft_row(draft.id)
+    assert row is not None
     row.prefill_status = "unknown"
     await active_session().flush()
     tick = Job(id=uuid4(), task_name="product_drafts.recover_prefill", payload={}, attempts=1)
@@ -101,6 +102,7 @@ async def test_prefill_recovery_requeues_orphan_and_waits_for_active_job(db):
     await active_session().execute(delete(JobTable).where(
         JobTable.task_name == "product_drafts.prefill"))
     row = await model.get_draft_row(draft.id)
+    assert row is not None
     row.prefill_status = "failed"
     tick = Job(id=uuid4(), task_name="product_drafts.recover_prefill", payload={}, attempts=1)
     await recover_prefill(tick)
@@ -134,6 +136,7 @@ async def test_prefill_retry_preserves_manual_fields_and_quotes(db, monkeypatch)
     draft = await service.update_draft(draft.id, DraftUpdate(version=draft.version,
         fields=DraftFields(name="人工名稱"), manual_fields=["color"]), ACTOR)
     row = await model.get_draft_row(draft.id)
+    assert row is not None
     row.quotes = [{"id": str(uuid4()), "vendor_id": str(vendor["id"]),
                    "original_amount": "900", "exchange_rate": "1", "note": None}]
     original = list(row.quotes)
@@ -154,6 +157,7 @@ async def test_manual_prefill_retry_starts_new_round_without_duplicate_jobs(db):
     queued = await queued_for(draft.id)
     queued.status, queued.attempts = "dead", 3
     row = await model.get_draft_row(draft.id)
+    assert row is not None
     row.prefill_status = "failed"
     before = row.prefill_revision
     result = await prefill.retry_prefill(draft.id, VersionRequest(version=row.version), ACTOR)
@@ -172,6 +176,7 @@ async def test_manual_prefill_retry_does_not_restart_collecting_or_completed_dra
     with pytest.raises(LangException):
         await prefill.retry_prefill(draft.id, VersionRequest(version=draft.version), ACTOR)
     row = await model.get_draft_row(draft.id)
+    assert row is not None
     row.collecting, row.prefill_status = False, "ready"
     result = await prefill.retry_prefill(draft.id, VersionRequest(version=row.version), ACTOR)
     assert result.prefill_status == "ready"

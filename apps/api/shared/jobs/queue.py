@@ -90,7 +90,8 @@ async def fail_job(
                                                 job.max_attempts)
     delay = retry_delay_seconds
     if delay is None:
-        delay = min(30 * 2 ** min(job.attempts - 1, 5), 900) + random.uniform(0, 10)  # noqa: S311
+        base = min(30 * 2 ** min(job.attempts - 1, 5), 900)
+        delay = base + random.uniform(0, 10)  # noqa: S311 # 重試抖動不涉及安全.
     result = await active_session().execute(update(JobTable).where(_owned_claim(job)).values(
         status="dead" if exhausted else "pending",
         available_at=now + timedelta(seconds=delay), worker_id=None, lease_token=None,
