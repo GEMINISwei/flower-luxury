@@ -113,6 +113,21 @@ async def test_prefill_recovery_requeues_orphan_and_waits_for_active_job(db):
     assert queued.status == "running"
 
 
+async def test_prefill_recovery_does_not_restart_exhausted_draft_after_job_cleanup(db):
+    from modules.product_drafts.prefill_jobs import recover_prefill
+
+    draft = await draft_with_text()
+    queued = await queued_for(draft.id)
+    queued.status, queued.attempts = "dead", 3
+    tick = Job(id=uuid4(), task_name="product_drafts.recover_prefill", payload={}, attempts=1)
+    await recover_prefill(tick)
+    await active_session().delete(queued)
+    await active_session().flush()
+    await recover_prefill(tick)
+    assert await queued_for(draft.id) is None
+    assert (await service.get_draft(draft.id)).prefill_status == "failed"
+
+
 async def test_prefill_retry_preserves_manual_fields_and_quotes(db, monkeypatch):
     draft = await draft_with_text()
     vendor = await VendorTable.create({"name": "buyer", "is_active": True, "has_quotes": False})
