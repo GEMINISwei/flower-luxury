@@ -38,3 +38,18 @@ async def test_manual_prefill_and_global_rate_routes_are_removed(client):
     assert (await client.post("/api/product-drafts/11111111-1111-4111-8111-111111111111/prefill",
                               json={"version": 1})).status_code == 404
     assert (await client.get("/api/exchange-rates/settings")).status_code == 404
+
+
+async def test_prefill_retry_requires_login_and_returns_draft(client, set_current_users, monkeypatch):
+    from modules.product_drafts import prefill
+    from tests.modules.product_drafts.helpers import ID, info
+
+    retry = AsyncMock(return_value=info())
+    monkeypatch.setattr(prefill, "retry_prefill", retry)
+    set_current_users({"staff": ACTOR})
+    url = f"/api/product-drafts/{ID}/prefill/retry"
+    assert (await client.post(url, json={"version": 1})).status_code == 401
+    authenticate(client, "staff")
+    response = await client.post(url, json={"version": 1})
+    assert response.status_code == 200 and response.json()["id"] == ID
+    assert retry.await_args.args[1].version == 1

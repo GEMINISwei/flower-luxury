@@ -69,17 +69,17 @@ async def test_prefill_schedules_once_when_collection_closes(db):
     assert len(jobs) == 1 and jobs[0].payload["draft_id"] == draft.id
 
 
-async def test_prefill_failure_is_final_and_preserves_fields(db, monkeypatch):
+async def test_prefill_failure_propagates_for_durable_retry_and_preserves_fields(db, monkeypatch):
     draft = await draft_with_text()
     draft = await service.update_draft(draft.id, DraftUpdate(
         version=draft.version, fields=DraftFields(name="人工名稱")), ACTOR)
     generate = AsyncMock(side_effect=ValueError("invalid"))
     monkeypatch.setattr(prefill, "generate_prefill", generate)
     queued = job(draft.id, draft.prefill_revision)
-    await prefill.run_prefill(queued)
+    with pytest.raises(ValueError, match="invalid"):
+        await prefill.run_prefill(queued)
     failed = await service.get_draft(draft.id)
-    assert failed.prefill_status == "failed" and failed.fields.name == "人工名稱"
-    await prefill.run_prefill(queued)
+    assert failed.prefill_status == "queued" and failed.fields.name == "人工名稱"
     generate.assert_awaited_once()
 
 
@@ -152,8 +152,9 @@ async def test_prefill_discards_deleted_draft_and_invalid_vendor(db, monkeypatch
         "vendor_id": "11111111-1111-4111-8111-111111111111", "original_amount": "100",
     }]))
     monkeypatch.setattr(prefill, "generate_prefill", generate)
-    await prefill.run_prefill(job(draft.id, draft.prefill_revision))
-    assert (await service.get_draft(draft.id)).prefill_status == "failed"
+    with pytest.raises(ValueError, match="vendor"):
+        await prefill.run_prefill(job(draft.id, draft.prefill_revision))
+    assert (await service.get_draft(draft.id)).prefill_status == "queued"
     await active_session().delete(await model.get_draft_row(draft.id))
     await active_session().flush()
     await prefill.run_prefill(job(draft.id, draft.prefill_revision))

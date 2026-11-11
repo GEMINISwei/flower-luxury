@@ -45,13 +45,30 @@ actor = {"id": "22222222-2222-4222-8222-222222222222", "username": "fixture", "a
 async def run():
     engine = create_engine(os.environ["POSTGRES_URL"])
     configure_session_factory(engine)
-    async with session_scope():
+    async with session_scope() as session:
         arg = json.loads(sys.argv[1])
         if arg.get("ai"):
             os.environ["GEMINI_API_KEY"] = "fixture-only"
         if arg.get("conflict"):
             draft = await service.get_draft(arg["conflict"])
             await service.update_draft(draft.id, DraftUpdate(version=draft.version, fields=DraftFields(name="其他人的修改")), actor)
+            print("{}")
+        elif arg.get("retry_result"):
+            from unittest.mock import AsyncMock, patch
+            from modules.product_drafts import prefill
+            from modules.product_drafts.prefill_schema import PrefillContent, PrefillResult
+            from shared.jobs.model import JobTable
+            from shared.jobs.contracts import Job
+            from sqlalchemy import select
+            draft = await service.get_draft(arg["retry_result"])
+            assert draft.prefill_revision == 2
+            queued = await session.scalar(select(JobTable).where(
+                JobTable.idempotency_key == f"prefill:{draft.id}:2"))
+            assert queued is not None and queued.max_attempts == 3 and queued.attempts < 3
+            result = PrefillContent(content=PrefillResult(color="AI 黑色").model_dump_json())
+            with patch.object(prefill, "release_connection", AsyncMock()), patch.object(prefill, "generate_prefill", AsyncMock(return_value=result)):
+                await prefill.run_prefill(Job(id=queued.id, task_name=queued.task_name,
+                    attempts=1, payload=queued.payload))
             print("{}")
         else:
             key = "C" + uuid.uuid4().hex
@@ -114,6 +131,19 @@ async def run():
                 await review.discard_draft(last_info.id, VersionRequest(version=last_info.version), actor)
             if arg.get("enabled"):
                 group.enabled = True
+            if arg.get("failed_ai"):
+                from shared.jobs.model import JobTable
+                from sqlalchemy import select
+                row = await draft_model.get_draft_row(first.draft_id)
+                row.prefill_status = "failed"
+                queued = await session.scalar(select(JobTable).where(
+                    JobTable.payload["draft_id"].astext == first.draft_id))
+                if queued is None:
+                    queued = JobTable(task_name="product_drafts.prefill", queue="ai",
+                        payload={"draft_id": first.draft_id, "revision": 1})
+                    session.add(queued)
+                queued.status, queued.attempts, queued.max_attempts = "dead", 3, 3
+                queued.idempotency_key = f"prefill:{first.draft_id}:1"
             brand = await BrandTable.create({"name": arg["name"], "is_active": True})
             if arg.get("ai"):
                 from unittest.mock import AsyncMock, patch
@@ -143,6 +173,34 @@ function fixture(options: Record<string, string>) {
 }
 function seed() { return fixture({ name: `Draft ${randomUUID().slice(0, 8)}` }) }
 async function open(page: Page, id: string) { await page.goto(`/product-drafts/${id}`) }
+
+test("預填三次失敗後可按執行 AI 預填重新嘗試", async ({ page }) => {
+  const data = fixture({ name: `Retry ${randomUUID().slice(0, 8)}`, failed_ai: "true" })
+  await login(page, staff)
+  await open(page, data.id)
+  await page.getByLabel("名稱", { exact: true }).fill("尚未儲存的名稱")
+  const button = page.getByRole("button", { name: "執行 AI 預填", exact: true })
+  await button.click()
+  await expect(button).toBeHidden()
+  await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("尚未儲存的名稱")
+  fixture({ retry_result: data.id })
+  await page.getByRole("button", { name: "重新載入資料", exact: true }).click()
+  await expect(page.getByLabel("顏色", { exact: true })).toHaveValue("AI 黑色")
+  await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("尚未儲存的名稱")
+})
+
+test("重新載入保留欄位且不顯示成功訊息與常駐說明", async ({ page }) => {
+  const data = seed()
+  await login(page, staff)
+  await open(page, data.id)
+  await expect(page.getByText("重新載入會更新訊息、照片及版本", { exact: false })).toHaveCount(0)
+  await page.getByLabel("名稱", { exact: true }).fill("保留輸入")
+  fixture({ conflict: data.id })
+  await page.getByRole("button", { name: "重新載入資料", exact: true }).click()
+  await expect(page.getByLabel("名稱", { exact: true })).toHaveValue("保留輸入")
+  await expect(page.getByText("已載入最新資料，保留你的欄位輸入", { exact: false })).toHaveCount(0)
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0)
+})
 async function fillRequired(page: Page, name: string, brand: string) {
   await page.getByLabel("名稱", { exact: true }).fill(name)
   await page.getByLabel("品牌", { exact: true }).selectOption(brand)
