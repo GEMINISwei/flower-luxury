@@ -31,6 +31,7 @@ class TaskSpec:
     timeout_seconds: float = 60
     queue: str = "general"
     interval_seconds: float | None = None
+    retry_delay_seconds: float | None = None
 
     def __post_init__(self) -> None:
         if not self.name or self.max_attempts < 1:
@@ -43,3 +44,7 @@ class TaskSpec:
             not math.isfinite(self.interval_seconds) or self.interval_seconds <= 0
         ):
             raise ValueError("schedule interval must be finite and positive")
+        if self.retry_delay_seconds is not None and (
+            not math.isfinite(self.retry_delay_seconds) or self.retry_delay_seconds <= 0
+        ):
+            raise ValueError("retry delay must be finite and positive")

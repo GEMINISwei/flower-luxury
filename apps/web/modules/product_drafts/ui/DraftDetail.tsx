@@ -5,7 +5,7 @@ import { ConfirmDialog, FormPageShell, ICON_SIZE } from "@/shared/ui"
 import { useT } from "@/shared/i18n/context"
 import type { BrandInfo } from "@/modules/brands/public.client"
 import type { VendorInfo } from "@/modules/vendors/public.client"
-import { discardDraft } from "../actions"
+import { discardDraft, retryDraftPrefill } from "../actions"
 import { approvalCapabilities, draftStage, draftTextMessages } from "../capabilities"
 import { draftMessages } from "../i18n"
 import type { DraftInfo, SourceInfo } from "../types"
@@ -55,7 +55,6 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
       <PendingMessages draft={draft} disabled={disabled} mutate={editor.run} />
       <div className={styles.feedback}>
         {stage !== "waiting" && <p role="status">{t(stage)} — {t("blockedHint")}</p>}
-        <p className={styles.hint}>{t("reloadHint")}</p>
         {editor.error && <p role="alert">{editor.error}</p>}
         {editor.status && <p role="status">{editor.status}</p>}
         {editor.dirty && <p className={styles.hint}>{t("unsaved")}</p>}
@@ -76,7 +75,8 @@ export default function DraftDetail({ initial, brands, sources, vendors, scope, 
             }} /></div>
         </div>
         <div className={styles.editorColumn}>
-          <PrefillStatus draft={draft} />
+          <PrefillStatus draft={draft} disabled={disabled}
+            onRetry={() => editor.run(() => retryDraftPrefill(draft.id, draft.version))} />
           <DraftFields values={values} brands={brands} disabled={pending} onChange={editor.set} />
           <DraftQuotes draft={draft} vendors={vendors} disabled={disabled} mutate={editor.run} />
         </div>

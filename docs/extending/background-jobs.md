@@ -2,7 +2,7 @@
 
 背景工作使用獨立的 `line-collector` 容器，與 API 共用 image、PostgreSQL 及 uploads volume，
 不另外引入 Redis（[ADR starter/0005](../starter/0005-postgres-job-queue.md)）。
-目前已註冊商品暫存清理、到期摘要、LINE 圖片下載、群組名稱查詢、圖片加工與一次 AI 預填任務。
+目前已註冊商品暫存清理、到期摘要、LINE 圖片下載、群組名稱查詢、圖片加工、AI 預填與未完成預填恢復任務。
 LINE 功能兩項金鑰都留空即可停用，群組預設不收集，見 [LINE 商品收集](../features/line-collection.md)。
 
 ## 平台入口與模組事件
@@ -55,6 +55,8 @@ payload 優先只存業務識別碼，不複製完整原文、圖片 bytes 或�
 - 逾時會取消 handler。SIGTERM 停止領取，最多等 75 秒；其間仍維持心跳，之後才取消並等清理完成。
   compose 關機寬限為 90 秒。強制終止時由其他或重啟後的 worker 回收，最後一次嘗試失聯會進 dead。
 - 暫時失敗以 30、60、120 秒等間隔重試，基礎最多 900 秒，另加 0～10 秒隨機值。
+  `TaskSpec.retry_delay_seconds` 可指定固定間隔，handler 失敗、取消與失聯 worker 回收都使用它；
+  AI 預填固定 60 秒、最多三次，不加隨機延遲。
   `PermanentJobError` 直接進 dead，到達儲存的 `max_attempts` 也停止重試。
 - 成功立即清空 payload，保留 succeeded 紀錄供去重；dead 保留供排查，不保存 exception 字串。
   log 記工作 ID、任務名稱、嘗試次數、佇列與錯誤類別，不記原文或憑證。
@@ -93,8 +95,9 @@ docker exec -w /app <專案>-api python -m app.jobs retry <工作UUID>
 ```
 
 `status` 輸出各佇列數量、已到期工作的最久等待時間，以及最近 50 筆死信的安全 metadata，
-不輸出 payload 或連線資訊。`retry` 只接受已啟用、可安全重試的 dead 工作；最多一次嘗試的
-AI 工作拒絕重排，避免未知結果的外部呼叫被重送。重排成功後重複操作不會再排一筆。
+不輸出 payload 或連線資訊。`retry` 只接受已啟用、可安全重試且允許多次嘗試的 dead 工作；
+重排成功後重複操作不會再排一筆。AI 預填改由商品詳情的「執行 AI 預填」啟動新一輪，
+一併更新暫存版本與次數；不使用通用 CLI 重排。
 
 備份、還原及 migration 的停止與恢復規則見[維運文件](../operations.md#背景收集程序)。
 LINE Developers Console、Webhook、邀請 Bot 入群及群組啟用步驟見

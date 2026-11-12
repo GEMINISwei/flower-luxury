@@ -21,6 +21,10 @@ class PrefillApplication(BaseModel):
     applied: bool
 
 
+class PrefillState(BaseModel):
+    status: str
+
+
 class PrefillSettingsUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     supplement: str = Field(max_length=10000)

@@ -1,6 +1,6 @@
 # 0004. 依 LINE 原始時間自動分組，收集結束後的遲到訊息交由人員加入
 
-狀態：採用（2026-11-02）
+狀態：被 [0008](0008-ai-prefill-retries.md) 取代（2026-11-11）
 
 取代：[0003](0003-manual-collection-finalization.md)
 

@@ -4802,6 +4802,58 @@
         ]
       }
     },
+    "/api/product-drafts/{id}/prefill/retry": {
+      "post": {
+        "operationId": "retry_prefill_route_api_product_drafts__id__prefill_retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retry Prefill Route",
+        "tags": [
+          "product-drafts"
+        ]
+      }
+    },
     "/api/product-drafts/{id}/quotes": {
       "post": {
         "operationId": "create_quote_route_api_product_drafts__id__quotes_post",

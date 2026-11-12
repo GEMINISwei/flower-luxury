@@ -36,6 +36,32 @@ async def noop(job: Job) -> None:
     pass
 
 
+async def test_fixed_retry_delay_applies_to_handler_failure_and_worker_loss():
+    async def broken(job: Job) -> None:
+        raise ValueError("retry")
+
+    task = TaskSpec("example.fixed", broken, retry_delay_seconds=60)
+    tasks = {task.name: task}
+    queued = await enqueue(task.name)
+    before = utc_now()
+    assert await run_once(tasks)
+    failed = await stored(queued)
+    assert failed.status == "pending" and failed.attempts == 1
+    assert before + timedelta(seconds=60) <= failed.available_at \
+        <= utc_now() + timedelta(seconds=60)
+    await make_due(queued)
+    claimed = await claim(tasks)
+    assert claimed is not None
+    await expire(claimed)
+    before = utc_now()
+    async with session_scope():
+        await workers.recover_workers(tasks)
+    recovered = await stored(queued)
+    assert recovered.status == "pending" and recovered.attempts == 2
+    assert before + timedelta(seconds=60) <= recovered.available_at \
+        <= utc_now() + timedelta(seconds=60)
+
+
 TASK = TaskSpec("example.process", noop, max_attempts=2, timeout_seconds=1)
 TASKS = {TASK.name: TASK}
 WORKER = uuid4()

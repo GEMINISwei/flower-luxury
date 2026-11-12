@@ -10,8 +10,10 @@ from sqlalchemy import (
     Index,
     String,
     Text,
+    and_,
     delete,
     func,
+    or_,
     select,
     text,
 )
@@ -20,6 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from shared.db.session import active_session
 from shared.db.table import BaseTable, Condition, PagedResult, PagePosition, parse_uuid
+from shared.jobs.model import JobTable
 from shared.time import utc_now
 
 
@@ -33,7 +36,7 @@ class StreamTable(BaseTable):
 class DraftTable(BaseTable):
     __tablename__ = "product_drafts"
     source_key: Mapped[str] = mapped_column(ForeignKey("product_draft_streams.source_key"))
-    # 結束收集的時間點與當時的原文, AI 預填只讀這份, 之後才加入的內容不重跑.
+    # 舊版人工定稿的快照仍供 AI 讀取, 自動分組的暫存使用已加入的訊息.
     finalized_at: Mapped[datetime | None]
     finalized_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     version: Mapped[int] = mapped_column(default=1)
@@ -43,6 +46,7 @@ class DraftTable(BaseTable):
     quotes: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     selected_quote_id: Mapped[str | None] = mapped_column(String(200))
     prefill_revision: Mapped[int] = mapped_column(default=0)
+    prefill_attempts: Mapped[int] = mapped_column(default=0)
     prefill_status: Mapped[str] = mapped_column(String(16), default="idle")
     collecting: Mapped[bool] = mapped_column(default=True)
     has_text: Mapped[bool] = mapped_column(default=False)
@@ -51,6 +55,7 @@ class DraftTable(BaseTable):
     __table_args__ = (
         CheckConstraint("version >= 1", name="positive_version"),
         CheckConstraint("prefill_revision >= 0", name="prefill_positive_revision"),
+        CheckConstraint("prefill_attempts BETWEEN 0 AND 3", name="prefill_attempt_limit"),
         CheckConstraint("prefill_status IN "
                         "('idle', 'disabled', 'queued', 'ready', 'failed', 'unknown')",
                         name="prefill_valid_status"),
@@ -71,6 +76,16 @@ class PrefillSettingsTable(BaseTable):
         CheckConstraint("key = 'global'", name="prefill_global_only"),
         CheckConstraint("revision >= 1", name="prefill_settings_positive_revision"),
     )
+
+
+async def get_prefill_job(row: DraftTable) -> JobTable | None:
+    return await active_session().scalar(select(JobTable).where(
+        JobTable.task_name == "product_drafts.prefill",
+        or_(JobTable.idempotency_key == f"prefill:{row.id}:{row.prefill_revision}", and_(
+            JobTable.payload["draft_id"].astext == str(row.id),
+            JobTable.payload["revision"].astext == str(row.prefill_revision),
+        )),
+    ).order_by(JobTable.created_at.desc(), JobTable.id.desc()).limit(1))
 
 
 async def prefill_settings_row(*, lock: bool = False) -> PrefillSettingsTable | None:

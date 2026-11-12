@@ -6,6 +6,7 @@
 
 ### Changed
 
+- AI 預填失敗固定等待一分鐘再試，含首次最多三次；恢復中斷與既有未完成工作，耗盡後可在審核畫面按「執行 AI 預填」。重新載入保留未儲存欄位，移除成功訊息與常駐說明。
 - 後端覆蓋率改在 `make check integration` 合併單元與 integration 後判定，不再另設 `api-coverage` job；CI 的 Summary 列出前後端的覆蓋率實測值與門檻，前端門檻只看 lines 與 branches。
 - 覆蓋率門檻依合併計算後的實測值往下留 5 個百分點重訂：後端 74% → 89%，前端 lines 89% → 92%、branches 79% → 87%。
 

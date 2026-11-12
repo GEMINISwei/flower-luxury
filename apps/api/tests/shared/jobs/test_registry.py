@@ -32,7 +32,9 @@ def test_invalid_task_policy_is_rejected(attempts, timeout):
 
 
 @pytest.mark.parametrize("options", [{"queue": ""}, {"interval_seconds": 0},
-                                    {"interval_seconds": float("nan")}])
+                                    {"interval_seconds": float("nan")},
+                                    {"retry_delay_seconds": 0},
+                                    {"retry_delay_seconds": float("inf")}])
 def test_invalid_queue_or_schedule_is_rejected(options):
     with pytest.raises(ValueError):
         TaskSpec("example.process", handle, **options)

@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from datetime import timedelta
 from uuid import UUID
 
@@ -6,6 +7,7 @@ from sqlalchemy import Select, case, func, select, update
 from shared.db.session import active_session
 from shared.time import utc_now
 
+from .contracts import TaskSpec
 from .model import JobTable, WorkerTable
 
 
@@ -30,17 +32,20 @@ async def beat_worker(worker_id: UUID) -> bool:
     return result.scalar_one_or_none() is not None
 
 
-async def _release(worker_id: UUID) -> None:
+async def _release(worker_id: UUID, tasks: Mapping[str, TaskSpec]) -> None:
     now = utc_now()
     exhausted = JobTable.attempts >= JobTable.max_attempts
+    delays = {name: now + timedelta(seconds=task.retry_delay_seconds)
+              for name, task in tasks.items() if task.retry_delay_seconds is not None}
+    available = case(delays, value=JobTable.task_name, else_=now) if delays else now
     await active_session().execute(update(JobTable).where(
         JobTable.worker_id == worker_id, JobTable.status == "running",
     ).values(status=case((exhausted, "dead"), else_="pending"), worker_id=None,
-             lease_token=None, available_at=now, updated_at=now, last_error="worker_lost",
+             lease_token=None, available_at=available, updated_at=now, last_error="worker_lost",
              finished_at=case((exhausted, now), else_=None)))
 
 
-async def recover_workers() -> None:
+async def recover_workers(tasks: Mapping[str, TaskSpec] | None = None) -> None:
     session = active_session()
     cutoff = func.timezone("UTC", func.clock_timestamp()) - timedelta(seconds=30)
     stale = await session.scalars(select(WorkerTable).where(
@@ -48,11 +53,11 @@ async def recover_workers() -> None:
     ).with_for_update(skip_locked=True).limit(100))
     for row in stale:
         row.status, row.updated_at = "dead", utc_now()
-        await _release(row.id)
+        await _release(row.id, tasks or {})
     await session.flush()
 
 
-async def retire_worker(worker_id: UUID) -> None:
+async def retire_worker(worker_id: UUID, tasks: Mapping[str, TaskSpec] | None = None) -> None:
     await active_session().execute(update(WorkerTable).where(WorkerTable.id == worker_id)
                                   .values(status="dead", updated_at=utc_now()))
-    await _release(worker_id)
+    await _release(worker_id, tasks or {})
